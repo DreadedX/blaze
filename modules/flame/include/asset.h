@@ -14,7 +14,11 @@ namespace blaze::flame {
 	class Asset {
 		public:
 			// @todo This constructor is only for testing
-			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version, uint32_t offset = 0);
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version);
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version, uint32_t offset, uint32_t size);
+
+			const std::string get_name() const { return _name; }
+			uint8_t get_version() const { return _version; }
 
 			std::shared_ptr<ASyncData> get_data();
 			// @todo Maybe a better name than TaskData

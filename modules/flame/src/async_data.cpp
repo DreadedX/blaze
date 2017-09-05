@@ -3,18 +3,18 @@
 #include <iostream>
 
 namespace blaze::flame {
-	const State ASyncData::get_state() {
+	State ASyncData::get_state() {
 		std::lock_guard<std::mutex> lock(_mutex);
 		return _state;
 	}
-	const bool ASyncData::is_loaded() {
+	bool ASyncData::is_loaded() {
 		return get_state() == State::LOADED;
 	}
 	void ASyncData::set_state(State state) {
 		std::lock_guard<std::mutex> lock(_mutex);
 		_state = state;
 	}
-	const uint32_t ASyncData::get_size() {
+	uint32_t ASyncData::get_size() {
 		_wait_until_loaded();
 		return _size;
 	}

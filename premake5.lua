@@ -1,9 +1,12 @@
 language "C++"
+cppdialect "C++17"
 
 workspace "blaze"
 	configurations { "Debug", "Release" }
 	platforms { "Linux", "Windows" }
 	location "build"
+	flags { "MultiProcessorCompile" }
+	warnings "Extra"
 
 	filter "configurations:Debug"
 		defines "DEBUG"

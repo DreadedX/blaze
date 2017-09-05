@@ -6,19 +6,19 @@
 #define CHUNK_SIZE 1024
 
 namespace blaze::flame {
-	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version, uint32_t offset) : _name(name), _afs(afs), _version(version), _offset(offset) {
+	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version) : _name(name), _afs(afs), _version(version), _offset(0) {
 		if (_afs && _afs->is_open()) {
 			auto& fs = _afs->lock();
-			auto pos = fs.tellg();
 			fs.seekg(0, std::ios::end);
 			_size = fs.tellg();
-			fs.seekg(pos);
 			_afs->unlock();
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 			_size = 0;
 		}
 	}
+
+	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version, uint32_t offset, uint32_t size) : _name(name), _afs(afs), _version(version), _offset(offset), _size(size) {}
 
 	void Asset::add_load_task(std::function< TaskData(TaskData)> task) {
 		_tasks.push_back(task);
