@@ -12,7 +12,7 @@ workspace "blaze"
 		defines "DEBUG"
 		symbols "On"
 
-	filter "configurations:Debug"
+	filter "configurations:Release"
 		defines "NDEBUG"
 		optimize "On"
 

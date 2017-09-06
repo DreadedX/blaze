@@ -18,6 +18,7 @@ namespace blaze::flame {
 
 	class Asset;
 	class ASyncFStream;
+	class AssetList;
 
 	// Archives only exist for writing files
 	class Archive {
@@ -44,7 +45,10 @@ namespace blaze::flame {
 			uint8_t _key[PUBLIC_KEY_SIZE];
 
 		friend Archive& operator<<(Archive& archive, Asset& asset);
+		friend AssetList& operator<<(AssetList& asset_list, Archive& archive);
 	};
 
 	Archive& operator<<(Archive& archive, Asset& asset);
+	// @todo This should propably be in asset_list
+	AssetList& operator<<(AssetList& asset_list, Archive& archive);
 };

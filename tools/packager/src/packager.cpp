@@ -41,26 +41,23 @@ int main() {
 
 		auto data = test_asset.get_data();
 		auto data2 = test_asset2.get_data();
-		while (!data->is_loaded()) {
+		while (!data.is_loaded()) {
 			std::cout << "Waiting for data to load!\n";
-			if (data->get_state() == blaze::flame::State::FAILED) {
+			if (data.get_state() == blaze::flame::State::FAILED) {
 				std::cerr << "Failed to load asset\n";
 				break;
 			}
 		}
-		for (uint32_t i = 0; i < data->get_size(); ++i) {
-			auto dat = (*data)[i];
+		for (uint32_t i = 0; i < data.get_size(); ++i) {
+			auto dat = data[i];
 			std::cout << dat;
 		}
-		for (uint32_t i = 0; i < data2->get_size(); ++i) {
-			auto dat = (*data2)[i];
+		for (uint32_t i = 0; i < data2.get_size(); ++i) {
+			auto dat = data2[i];
 			std::cout << dat;
 		}
 
-		archive << test_asset;
-		archive << test_asset;
-		archive << test_asset2new;
-		archive << test_asset2;
+		archive << test_asset << test_asset << test_asset2new << test_asset2;
 
 		std::fstream priv_key_file("priv.key", std::ios::in);
 		std::shared_ptr<uint8_t[]> priv_key = std::make_unique<uint8_t[]>(1217);
@@ -76,18 +73,17 @@ int main() {
 		std::cout << "Official: " << (archive.is_trusted(trusted_key) ? "Yes" : "No") << '\n';
 
 		blaze::flame::AssetList asset_list;
-		asset_list.add_archive(archive);
+		asset_list << archive;
 
 		asset_list.debug_list_assets();
 		
-		auto test_asset = asset_list.find_asset("TestAsset");
-		auto data = test_asset->get_data();
-		for (uint32_t i = 0; i < data->get_size(); ++i) {
-			auto dat = (*data)[i];
+		auto data = asset_list.find_asset("TestAsset");
+		for (uint32_t i = 0; i < data.get_size(); ++i) {
+			auto dat = data[i];
 			std::cout << dat;
 		}
 
 		auto test_asset3 = asset_list.find_asset("TestAsset3");
-		assert(!test_asset3);
+		assert(test_asset3.get_state() == blaze::flame::State::FAILED);
 	}
 }

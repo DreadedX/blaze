@@ -2,8 +2,10 @@
 
 #include "archive.h"
 #include "async_fstream.h"
+#include "async_data.h"
 #include "asset.h"
 #include "binary_helper.h"
+#include "asset_list.h"
 
 #include "sha3.h"
 #include "rsa.h"
@@ -216,14 +218,60 @@ namespace blaze::flame {
 			binary::write(fs, asset._version);
 			// We save the size of the data stream, not the size of the file on disk
 			// @note This blocks until the stream is finished loading
-			binary::write(fs, data->get_size());
+			binary::write(fs, data.get_size());
 
-			binary::write(fs, data->data(), data->get_size());
+			binary::write(fs, data.data(), data.get_size());
 
 			archive._afs->unlock();
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 		}
 		return archive;
+	}
+
+	// @todo Check if the archive is a valid one
+	AssetList& operator<<(AssetList& asset_list, Archive& archive) {
+		// Use the file stream to load all individual assets into Assets and add them to the list
+		auto afs = archive.get_async_fstream();
+		auto& fs = afs->lock();
+
+		fs.seekg(0, std::ios::end);
+		unsigned long archive_size = fs.tellg();
+
+		unsigned long next_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + archive.get_author().length()+1 +archive.get_description().length()+1;
+
+		while (next_asset < archive_size) {
+			fs.seekg(next_asset);
+			std::string name;
+			binary::read(fs, name);
+			uint8_t version;
+			binary::read(fs, version);
+			uint32_t size;
+			binary::read(fs, size);
+			uint32_t offset = fs.tellg();
+
+			next_asset = offset + size;
+
+			// Check if we have already 
+			auto existing = asset_list._assets.find(name);
+			if (existing != asset_list._assets.end()) {
+				if (existing->second.get_version() < version) {
+					std::cout << "Replacing asset with newer version: " << name << '\n';
+				} else if(existing->second.get_version() > version) {
+					std::cout << "Already loaded newer asset: " << name << '\n';
+					continue;
+				} else {
+					std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Conflicting assets with same version\n";
+					// There is no way we can handle this situation, so we just really on load order
+					continue;
+				}
+			}
+
+			Asset asset(name, afs, version, offset, size);
+			asset_list._assets[name] = asset;
+		}
+
+		afs->unlock();
+		return asset_list;
 	}
 }

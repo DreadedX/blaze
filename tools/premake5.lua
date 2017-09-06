@@ -12,6 +12,6 @@ project "packager"
 	location "../build/packager"
 	files "packager/src/**.cpp"
 	includedirs { "packager/include", "../modules/flame/include", "../third_party/cryptopp"}
-	links { "flame", "cryptopp", "pthread", "gtk+-3.0" }
+	links { "flame", "cryptopp", "pthread" }
 
 	-- pkgconfig.load('gtkmm-3.0')
