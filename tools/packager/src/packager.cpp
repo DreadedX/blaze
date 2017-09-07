@@ -6,6 +6,8 @@
 #include "binary_helper.h"
 #include "async_data.h"
 
+#include "compress.h"
+
 #include "rsa.h"
 #include "osrng.h"
 #include "integer.h"
@@ -13,16 +15,6 @@
 // Test
 #include "trusted_key.h"
 #include "asset_list.h"
-
-blaze::flame::Asset::TaskData zlib_compress(blaze::flame::Asset::TaskData task_data) {
-	std::cout << "This could be zlib compression\n";
-	task_data.first = std::make_unique<uint8_t[]>(10);
-	task_data.second = 10;
-	for (int i = 0; i < 10; ++i) {
-		task_data.first[i] = 9-i;
-	}
-	return task_data;
-}
 
 // Just to make everything compile
 int main() {
@@ -37,7 +29,7 @@ int main() {
 		blaze::flame::Asset test_asset2("TestAsset2", test_file, 1);
 		blaze::flame::Asset test_asset2new("TestAsset2", test_file, 2);
 
-		// test_asset.add_load_task(zlib_compress);
+		test_asset.add_load_task(blaze::flame::zlib::compress);
 
 		auto data = test_asset.get_data();
 		auto data2 = test_asset2.get_data();

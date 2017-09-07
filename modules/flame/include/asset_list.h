@@ -25,8 +25,6 @@ namespace blaze::flame {
 			}
 
 		private:
-			// @todo Are we really going to do yet another layer of pointers
-			// @todo A hash map is a better idea for making assets searchable
 			std::unordered_map<std::string, Asset> _assets;
 
 		friend AssetList& operator<<(AssetList& asset_list, Archive& archive);

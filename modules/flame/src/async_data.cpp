@@ -1,37 +1,58 @@
 #include "async_data.h"
 
 #include <iostream>
+#include <cstring>
 
 namespace blaze::flame {
-	// @todo I don't know if makeing a copy of the task list is the best thing ever...
 	Asset::TaskData async_load(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, std::vector<std::function<Asset::TaskData(Asset::TaskData)>> tasks) {
-		// @todo This works, but make_shared does not, investigate
-		std::shared_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+		// The final data array grows each iteration of the loop with the size of the processed data, this is because we do not know what the final size will be
+		std::unique_ptr<uint8_t[]> data = nullptr;
 
+		uint32_t data_pos = 0;
 		uint32_t remaining = size;
 
+		// @todo This inner loop can be reused for streaming data, e.g. music
 		while (remaining > 0) {
 			uint32_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
 
 			if (afs && afs->is_open()) {
 
+				std::unique_ptr<uint8_t[]> tmp_data = std::make_unique<uint8_t[]>(chunk);
+
 				auto& fs = afs->lock();
 				fs.seekg(offset + (size-remaining));
-				fs.read(reinterpret_cast<char*>(data.get() + (size-remaining)), chunk);
+				fs.read(reinterpret_cast<char*>(tmp_data.get()), chunk);
 				afs->unlock();
+	
+				// @todo Pass task type enum
+				// Asset::TaskData task_data(std::move(tmp_data), chunk, TaskDataType::STREAM);
+				// @todo Small problem, we do not know the size of e.g. the compressed data chunks, how are we going to deal with that
+				Asset::TaskData task_data(std::move(tmp_data), chunk);
+				for (auto& t : tasks) {
+					task_data = t(std::move(task_data));
+				}
+				
+				std::unique_ptr<uint8_t[]> current_data = std::move(data);
+				data = std::make_unique<uint8_t[]>(data_pos + task_data.second);
+				if (current_data != nullptr) {
+					memcpy(data.get(), current_data.get(), data_pos);
+				}
+				memcpy(data.get() + data_pos, task_data.first.get(), task_data.second);
 
+				data_pos += task_data.second;
 				remaining -= chunk;
 			} else {
-				// @todo This branch could cause lock ups
 				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 				return Asset::TaskData(nullptr, 0);
 			}
 		}
 
-		Asset::TaskData task_data(std::move(data), size);
-		for (auto& t : tasks) {
-			task_data = t(std::move(task_data));
-		}
+		// @todo Pass in an task type enum, then we can enable this again
+		// Asset::TaskData task_data(std::move(data), data_pos, TaskDataType::FINAL);
+		Asset::TaskData task_data(std::move(data), data_pos);
+		// for (auto& t : tasks) {
+		// 	task_data = t(std::move(task_data));
+		// }
 
 		return task_data;
 	}
@@ -86,5 +107,4 @@ namespace blaze::flame {
 			get_state();
 		}
 	}
-
 }

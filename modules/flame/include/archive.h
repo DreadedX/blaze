@@ -49,6 +49,6 @@ namespace blaze::flame {
 	};
 
 	Archive& operator<<(Archive& archive, Asset& asset);
-	// @todo This should propably be in asset_list
+	// @todo This should propably be in asset_list, going to be fun with all the cross referencing of headers
 	AssetList& operator<<(AssetList& asset_list, Archive& archive);
 };

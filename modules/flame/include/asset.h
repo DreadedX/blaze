@@ -11,9 +11,10 @@
 namespace blaze::flame {
 	class Archive;
 	class ASyncData;
+	// @todo This is not really and asset anymore, it is just the MetaData, ASync data is the actual data. Maybe AssetMeta and AssetData
 	class Asset {
 		public:
-			// @todo Ehm...
+			// @todo Ehm... We somehow need this to make the asset list work
 			Asset() {}
 
 			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version);
@@ -24,7 +25,7 @@ namespace blaze::flame {
 
 			ASyncData get_data();
 			// @todo Maybe a better name than TaskData
-			using TaskData = std::pair<std::shared_ptr<uint8_t[]>, uint32_t>;
+			using TaskData = std::pair<std::unique_ptr<uint8_t[]>, uint32_t>;
 			// @todo How do we pass additional data in and out of these functions
 			void add_load_task(std::function< TaskData(TaskData)> task);
 

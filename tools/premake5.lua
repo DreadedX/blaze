@@ -11,7 +11,7 @@ project "packager"
 	kind "WindowedApp"
 	location "../build/packager"
 	files "packager/src/**.cpp"
-	includedirs { "packager/include", "../modules/flame/include", "../third_party/cryptopp"}
+	includedirs { "packager/include", "../modules/flame/include", "../third_party/cryptopp", "../modules/flame-zlib/include" }
 	links { "flame", "cryptopp", "pthread" }
 
 	-- pkgconfig.load('gtkmm-3.0')

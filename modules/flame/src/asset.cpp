@@ -22,7 +22,6 @@ namespace blaze::flame {
 		_tasks.push_back(task);
 	}
 
-	// @todo We want this to turn compressed to raw data when read archive and the other way around when writing. How?
 	ASyncData Asset::get_data() {
 		if (!_afs || !_afs->is_open()) {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";

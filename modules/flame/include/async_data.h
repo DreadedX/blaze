@@ -9,7 +9,7 @@
 #include <vector>
 
 // @todo Is this a good number?
-#define CHUNK_SIZE 1024
+#define CHUNK_SIZE 2
 
 namespace blaze::flame {
 
