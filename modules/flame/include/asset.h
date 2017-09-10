@@ -17,11 +17,11 @@ namespace blaze::flame {
 			// @todo Ehm... We somehow need this to make the asset list work
 			Asset() {}
 
-			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version);
-			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version, uint32_t offset, uint32_t size);
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version);
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size);
 
-			const std::string get_name() const { return _name; }
-			uint8_t get_version() const { return _version; }
+			const std::string& get_name() const { return _name; }
+			uint16_t get_version() const { return _version; }
 
 			ASyncData get_data();
 			// @todo Maybe a better name than TaskData
@@ -32,7 +32,7 @@ namespace blaze::flame {
 		private:
 			std::string _name;
 			std::shared_ptr<ASyncFStream> _afs;
-			uint8_t _version;
+			uint16_t _version;
 			uint32_t _offset;
 			// The size of the data on disk, really only for internal use
 			uint32_t _size;

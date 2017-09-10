@@ -41,7 +41,7 @@ namespace blaze::flame {
 		return digest;
 	}
 
-	Archive::Archive(std::shared_ptr<ASyncFStream> afs, std::string author, std::string description) : _afs(afs), _author(author), _description(description) {}
+	Archive::Archive(std::shared_ptr<ASyncFStream> afs, std::string name, std::string author, std::string description, uint16_t version) : _afs(afs), _name(name), _author(author), _description(description), _version(version) {}
 
 	Archive::Archive(std::shared_ptr<ASyncFStream> afs) : _afs(afs) {
 		std::cout << "Loading existing archive\n";
@@ -83,8 +83,26 @@ namespace blaze::flame {
 					fs.seekg(PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC));
 
 					if (binary::compare(digest.get(), stored_digest, HASH_SIZE)) {
+						binary::read(fs, _name);
 						binary::read(fs, _author);
 						binary::read(fs, _description);
+						binary::read(fs, _version);
+
+						while (true) {
+							uint8_t next;
+							binary::read(fs, next);
+							if (next == 0x00) {
+								 break;
+							}
+							fs.seekg(-1, std::ios::cur);
+
+							std::string name;
+							binary::read(fs, name);
+							uint16_t version;
+							binary::read(fs, version);
+							_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
+						}
+
 						_valid = true;
 					} else {
 						std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File is corrupted or not finalized\n";
@@ -99,6 +117,14 @@ namespace blaze::flame {
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 		}
+	}
+
+	void Archive::add_dependency(std::string name, uint16_t version) {
+		if (_initialized) {
+			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Can not add dependecies after initializing\n";
+			return;
+		}
+		_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
 	}
 
 	void Archive::initialize() {
@@ -117,8 +143,16 @@ namespace blaze::flame {
 				binary::write(fs, (uint8_t) 0x00);
 			}
 
+			binary::write(fs, _name);
 			binary::write(fs, _author);
 			binary::write(fs, _description);
+			binary::write(fs, _version);
+
+			for (auto& dependency : _dependencies) {
+				binary::write(fs, dependency.first);
+				binary::write(fs, dependency.second);
+			}
+			binary::write(fs, (uint8_t) 0x00);
 
 			_afs->unlock();
 
@@ -199,79 +233,33 @@ namespace blaze::flame {
 		}
 	}
 
-	Archive& operator<<(Archive& archive, Asset& asset) {
-		if (archive._valid) {
+	void Archive::add(Asset& asset) {
+		if (_valid) {
 			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized";
-			return archive;
+			return;
 		}
-		if (!archive._initialized) {
+		if (!_initialized) {
 			std::cerr << __FILE__ << ":" << __LINE__ << " " << "You need to initialze the archive first\n";
-			return archive;
+			return;
 		}
 
 		auto data = asset.get_data();
 
-		if (archive._afs && archive._afs->is_open()) {
-			auto& fs = archive._afs->lock();
+		if (_afs && _afs->is_open()) {
+			auto& fs = _afs->lock();
 
-			binary::write(fs, asset._name);
-			binary::write(fs, asset._version);
+			binary::write(fs, asset.get_name());
+			binary::write(fs, asset.get_version());
 			// We save the size of the data stream, not the size of the file on disk
 			// @note This blocks until the stream is finished loading
 			binary::write(fs, data.get_size());
 
 			binary::write(fs, data.data(), data.get_size());
 
-			archive._afs->unlock();
+			_afs->unlock();
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 		}
-		return archive;
 	}
 
-	// @todo Check if the archive is a valid one
-	AssetList& operator<<(AssetList& asset_list, Archive& archive) {
-		// Use the file stream to load all individual assets into Assets and add them to the list
-		auto afs = archive.get_async_fstream();
-		auto& fs = afs->lock();
-
-		fs.seekg(0, std::ios::end);
-		unsigned long archive_size = fs.tellg();
-
-		unsigned long next_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + archive.get_author().length()+1 +archive.get_description().length()+1;
-
-		while (next_asset < archive_size) {
-			fs.seekg(next_asset);
-			std::string name;
-			binary::read(fs, name);
-			uint8_t version;
-			binary::read(fs, version);
-			uint32_t size;
-			binary::read(fs, size);
-			uint32_t offset = fs.tellg();
-
-			next_asset = offset + size;
-
-			// Check if we have already 
-			auto existing = asset_list._assets.find(name);
-			if (existing != asset_list._assets.end()) {
-				if (existing->second.get_version() < version) {
-					std::cout << "Replacing asset with newer version: " << name << '\n';
-				} else if(existing->second.get_version() > version) {
-					std::cout << "Already loaded newer asset: " << name << '\n';
-					continue;
-				} else {
-					std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Conflicting assets with same version\n";
-					// There is no way we can handle this situation, so we just really on load order
-					continue;
-				}
-			}
-
-			Asset asset(name, afs, version, offset, size);
-			asset_list._assets[name] = asset;
-		}
-
-		afs->unlock();
-		return asset_list;
-	}
 }

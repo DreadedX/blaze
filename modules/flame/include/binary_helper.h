@@ -28,6 +28,9 @@ namespace blaze::flame::binary {
 	std::ostream& write(std::ostream& os, const uint8_t& value);
 	std::istream& read(std::istream& is, uint8_t& value);
 
+	std::ostream& write(std::ostream& os, const uint16_t& value);
+	std::istream& read(std::istream& is, uint16_t& value);
+
 	std::ostream& write(std::ostream& os, const uint32_t& value);
 	std::istream& read(std::istream& is, uint32_t& value);
 }

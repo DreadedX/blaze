@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace blaze::flame {
-	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version) : _name(name), _afs(afs), _version(version), _offset(0) {
+	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version) : _name(name), _afs(afs), _version(version), _offset(0) {
 		if (_afs && _afs->is_open()) {
 			auto& fs = _afs->lock();
 			fs.seekg(0, std::ios::end);
@@ -16,7 +16,7 @@ namespace blaze::flame {
 		}
 	}
 
-	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint8_t version, uint32_t offset, uint32_t size) : _name(name), _afs(afs), _version(version), _offset(offset), _size(size) {}
+	Asset::Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size) : _name(name), _afs(afs), _version(version), _offset(offset), _size(size) {}
 
 	void Asset::add_load_task(std::function< TaskData(TaskData)> task) {
 		_tasks.push_back(task);

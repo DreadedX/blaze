@@ -67,6 +67,23 @@ namespace blaze::flame::binary {
 		return is;
 	}
 
+	std::ostream& write(std::ostream& os, const uint16_t& value) {
+		for (size_t i = 0; i < sizeof(uint16_t); ++i) {
+			uint8_t byte = ((value >> i*8) & 0xff);
+			os.write(reinterpret_cast<const char*>(&byte), 1);
+		}
+		return os;
+	}
+	std::istream& read(std::istream& is, uint16_t& value) {
+		value = 0;
+		for (size_t i = 0; i < sizeof(uint16_t); ++i) {
+			uint8_t byte;
+			is.read(reinterpret_cast<char*>(&byte), 1);
+			value |= (byte << i*8);
+		}
+		return is;
+	}
+
 	std::ostream& write(std::ostream& os, const uint32_t& value) {
 		for (size_t i = 0; i < sizeof(uint32_t); ++i) {
 			uint8_t byte = ((value >> i*8) & 0xff);

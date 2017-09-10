@@ -20,7 +20,9 @@
 int main() {
 	{
 		std::shared_ptr<blaze::flame::ASyncFStream> archive_file = std::make_shared<blaze::flame::ASyncFStream>("test.flm", std::ios::in | std::ios::out | std::ios::trunc);
-		blaze::flame::Archive archive(archive_file, "Dreaded_X", "This is an archive just for testing the system");
+		blaze::flame::Archive archive(archive_file, "test", "Dreaded_X", "This is an archive just for testing the system", 1);
+		// @todo We need to make a second archive to test this stuff
+		archive.add_dependency("test", 1);
 		archive.initialize();
 
 		// Now we can share one file stream and ensure that only one thread can read from it
@@ -49,23 +51,35 @@ int main() {
 			std::cout << dat;
 		}
 
-		archive << test_asset << test_asset << test_asset2new << test_asset2;
+		archive.add(test_asset);
+		archive.add(test_asset);
+		archive.add(test_asset2new);
+		archive.add(test_asset2);
 
 		std::fstream priv_key_file("priv.key", std::ios::in);
 		std::shared_ptr<uint8_t[]> priv_key = std::make_unique<uint8_t[]>(1217);
 		blaze::flame::binary::read(priv_key_file, priv_key.get(), 1217);
+
 		archive.finialize(priv_key, 1217);
 	}
 
 	{
 		std::shared_ptr<blaze::flame::ASyncFStream> archive_file = std::make_shared<blaze::flame::ASyncFStream>("test.flm", std::ios::in | std::ios::out);
 		blaze::flame::Archive archive(archive_file);
+		std::cout << "Name: " << archive.get_name() << '\n';
 		std::cout << "Author: " << archive.get_author() << '\n';
 		std::cout << "Description: " << archive.get_description() << '\n';
+		std::cout << "Version: " << archive.get_version() << '\n';
 		std::cout << "Official: " << (archive.is_trusted(trusted_key) ? "Yes" : "No") << '\n';
 
+		std::cout << "Dependencies: \n";
+		for (auto& dependency : archive.get_dependencies()) {
+			std::cout << '\t' << dependency.first << ' ' << dependency.second << '\n';
+		}
+
 		blaze::flame::AssetList asset_list;
-		asset_list << archive;
+		asset_list.add(archive);
+		asset_list.load();
 
 		asset_list.debug_list_assets();
 		
