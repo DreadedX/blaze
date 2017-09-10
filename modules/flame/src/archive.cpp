@@ -202,21 +202,10 @@ namespace blaze::flame {
 		// Sign with private key
 		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.get(), HASH_SIZE));
 
-		std::cout << "Signature: " << std::hex << signature << '\n';
-		std::cout << "Hash: ";
-		for (int i = 0; i < 32; ++i) {
-			std::cout << "0x" << std::hex << (uint32_t)digest[i] << ' ';
-		}
-		std::cout << '\n';
-
 		if (_afs && _afs->is_open()) {
-			// Store current location in the file
 			auto& fs = _afs->lock();
-			// Go to hash portion of the archive
 			fs.seekp(sizeof(MAGIC));
-			// Write the public key
 			binary::write(fs, pubqueue);
-			// Write the (signed) hash
 			binary::write(fs, signature);
 
 			_afs->unlock();

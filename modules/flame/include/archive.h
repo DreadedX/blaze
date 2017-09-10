@@ -31,7 +31,6 @@ namespace blaze::flame {
 
 			void add(Asset& asset);
 
-			// Check if the archive is a trusted archive by comparing the key with a trusted key
 			bool is_trusted(uint8_t trusted_key[]) { return binary::compare(_key, trusted_key, PUBLIC_KEY_SIZE); };
 			const bool& is_valid() const { return _valid; }
 			const std::string& get_name() const { return _name; }
@@ -53,11 +52,5 @@ namespace blaze::flame {
 			bool _initialized = false;
 			bool _valid = false;
 			uint8_t _key[PUBLIC_KEY_SIZE];
-
-		friend Archive& operator<<(Archive& archive, Asset& asset);
 	};
-
-	Archive& operator<<(Archive& archive, Asset& asset);
-	// @todo This should propably be in asset_list, going to be fun with all the cross referencing of headers
-	AssetList& operator<<(AssetList& asset_list, Archive& archive);
 };

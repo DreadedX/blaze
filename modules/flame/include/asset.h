@@ -38,8 +38,6 @@ namespace blaze::flame {
 			uint32_t _size;
 
 			std::vector<std::function<TaskData(TaskData)>> _tasks;
-
-			friend Archive& operator<<(Archive& archive, Asset& asset);
 	};
 };
 

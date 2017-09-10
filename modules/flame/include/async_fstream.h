@@ -4,6 +4,7 @@
 #include <fstream>
 
 namespace blaze::flame {
+	// @todo Rename this function
 	class ASyncFStream {
 		public:
 			ASyncFStream(std::string filename, std::ios::openmode openmode);
