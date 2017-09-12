@@ -7,6 +7,7 @@ namespace blaze::flame {
 	// @todo Rename this function
 	class ASyncFStream {
 		public:
+			ASyncFStream(std::string filename) : ASyncFStream(filename, std::ios::in | std::ios::out) {}
 			ASyncFStream(std::string filename, std::ios::openmode openmode);
 			~ASyncFStream();
 

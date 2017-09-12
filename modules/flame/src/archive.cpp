@@ -162,7 +162,7 @@ namespace blaze::flame {
 		}
 	}
 
-	void Archive::finialize(std::shared_ptr<uint8_t[]> priv_key, uint32_t key_size) {
+	void Archive::finialize(std::array<uint8_t, 1217>& priv_key) {
 		if (_valid) {
 			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized";
 			return;
@@ -192,7 +192,7 @@ namespace blaze::flame {
 
 		{
 			CryptoPP::ByteQueue privqueue;
-			privqueue.Put2(priv_key.get(), key_size, 0, true);
+			privqueue.Put2(priv_key.data(), priv_key.size(), 0, true);
 			rsa_private.Load(privqueue);
 
 			CryptoPP::RSA::PublicKey rsa_public(rsa_private);
@@ -224,7 +224,7 @@ namespace blaze::flame {
 
 	void Archive::add(Asset& asset) {
 		if (_valid) {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized";
+			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized\n";
 			return;
 		}
 		if (!_initialized) {
@@ -251,4 +251,46 @@ namespace blaze::flame {
 		}
 	}
 
+	// @todo Should we precompute this, or just compute it as we need it
+	std::vector<Asset> Archive::get_assets() {
+		std::vector<Asset> assets;
+
+		if (!_valid) {
+			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Archive invalid\n";
+			return assets;
+		}
+
+		// Use the file stream to load all individual assets into Assets and add them to the list
+		auto& fs = _afs->lock();
+
+		fs.seekg(0, std::ios::end);
+		unsigned long archive_size = fs.tellg();
+
+		unsigned long next_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + _name.length()+1 + _author.length()+1 +_description.length()+1 + sizeof(uint16_t) /* version */;
+
+		for (auto& dependency : _dependencies) {
+			next_asset += dependency.first.length()+1 + sizeof(uint16_t);
+		}
+		// null terminator at the end of the dependency list
+		next_asset += 1;
+
+		while (next_asset < archive_size) {
+			fs.seekg(next_asset);
+			std::string name;
+			binary::read(fs, name);
+			uint16_t version;
+			binary::read(fs, version);
+			uint32_t size;
+			binary::read(fs, size);
+			uint32_t offset = fs.tellg();
+
+			next_asset = offset + size;
+
+			assets.push_back(Asset(name, _afs, version, offset, size));
+		}
+
+		_afs->unlock();
+
+		return assets;
+	}
 }

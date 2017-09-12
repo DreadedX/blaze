@@ -12,6 +12,17 @@
 namespace blaze::flame::binary {
 	bool compare(const uint8_t array1[], const uint8_t array2[], const uint32_t size);
 
+	template <std::size_t S>
+	std::ostream& write(std::ostream& os, const std::array<uint8_t, S>& value) {
+		os.write(reinterpret_cast<const char*>(value.data()), value.size());
+		return os;
+	}
+	template <std::size_t S>
+	std::istream& read(std::istream& is, std::array<uint8_t, S>& value) {
+		is.read(reinterpret_cast<char*>(value.data()), value.size());
+		return is;
+	}
+
 	std::ostream& write(std::ostream& os, const std::string& value);
 	std::istream& read(std::istream& is, std::string& value);
 

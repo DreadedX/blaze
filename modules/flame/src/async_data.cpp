@@ -67,6 +67,7 @@ namespace blaze::flame {
 
 	State ASyncData::get_state() {
 		// @todo Is _future invalid after calling get, if so we do not have to check the state
+		// @todo Zero size file give an error, do not know if that is the correct thing
 		if (_state == State::LOADING && _future.valid() && _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			_task_data = _future.get();
 			if (_task_data.first == nullptr) {

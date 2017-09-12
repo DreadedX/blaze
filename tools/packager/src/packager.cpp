@@ -8,16 +8,74 @@
 
 #include "compress.h"
 
+// CryptoPP
 #include "rsa.h"
 #include "osrng.h"
 #include "integer.h"
+
+// Sol2
+#include "sol.hpp"
 
 // Test
 #include "trusted_key.h"
 #include "asset_list.h"
 
+std::array<uint8_t, 1217> load_private_key(std::string path) {
+	std::fstream priv_key_file(path, std::ios::in);
+	std::array<uint8_t, 1217> priv_key;
+	blaze::flame::binary::read(priv_key_file, priv_key);
+	return priv_key;
+}
+
+void lua_test() {
+	using namespace blaze::flame;
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::io, sol::lib::string);
+
+	lua.new_usertype<Asset> ("Asset",
+			sol::constructors<
+				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t),
+				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t)
+				>(),
+				"get_name", &Asset::get_name,
+				"get_version", &Asset::get_version
+			);
+	lua.new_usertype<Archive> ("Archive",
+			sol::constructors<
+				Archive(std::shared_ptr<ASyncFStream> afs, std::string, std::string, std::string, uint16_t),
+				Archive(std::shared_ptr<ASyncFStream> afs)
+			>(),
+			"add_dependency", &Archive::add_dependency,
+			"initialize", &Archive::initialize,
+			"finalize", &Archive::finialize,
+			"add", &Archive::add
+			);
+	lua.new_usertype<ASyncFStream> ("ASyncFStream",
+			sol::constructors<
+				ASyncFStream(std::string)
+			>(),
+			"is_open", &ASyncFStream::is_open
+			);
+
+	lua.set_function("open_file", [](std::string path){
+			return std::make_shared<ASyncFStream>(path, std::ios::in | std::ios::out);
+			});
+	lua.set_function("open_new_file", [](std::string path){
+			return std::make_shared<ASyncFStream>(path, std::ios::in | std::ios::out | std::ios::trunc);
+			});
+
+	lua.set_function("load_private_key", &load_private_key);
+
+	lua.script_file("packager.lua");
+}
+
 // Just to make everything compile
 int main() {
+
+	lua_test();
+
+	return 0;
+
 	{
 		std::shared_ptr<blaze::flame::ASyncFStream> archive_file = std::make_shared<blaze::flame::ASyncFStream>("test.flm", std::ios::in | std::ios::out | std::ios::trunc);
 		blaze::flame::Archive archive(archive_file, "test", "Dreaded_X", "This is an archive just for testing the system", 1);
@@ -46,21 +104,21 @@ int main() {
 			auto dat = data[i];
 			std::cout << dat;
 		}
+		std::cout << '\n';
 		for (uint32_t i = 0; i < data2.get_size(); ++i) {
 			auto dat = data2[i];
 			std::cout << dat;
 		}
+		std::cout << '\n';
 
 		archive.add(test_asset);
 		archive.add(test_asset);
 		archive.add(test_asset2new);
 		archive.add(test_asset2);
 
-		std::fstream priv_key_file("priv.key", std::ios::in);
-		std::shared_ptr<uint8_t[]> priv_key = std::make_unique<uint8_t[]>(1217);
-		blaze::flame::binary::read(priv_key_file, priv_key.get(), 1217);
+		auto priv_key = load_private_key("priv.key");
 
-		archive.finialize(priv_key, 1217);
+		archive.finialize(priv_key);
 	}
 
 	{
@@ -78,8 +136,14 @@ int main() {
 		}
 
 		blaze::flame::AssetList asset_list;
+		// Add archive to a list of archives to load
 		asset_list.add(archive);
-		asset_list.load();
+		// This function is needed to prevent cyclic dependencies
+		asset_list.load_archives();
+
+		std::shared_ptr<blaze::flame::ASyncFStream> test_file = std::make_shared<blaze::flame::ASyncFStream>("assets/test.txt", std::ios::in);
+		blaze::flame::Asset test_asset("TestAssetNOARCHIVE", test_file, 1);
+		asset_list.add(test_asset);
 
 		asset_list.debug_list_assets();
 		

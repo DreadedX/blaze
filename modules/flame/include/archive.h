@@ -27,7 +27,7 @@ namespace blaze::flame {
 			Archive(std::shared_ptr<ASyncFStream> afs);
 			void add_dependency(std::string name, uint16_t version);
 			void initialize();
-			void finialize(std::shared_ptr<uint8_t[]> priv_key, uint32_t key_size);
+			void finialize(std::array<uint8_t, 1217>& priv_key);
 
 			void add(Asset& asset);
 
@@ -38,6 +38,7 @@ namespace blaze::flame {
 			const std::string& get_description() const { return _description; }
 			const uint16_t& get_version() const { return _version; }
 			const auto& get_dependencies() const { return _dependencies; }
+			std::vector<Asset> get_assets();
 
 			const std::shared_ptr<ASyncFStream> get_async_fstream() const { return _afs; }
 
