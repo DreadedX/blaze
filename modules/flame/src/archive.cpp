@@ -44,7 +44,6 @@ namespace blaze::flame {
 	Archive::Archive(std::shared_ptr<ASyncFStream> afs, std::string name, std::string author, std::string description, uint16_t version) : _afs(afs), _name(name), _author(author), _description(description), _version(version) {}
 
 	Archive::Archive(std::shared_ptr<ASyncFStream> afs) : _afs(afs) {
-		std::cout << "Loading existing archive\n";
 		if (_afs && _afs->is_open()) {
 			auto& fs = _afs->lock();
 			fs.seekg(0, std::ios::end);

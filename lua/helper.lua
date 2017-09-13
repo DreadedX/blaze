@@ -1,13 +1,4 @@
-local mymodule = {}
-
-local archive_template = {
-	path = "string",
-	author = "string",
-	description = "string",
-	version = "number",
-	assets = {{ "string", "number" }},
-	dependencies = { "number" }
-}
+local helper = {}
 
 local function verify_error_type(name, archive_name, found, expected)
 	print(string.format("'%s' in archive '%s' has type '%s', expected '%s'", name, archive_name, found, expected))
@@ -17,7 +8,8 @@ local function verify_error_missing(archive_name, expected, name)
 end
 
 -- @todo Refactor this, maybe using recursion
-local function verify(archives)
+-- @todo Is assets are not given a name it will cause an exception
+function helper.verify(archives, archive_template)
 	valid = true
 	for archive_name,archive in pairs(archives) do
 		if (type(archive) == "table") then
@@ -56,26 +48,4 @@ local function verify(archives)
 	return valid
 end
 
-function mymodule.build (archives)
-	if (verify(archives)) then
-		for archive,archive_data in pairs(archives) do
-			local archive = Archive.new(open_new_file(archive_data.path), archive, archive_data.author, archive_data.description, archive_data.version)
-
-			for dependency,version in pairs(archive_data.dependencies) do
-				archive:add_dependency(dependency, version)
-			end
-
-			archive:initialize()
-
-			for asset,asset_data in pairs(archive_data.assets) do
-				archive:add(Asset.new(asset, open_file(asset_data[1]), asset_data[2]))
-			end
-
-			archive:finalize(load_private_key("priv.key"))
-		end
-	else
-		print("ERROR")
-	end
-end
-
-return mymodule
+return helper

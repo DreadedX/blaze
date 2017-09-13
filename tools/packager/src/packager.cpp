@@ -23,7 +23,11 @@
 auto load_private_key(std::string path) {
 	std::fstream priv_key_file(path, std::ios::in);
 	std::array<uint8_t, 1217> priv_key;
-	blaze::flame::binary::read(priv_key_file, priv_key);
+	if (priv_key_file.is_open()) {
+		blaze::flame::binary::read(priv_key_file, priv_key);
+	} else {
+		std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Failed to open key file\n";
+	}
 	return priv_key;
 }
 
@@ -46,7 +50,10 @@ void lua_test() {
 				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t)
 				>(),
 				"get_name", &Asset::get_name,
-				"get_version", &Asset::get_version
+				"get_version", &Asset::get_version,
+				// @todo Test if this works
+				"get_data", &Asset::get_data
+				// add_load_task
 			);
 	lua.new_usertype<Archive> ("Archive",
 			sol::constructors<
@@ -56,15 +63,29 @@ void lua_test() {
 			"add_dependency", &Archive::add_dependency,
 			"initialize", &Archive::initialize,
 			"finalize", &Archive::finialize,
-			"add", &Archive::add
+			"add", &Archive::add,
+			"is_trusted", &Archive::is_trusted,
+			"is_valid", &Archive::is_valid,
+			"get_name", &Archive::get_name,
+			"get_author", &Archive::get_author,
+			"get_description", &Archive::get_description,
+			"get_version", &Archive::get_version,
+			"get_dependencies", &Archive::get_dependencies,
+			"get_assets", &Archive::get_assets
 			);
+	// @todo Test the functionality
 	lua.new_usertype<ASyncFStream> ("ASyncFStream",
-			"is_open", &ASyncFStream::is_open
+			// This needs to be called if done, because garbage collector
+			"close", &ASyncFStream::close,
+			"lock", &ASyncFStream::lock,
+			"is_open", &ASyncFStream::is_open,
+			"unlock", &ASyncFStream::unlock
 			);
 
 	lua.set_function("open_file", &open_file);
 	lua.set_function("open_new_file", &open_new_file);
 	lua.set_function("load_private_key", &load_private_key);
+	lua.set_function("get_trusted_key", []{ return trusted_key; });
 
 	lua.script_file("packager.lua");
 }
@@ -117,7 +138,7 @@ int main() {
 		archive.add(test_asset2new);
 		archive.add(test_asset2);
 
-		auto priv_key = load_private_key("priv.key");
+		auto priv_key = load_private_key("keys/test.priv");
 
 		archive.finialize(priv_key);
 	}

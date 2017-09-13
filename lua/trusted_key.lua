@@ -11,7 +11,7 @@ function string.tohex(str)
     end))
 end
 
-key = readAll("../pub.key")
+key = readAll("..//keys/test.pub")
 file = io.open("trusted_key.h", "w+")
 io.output(file)
 io.write("#pragma once\n\n#include <cstdint>\n\nuint8_t trusted_key[] = {")

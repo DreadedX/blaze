@@ -35,5 +35,5 @@ Session.vim
 tags
 
 ### Other stuff ###
-priv.key
-test.flm
+keys/
+archives/

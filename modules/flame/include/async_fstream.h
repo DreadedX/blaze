@@ -10,6 +10,7 @@ namespace blaze::flame {
 			ASyncFStream(std::string filename, std::ios::openmode openmode);
 			~ASyncFStream();
 
+			void close();
 			std::fstream& lock();
 			bool is_open();
 			void unlock();

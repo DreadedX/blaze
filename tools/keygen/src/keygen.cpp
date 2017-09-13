@@ -14,8 +14,8 @@ int main() {
 
 	CryptoPP::RSA::PublicKey rsa_public(rsa_private);
 
-	std::fstream pubfile("pub.key", std::ios::out);
-	std::fstream privfile("priv.key", std::ios::out);
+	std::fstream pubfile("keys/test.pub", std::ios::out);
+	std::fstream privfile("keys/test.priv", std::ios::out);
 	CryptoPP::ByteQueue pubqueue;
 	CryptoPP::ByteQueue privqueue;
 	rsa_public.Save(pubqueue);

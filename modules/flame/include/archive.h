@@ -40,8 +40,6 @@ namespace blaze::flame {
 			const auto& get_dependencies() const { return _dependencies; }
 			std::vector<Asset> get_assets();
 
-			const std::shared_ptr<ASyncFStream> get_async_fstream() const { return _afs; }
-
 		private:
 			std::shared_ptr<ASyncFStream> _afs;
 			std::string _name;
