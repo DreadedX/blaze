@@ -20,11 +20,19 @@
 #include "trusted_key.h"
 #include "asset_list.h"
 
-std::array<uint8_t, 1217> load_private_key(std::string path) {
+auto load_private_key(std::string path) {
 	std::fstream priv_key_file(path, std::ios::in);
 	std::array<uint8_t, 1217> priv_key;
 	blaze::flame::binary::read(priv_key_file, priv_key);
 	return priv_key;
+}
+
+inline auto open_file(std::string path) {
+	return std::make_shared<blaze::flame::ASyncFStream>(path, std::ios::in | std::ios::out);
+}
+
+inline auto open_new_file(std::string path) {
+	return std::make_shared<blaze::flame::ASyncFStream>(path, std::ios::in | std::ios::out | std::ios::trunc);
 }
 
 void lua_test() {
@@ -51,19 +59,11 @@ void lua_test() {
 			"add", &Archive::add
 			);
 	lua.new_usertype<ASyncFStream> ("ASyncFStream",
-			sol::constructors<
-				ASyncFStream(std::string)
-			>(),
 			"is_open", &ASyncFStream::is_open
 			);
 
-	lua.set_function("open_file", [](std::string path){
-			return std::make_shared<ASyncFStream>(path, std::ios::in | std::ios::out);
-			});
-	lua.set_function("open_new_file", [](std::string path){
-			return std::make_shared<ASyncFStream>(path, std::ios::in | std::ios::out | std::ios::trunc);
-			});
-
+	lua.set_function("open_file", &open_file);
+	lua.set_function("open_new_file", &open_new_file);
 	lua.set_function("load_private_key", &load_private_key);
 
 	lua.script_file("packager.lua");
@@ -72,30 +72,31 @@ void lua_test() {
 // Just to make everything compile
 int main() {
 
+	using namespace blaze::flame;
+
 	lua_test();
 
 	return 0;
 
 	{
-		std::shared_ptr<blaze::flame::ASyncFStream> archive_file = std::make_shared<blaze::flame::ASyncFStream>("test.flm", std::ios::in | std::ios::out | std::ios::trunc);
-		blaze::flame::Archive archive(archive_file, "test", "Dreaded_X", "This is an archive just for testing the system", 1);
+		Archive archive(open_new_file("test.flm"), "test", "Dreaded_X", "This is an archive just for testing the system", 1);
 		// @todo We need to make a second archive to test this stuff
 		archive.add_dependency("test", 1);
 		archive.initialize();
 
 		// Now we can share one file stream and ensure that only one thread can read from it
-		std::shared_ptr<blaze::flame::ASyncFStream> test_file = std::make_shared<blaze::flame::ASyncFStream>("assets/test.txt", std::ios::in);
-		blaze::flame::Asset test_asset("TestAsset", test_file, 1);
-		blaze::flame::Asset test_asset2("TestAsset2", test_file, 1);
-		blaze::flame::Asset test_asset2new("TestAsset2", test_file, 2);
+		auto test_file = open_file("assets/test.txt");
+		Asset test_asset("TestAsset", test_file, 1);
+		Asset test_asset2("TestAsset2", test_file, 1);
+		Asset test_asset2new("TestAsset2", test_file, 2);
 
-		test_asset.add_load_task(blaze::flame::zlib::compress);
+		test_asset.add_load_task(zlib::compress);
 
 		auto data = test_asset.get_data();
 		auto data2 = test_asset2.get_data();
 		while (!data.is_loaded()) {
 			std::cout << "Waiting for data to load!\n";
-			if (data.get_state() == blaze::flame::State::FAILED) {
+			if (data.get_state() == State::FAILED) {
 				std::cerr << "Failed to load asset\n";
 				break;
 			}
@@ -122,8 +123,7 @@ int main() {
 	}
 
 	{
-		std::shared_ptr<blaze::flame::ASyncFStream> archive_file = std::make_shared<blaze::flame::ASyncFStream>("test.flm", std::ios::in | std::ios::out);
-		blaze::flame::Archive archive(archive_file);
+		Archive archive(open_file("test.flm"));
 		std::cout << "Name: " << archive.get_name() << '\n';
 		std::cout << "Author: " << archive.get_author() << '\n';
 		std::cout << "Description: " << archive.get_description() << '\n';
@@ -135,14 +135,13 @@ int main() {
 			std::cout << '\t' << dependency.first << ' ' << dependency.second << '\n';
 		}
 
-		blaze::flame::AssetList asset_list;
+		AssetList asset_list;
 		// Add archive to a list of archives to load
 		asset_list.add(archive);
 		// This function is needed to prevent cyclic dependencies
 		asset_list.load_archives();
 
-		std::shared_ptr<blaze::flame::ASyncFStream> test_file = std::make_shared<blaze::flame::ASyncFStream>("assets/test.txt", std::ios::in);
-		blaze::flame::Asset test_asset("TestAssetNOARCHIVE", test_file, 1);
+		Asset test_asset("TestAssetNOARCHIVE", open_file("assets/test.txt"), 1);
 		asset_list.add(test_asset);
 
 		asset_list.debug_list_assets();
@@ -154,6 +153,6 @@ int main() {
 		}
 
 		auto test_asset3 = asset_list.find_asset("TestAsset3");
-		assert(test_asset3.get_state() == blaze::flame::State::FAILED);
+		assert(test_asset3.get_state() == State::FAILED);
 	}
 }
