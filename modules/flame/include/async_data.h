@@ -8,9 +8,6 @@
 #include <future>
 #include <vector>
 
-// @todo Is this a good number?
-#define CHUNK_SIZE 2
-
 namespace blaze::flame {
 
 	enum class State : uint8_t {
@@ -21,7 +18,7 @@ namespace blaze::flame {
 
 	class ASyncData {
 		public:
-			ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, std::vector<std::function<Asset::TaskData(Asset::TaskData)>> tasks);
+			ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow, bool chunk_markers);
 			ASyncData();
 
 			State get_state();
@@ -33,8 +30,9 @@ namespace blaze::flame {
 
 		private:
 			State _state = State::LOADING;
-			Asset::TaskData _task_data;
-			std::future<Asset::TaskData> _future;
+			uint32_t _size;
+			std::unique_ptr<uint8_t[]> _data;
+			std::future<std::pair<std::unique_ptr<uint8_t[]>, uint32_t>> _future;
 
 			void _wait_until_loaded();
 	};

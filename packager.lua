@@ -52,6 +52,8 @@ function print_archive_info(archive)
 		print("Assets: ")
 		for _,asset in pairs(assets) do
 			print(string.format(" %s (%i)", asset:get_name(), asset:get_version()))
+			print("Content: \n")
+			debug_content(asset:get_data())
 		end
 	end
 end

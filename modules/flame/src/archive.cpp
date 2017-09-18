@@ -285,7 +285,8 @@ namespace blaze::flame {
 
 			next_asset = offset + size;
 
-			assets.push_back(Asset(name, _afs, version, offset, size));
+			// @todo We are assuming that all files in the archive use chunk markers, but that might not be the case
+			assets.push_back(Asset(name, _afs, version, offset, size, true));
 		}
 
 		_afs->unlock();

@@ -47,7 +47,7 @@ void lua_test() {
 	lua.new_usertype<Asset> ("Asset",
 			sol::constructors<
 				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t),
-				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t)
+				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t, bool)
 				>(),
 				"get_name", &Asset::get_name,
 				"get_version", &Asset::get_version,
@@ -87,6 +87,19 @@ void lua_test() {
 	lua.set_function("load_private_key", &load_private_key);
 	lua.set_function("get_trusted_key", []{ return trusted_key; });
 
+	lua.set_function("debug_compress", [](Asset& asset){
+		Asset::Workflow workflow;
+		workflow.inner.push_back(zlib::compress);
+		asset.set_workflow(workflow);
+	});
+
+	lua.set_function("debug_content", [](ASyncData& data){
+		for (uint32_t i = 0; i < data.get_size(); ++i) {
+			auto dat = data[i];
+			std::cout << " 0x" << std::hex << (uint32_t)dat;
+		}
+	});
+
 	lua.script_file("packager.lua");
 }
 
@@ -111,7 +124,9 @@ int main() {
 		Asset test_asset2("TestAsset2", test_file, 1);
 		Asset test_asset2new("TestAsset2", test_file, 2);
 
-		test_asset.add_load_task(zlib::compress);
+		Asset::Workflow workflow;
+		workflow.inner.push_back(zlib::compress);
+		test_asset.set_workflow(workflow);
 
 		auto data = test_asset.get_data();
 		auto data2 = test_asset2.get_data();
