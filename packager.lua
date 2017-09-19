@@ -20,7 +20,8 @@ builder.build({
 		key = "keys/unofficial.priv",
 		assets = {
 			LuaAsset = { "assets/lua.txt", 1 },
-			TestAsset = { "assets/test.txt", 3}
+			TestAsset = { "assets/test.txt", 3},
+			LoremAsset = { "assets/lorem.txt", 1}
 		},
 		dependencies = {
 			base = 1
@@ -51,6 +52,7 @@ function print_archive_info(archive)
 	if (assets:size() > 0) then
 		print("Assets: ")
 		for _,asset in pairs(assets) do
+			debug_decompress(asset)
 			print(string.format(" %s (%i)", asset:get_name(), asset:get_version()))
 			print("Content: \n")
 			debug_content(asset:get_data())

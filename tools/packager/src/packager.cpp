@@ -5,8 +5,11 @@
 #include "asset.h"
 #include "binary_helper.h"
 #include "async_data.h"
+#include "asset_list.h"
+#include "tasks.h"
 
 #include "compress.h"
+#include "decompress.h"
 
 // CryptoPP
 #include "rsa.h"
@@ -18,7 +21,6 @@
 
 // Test
 #include "trusted_key.h"
-#include "asset_list.h"
 
 auto load_private_key(std::string path) {
 	std::fstream priv_key_file(path, std::ios::in);
@@ -90,13 +92,22 @@ void lua_test() {
 	lua.set_function("debug_compress", [](Asset& asset){
 		Asset::Workflow workflow;
 		workflow.inner.push_back(zlib::compress);
+		workflow.inner.push_back(add_chunk_marker);
+		asset.set_workflow(workflow);
+	});
+
+	lua.set_function("debug_decompress", [](Asset& asset){
+		Asset::Workflow workflow;
+		workflow.inner.push_back(zlib::decompress);
 		asset.set_workflow(workflow);
 	});
 
 	lua.set_function("debug_content", [](ASyncData& data){
+		std::cout << "Size: " << data.get_size() << '\n';
 		for (uint32_t i = 0; i < data.get_size(); ++i) {
 			auto dat = data[i];
-			std::cout << " 0x" << std::hex << (uint32_t)dat;
+			// std::cout << " 0x" << std::hex << (uint32_t)dat;
+			std::cout << dat;
 		}
 	});
 

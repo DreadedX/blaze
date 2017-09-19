@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstring>
 
-#define CHUNK_SIZE 2
+#define CHUNK_SIZE 16384
 
 namespace blaze::flame {
 	// @todo Make chunk marker optional in asset/archive
