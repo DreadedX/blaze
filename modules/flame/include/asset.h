@@ -20,8 +20,8 @@ namespace blaze::flame {
 			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version);
 			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size, bool chunk_markers);
 
-			const std::string& get_name() const { return _name; }
-			uint16_t get_version() const { return _version; }
+			const std::string& get_name() const;
+			uint16_t get_version() const;
 
 			ASyncData get_data();
 
@@ -41,16 +41,19 @@ namespace blaze::flame {
 				std::vector<Task> outer;
 			};
 
-			void set_workflow(Workflow workflow);
+			// @todo We need a better way of figuring out how to do workflows, they need to have some kind of base workflow, e.g. zlib decompress if coming from an archive and than the ability to add addition task on top of that
+			// Pass Workflow in in constuctor, will be used as base and than workflow in get_data which append to the base workflow
+			void set_workflow(Workflow _workflow);
+			const Workflow& get_workflow() const;
 
 		private:
 			std::string _name;
 			std::shared_ptr<ASyncFStream> _afs;
 			uint16_t _version;
 			uint32_t _offset;
-			bool _chunk_markers;
 			// The size of the data on disk, really only for internal use
 			uint32_t _size;
+			bool _chunk_markers;
 
 			Workflow _workflow;
 	};

@@ -4,10 +4,9 @@
 #include "async_fstream.h"
 #include "async_data.h"
 #include "asset.h"
-#include "binary_helper.h"
 #include "asset_list.h"
+#include "tasks.h"
 
-#include "sha3.h"
 #include "rsa.h"
 #include "osrng.h"
 
@@ -40,8 +39,6 @@ namespace blaze::flame {
 
 		return digest;
 	}
-
-	Archive::Archive(std::shared_ptr<ASyncFStream> afs, std::string name, std::string author, std::string description, uint16_t version) : _afs(afs), _name(name), _author(author), _description(description), _version(version) {}
 
 	Archive::Archive(std::shared_ptr<ASyncFStream> afs) : _afs(afs) {
 		if (_afs && _afs->is_open()) {
@@ -118,13 +115,7 @@ namespace blaze::flame {
 		}
 	}
 
-	void Archive::add_dependency(std::string name, uint16_t version) {
-		if (_initialized) {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Can not add dependecies after initializing\n";
-			return;
-		}
-		_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
-	}
+	Archive::Archive(std::shared_ptr<ASyncFStream> afs, std::string name, std::string author, std::string description, uint16_t version) : _afs(afs), _name(name), _author(author), _description(description), _version(version) {}
 
 	void Archive::initialize() {
 		if (_initialized) {
@@ -231,7 +222,16 @@ namespace blaze::flame {
 			return;
 		}
 
+		// @todo This is kind of janky.
+		// @todo Also add compression here
+		auto& old_workflow = asset.get_workflow();
+		Asset::Workflow new_workflow = old_workflow;
+		new_workflow.inner.push_back(add_chunk_marker);
+		asset.set_workflow(new_workflow);
+
 		auto data = asset.get_data();
+
+		asset.set_workflow(old_workflow);
 
 		if (_afs && _afs->is_open()) {
 			auto& fs = _afs->lock();
@@ -248,6 +248,37 @@ namespace blaze::flame {
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 		}
+	}
+
+	void Archive::add_dependency(std::string name, uint16_t version) {
+		if (_initialized) {
+			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Can not add dependecies after initializing\n";
+			return;
+		}
+		_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
+	}
+
+	const bool& Archive::is_valid() const { return _valid; }
+	bool Archive::is_trusted(uint8_t trusted_key[]) { return binary::compare(_key, trusted_key, PUBLIC_KEY_SIZE); };
+
+	const std::string& Archive::get_name() const {
+		return _name;
+	}
+
+	const std::string& Archive::get_author() const {
+		return _author;
+	}
+
+	const std::string& Archive::get_description() const {
+		return _description;
+	}
+
+	const uint16_t& Archive::get_version() const {
+		return _version;
+	}
+
+	const std::vector<std::pair<std::string, uint16_t>>& Archive::get_dependencies() const {
+		return _dependencies;
 	}
 
 	// @todo Should we precompute this, or just compute it as we need it

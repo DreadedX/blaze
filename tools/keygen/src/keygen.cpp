@@ -10,7 +10,7 @@ int main() {
 	CryptoPP::AutoSeededRandomPool rnd;
 
 	CryptoPP::RSA::PrivateKey rsa_private;
-	rsa_private.GenerateRandomWithKeySize(rnd, PRIVATE_KEY_BIT_SIZE);
+	rsa_private.GenerateRandomWithKeySize(rnd, blaze::flame::PRIVATE_KEY_BIT_SIZE);
 
 	CryptoPP::RSA::PublicKey rsa_public(rsa_private);
 

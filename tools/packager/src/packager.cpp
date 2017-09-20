@@ -1,129 +1,22 @@
-#include <fstream>
-#include <iostream>
-
-#include "archive.h"
-#include "asset.h"
-#include "binary_helper.h"
-#include "async_data.h"
-#include "asset_list.h"
-#include "tasks.h"
-
-#include "compress.h"
-#include "decompress.h"
-
-// CryptoPP
-#include "rsa.h"
-#include "osrng.h"
-#include "integer.h"
-
-// Sol2
-#include "sol.hpp"
-
-// Test
-#include "trusted_key.h"
-
-auto load_private_key(std::string path) {
-	std::fstream priv_key_file(path, std::ios::in);
-	std::array<uint8_t, 1217> priv_key;
-	if (priv_key_file.is_open()) {
-		blaze::flame::binary::read(priv_key_file, priv_key);
-	} else {
-		std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Failed to open key file\n";
-	}
-	return priv_key;
-}
-
-inline auto open_file(std::string path) {
-	return std::make_shared<blaze::flame::ASyncFStream>(path, std::ios::in | std::ios::out);
-}
-
-inline auto open_new_file(std::string path) {
-	return std::make_shared<blaze::flame::ASyncFStream>(path, std::ios::in | std::ios::out | std::ios::trunc);
-}
-
-void lua_test() {
-	using namespace blaze::flame;
-	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::io, sol::lib::string);
-
-	lua.new_usertype<Asset> ("Asset",
-			sol::constructors<
-				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t),
-				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t, bool)
-				>(),
-				"get_name", &Asset::get_name,
-				"get_version", &Asset::get_version,
-				// @todo Test if this works
-				"get_data", &Asset::get_data
-				// add_load_task
-			);
-	lua.new_usertype<Archive> ("Archive",
-			sol::constructors<
-				Archive(std::shared_ptr<ASyncFStream> afs, std::string, std::string, std::string, uint16_t),
-				Archive(std::shared_ptr<ASyncFStream> afs)
-			>(),
-			"add_dependency", &Archive::add_dependency,
-			"initialize", &Archive::initialize,
-			"finalize", &Archive::finialize,
-			"add", &Archive::add,
-			"is_trusted", &Archive::is_trusted,
-			"is_valid", &Archive::is_valid,
-			"get_name", &Archive::get_name,
-			"get_author", &Archive::get_author,
-			"get_description", &Archive::get_description,
-			"get_version", &Archive::get_version,
-			"get_dependencies", &Archive::get_dependencies,
-			"get_assets", &Archive::get_assets
-			);
-	// @todo Test the functionality
-	lua.new_usertype<ASyncFStream> ("ASyncFStream",
-			// This needs to be called if done, because garbage collector
-			"close", &ASyncFStream::close,
-			"lock", &ASyncFStream::lock,
-			"is_open", &ASyncFStream::is_open,
-			"unlock", &ASyncFStream::unlock
-			);
-
-	lua.set_function("open_file", &open_file);
-	lua.set_function("open_new_file", &open_new_file);
-	lua.set_function("load_private_key", &load_private_key);
-	lua.set_function("get_trusted_key", []{ return trusted_key; });
-
-	lua.set_function("debug_compress", [](Asset& asset){
-		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::compress);
-		workflow.inner.push_back(add_chunk_marker);
-		asset.set_workflow(workflow);
-	});
-
-	lua.set_function("debug_decompress", [](Asset& asset){
-		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::decompress);
-		asset.set_workflow(workflow);
-	});
-
-	lua.set_function("debug_content", [](ASyncData& data){
-		std::cout << "Size: " << data.get_size() << '\n';
-		for (uint32_t i = 0; i < data.get_size(); ++i) {
-			auto dat = data[i];
-			// std::cout << " 0x" << std::hex << (uint32_t)dat;
-			std::cout << dat;
-		}
-	});
-
-	lua.script_file("packager.lua");
-}
+#include "bind-flame.h"
+#include "helper.h"
 
 // Just to make everything compile
 int main() {
 
 	using namespace blaze::flame;
 
-	lua_test();
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::io, sol::lib::string);
+
+	lua::bind(lua);
+	bind(lua);
+
+	lua.script_file("packager.lua");
 
 	return 0;
 
-	{
+	#if 0
 		Archive archive(open_new_file("test.flm"), "test", "Dreaded_X", "This is an archive just for testing the system", 1);
 		// @todo We need to make a second archive to test this stuff
 		archive.add_dependency("test", 1);
@@ -202,4 +95,6 @@ int main() {
 		auto test_asset3 = asset_list.find_asset("TestAsset3");
 		assert(test_asset3.get_state() == State::FAILED);
 	}
+	#endif
 }
+
