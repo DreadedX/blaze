@@ -25,7 +25,6 @@ project "packager"
 		"../modules/lua-flame/include",
 		"../third_party/sol2/",
 		"../third_party/cryptopp",
-		"../modules/flame-zlib/include",
 	}
 	links {
 		"lua-flame",

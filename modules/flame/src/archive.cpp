@@ -10,6 +10,9 @@
 #include "rsa.h"
 #include "osrng.h"
 
+#include "compress.h"
+#include "decompress.h"
+
 #define CHUNK_SIZE 1024
 
 namespace blaze::flame {
@@ -222,16 +225,11 @@ namespace blaze::flame {
 			return;
 		}
 
-		// @todo This is kind of janky.
-		// @todo Also add compression here
-		auto& old_workflow = asset.get_workflow();
-		Asset::Workflow new_workflow = old_workflow;
-		new_workflow.inner.push_back(add_chunk_marker);
-		asset.set_workflow(new_workflow);
+		Asset::Workflow workflow;
+		workflow.inner.push_back(zlib::compress);
+		workflow.inner.push_back(add_chunk_marker);
 
-		auto data = asset.get_data();
-
-		asset.set_workflow(old_workflow);
+		auto data = asset.get_data(workflow);
 
 		if (_afs && _afs->is_open()) {
 			auto& fs = _afs->lock();
@@ -304,6 +302,9 @@ namespace blaze::flame {
 		// null terminator at the end of the dependency list
 		next_asset += 1;
 
+		Asset::Workflow workflow;
+		workflow.inner.push_back(zlib::decompress);
+
 		while (next_asset < archive_size) {
 			fs.seekg(next_asset);
 			std::string name;
@@ -317,7 +318,7 @@ namespace blaze::flame {
 			next_asset = offset + size;
 
 			// @todo We are assuming that all files in the archive use chunk markers, but that might not be the case
-			assets.push_back(Asset(name, _afs, version, offset, size, true));
+			assets.push_back(Asset(name, _afs, version, offset, size, true, workflow));
 		}
 
 		_afs->unlock();

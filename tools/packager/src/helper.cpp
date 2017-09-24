@@ -1,7 +1,7 @@
 #include "helper.h"
 
-#include "compress.h"
-#include "decompress.h"
+// #include "compress.h"
+// #include "decompress.h"
 
 // Test
 #include "trusted_key.h"
@@ -32,18 +32,6 @@ void bind(sol::state& lua) {
 	lua.set_function("open_new_file", &open_new_file);
 	lua.set_function("load_private_key", &load_private_key);
 	lua.set_function("get_trusted_key", []{ return trusted_key; });
-
-	lua.set_function("debug_compress", [](Asset& asset){
-		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::compress);
-		asset.set_workflow(workflow);
-	});
-
-	lua.set_function("debug_decompress", [](Asset& asset){
-		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::decompress);
-		asset.set_workflow(workflow);
-	});
 
 	lua.set_function("debug_content", [](ASyncData& data){
 		std::cout << "Size: " << data.get_size() << '\n';

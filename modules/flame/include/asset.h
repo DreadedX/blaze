@@ -17,14 +17,6 @@ namespace blaze::flame {
 			// @todo Ehm... We somehow need this to make the asset list work
 			Asset() {}
 
-			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version);
-			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size, bool chunk_markers);
-
-			const std::string& get_name() const;
-			uint16_t get_version() const;
-
-			ASyncData get_data();
-
 			// @todo How do we pass additional data in and out of these functions
 			struct Workflow {
 				using Task = std::function<
@@ -41,10 +33,13 @@ namespace blaze::flame {
 				std::vector<Task> outer;
 			};
 
-			// @todo We need a better way of figuring out how to do workflows, they need to have some kind of base workflow, e.g. zlib decompress if coming from an archive and than the ability to add addition task on top of that
-			// Pass Workflow in in constuctor, will be used as base and than workflow in get_data which append to the base workflow
-			void set_workflow(Workflow _workflow);
-			const Workflow& get_workflow() const;
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, Workflow workflow = Workflow());
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size, bool chunk_markers, Workflow workflow = Workflow());
+
+			const std::string& get_name() const;
+			uint16_t get_version() const;
+
+			ASyncData get_data(Workflow workflow = Workflow());
 
 		private:
 			std::string _name;
@@ -55,7 +50,7 @@ namespace blaze::flame {
 			uint32_t _size;
 			bool _chunk_markers;
 
-			Workflow _workflow;
+			Workflow _base_workflow;
 	};
 };
 

@@ -1,9 +1,12 @@
 #include "bind-flame.h"
 #include "helper.h"
 
+#include "asset_list.h"
+
 // Just to make everything compile
 int main() {
 
+	#if 1
 	using namespace blaze::flame;
 
 	sol::state lua;
@@ -16,7 +19,8 @@ int main() {
 
 	return 0;
 
-	#if 0
+	#elif
+	{
 		Archive archive(open_new_file("test.flm"), "test", "Dreaded_X", "This is an archive just for testing the system", 1);
 		// @todo We need to make a second archive to test this stuff
 		archive.add_dependency("test", 1);
@@ -27,10 +31,6 @@ int main() {
 		Asset test_asset("TestAsset", test_file, 1);
 		Asset test_asset2("TestAsset2", test_file, 1);
 		Asset test_asset2new("TestAsset2", test_file, 2);
-
-		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::compress);
-		test_asset.set_workflow(workflow);
 
 		auto data = test_asset.get_data();
 		auto data2 = test_asset2.get_data();
@@ -68,7 +68,7 @@ int main() {
 		std::cout << "Author: " << archive.get_author() << '\n';
 		std::cout << "Description: " << archive.get_description() << '\n';
 		std::cout << "Version: " << archive.get_version() << '\n';
-		std::cout << "Official: " << (archive.is_trusted(trusted_key) ? "Yes" : "No") << '\n';
+		// std::cout << "Official: " << (archive.is_trusted(trusted_key) ? "Yes" : "No") << '\n';
 
 		std::cout << "Dependencies: \n";
 		for (auto& dependency : archive.get_dependencies()) {

@@ -52,10 +52,9 @@ function print_archive_info(archive)
 	if (assets:size() > 0) then
 		print("Assets: ")
 		for _,asset in pairs(assets) do
-			debug_decompress(asset)
 			print(string.format(" %s (%i)", asset:get_name(), asset:get_version()))
 			print("Content: \n")
-			debug_content(asset:get_data())
+			debug_content(asset:get_data(Workflow.new()))
 		end
 	end
 end
