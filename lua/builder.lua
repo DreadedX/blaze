@@ -26,7 +26,6 @@ function builder.build (archives)
 
 			for asset,asset_data in pairs(archive_data.assets) do
 				local asset = Asset.new(asset, open_file(asset_data[1]), asset_data[2], Workflow.new())
-				-- debug_compress(asset)
 				archive:add(asset)
 			end
 

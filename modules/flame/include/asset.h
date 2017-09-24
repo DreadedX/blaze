@@ -17,24 +17,22 @@ namespace blaze::flame {
 			// @todo Ehm... We somehow need this to make the asset list work
 			Asset() {}
 
-			// @todo How do we pass additional data in and out of these functions
 			struct Workflow {
-				using Task = std::function<
-					std::pair<
-						std::unique_ptr<uint8_t[]>,
-						uint32_t
-					>(std::pair<
-						std::unique_ptr<uint8_t[]>,
-						uint32_t
-							>)
-					>;
-
-				std::vector<Task> inner;
-				std::vector<Task> outer;
+				std::vector<
+					std::function<
+						std::pair<
+							std::unique_ptr<uint8_t[]>,
+							uint32_t
+						>(std::pair<
+							std::unique_ptr<uint8_t[]>,
+							uint32_t
+						>
+					)>
+				> tasks;
 			};
 
 			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, Workflow workflow = Workflow());
-			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size, bool chunk_markers, Workflow workflow = Workflow());
+			Asset(std::string name, std::shared_ptr<ASyncFStream> afs, uint16_t version, uint32_t offset, uint32_t size, Workflow workflow = Workflow());
 
 			const std::string& get_name() const;
 			uint16_t get_version() const;
@@ -48,7 +46,6 @@ namespace blaze::flame {
 			uint32_t _offset;
 			// The size of the data on disk, really only for internal use
 			uint32_t _size;
-			bool _chunk_markers;
 
 			Workflow _base_workflow;
 	};

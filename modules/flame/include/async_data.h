@@ -18,7 +18,7 @@ namespace blaze::flame {
 
 	class ASyncData {
 		public:
-			ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow, bool chunk_markers);
+			ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow);
 			ASyncData();
 
 			State get_state();

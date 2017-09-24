@@ -226,8 +226,7 @@ namespace blaze::flame {
 		}
 
 		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::compress);
-		workflow.inner.push_back(add_chunk_marker);
+		workflow.tasks.push_back(zlib::compress);
 
 		auto data = asset.get_data(workflow);
 
@@ -303,7 +302,7 @@ namespace blaze::flame {
 		next_asset += 1;
 
 		Asset::Workflow workflow;
-		workflow.inner.push_back(zlib::decompress);
+		workflow.tasks.push_back(zlib::decompress);
 
 		while (next_asset < archive_size) {
 			fs.seekg(next_asset);
@@ -318,7 +317,7 @@ namespace blaze::flame {
 			next_asset = offset + size;
 
 			// @todo We are assuming that all files in the archive use chunk markers, but that might not be the case
-			assets.push_back(Asset(name, _afs, version, offset, size, true, workflow));
+			assets.push_back(Asset(name, _afs, version, offset, size, workflow));
 		}
 
 		_afs->unlock();

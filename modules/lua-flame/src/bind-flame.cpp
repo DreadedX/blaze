@@ -12,7 +12,7 @@ namespace blaze::flame::lua {
 		lua.new_usertype<Asset> ("Asset",
 			sol::constructors<
 				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, Asset::Workflow),
-				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t, bool, Asset::Workflow)
+				Asset(std::string, std::shared_ptr<ASyncFStream>, uint16_t, uint32_t, uint32_t, Asset::Workflow)
 			>(),
 			"get_name", &Asset::get_name,
 			"get_version", &Asset::get_version,
@@ -22,6 +22,9 @@ namespace blaze::flame::lua {
 		);
 
 		lua.new_usertype<Asset::Workflow> ("Workflow");
+		// lua.set_function("debug_new_workflow", []{
+		// 	return Asset::Workflow();
+		// });
 
 		lua.new_usertype<Archive> ("Archive",
 			sol::constructors<

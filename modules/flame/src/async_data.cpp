@@ -10,11 +10,10 @@
 namespace blaze::flame {
 	// @todo Make chunk marker optional in asset/archive
 	// @todo Outside of compression in chunks, is there really any good reason for the chunk markers, depends on how audio gets stored and if the chunk size for this is predictable
-	std::pair<std::unique_ptr<uint8_t[]>, uint32_t> async_load(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow, bool chunk_markers) {
+	std::pair<std::unique_ptr<uint8_t[]>, uint32_t> async_load(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow) {
 		// The final data array grows each iteration of the loop with the size of the processed data, this is because we do not know what the final size will be
-		std::unique_ptr<uint8_t[]> data = nullptr;
+		std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
 
-		uint32_t data_pos = 0;
 		uint32_t remaining = size;
 
 		// @todo This inner loop can be reused for streaming data, e.g. music
@@ -24,34 +23,12 @@ namespace blaze::flame {
 				auto& fs = afs->lock();
 				fs.seekg(offset + (size-remaining));
 
-				uint32_t chunk = 0;
-				if (chunk_markers) {
-					std::cout << "Chunk markers in use\n";
-					binary::read(fs, chunk);
-					std::cout << "Chunk size: " << chunk << '\n';
-					// Make sure we skip over the chunk markers
-					remaining -= sizeof(chunk);
-				} else {
-					chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
-				}
+				uint32_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
 				std::unique_ptr<uint8_t[]> tmp_data = std::make_unique<uint8_t[]>(chunk);
 
-				fs.read(reinterpret_cast<char*>(tmp_data.get()), chunk);
+				fs.read(reinterpret_cast<char*>(data.get() + (size-remaining) ), chunk);
 				afs->unlock();
 	
-				auto info = std::make_pair(std::move(tmp_data), chunk);
-				for (auto& t : workflow.inner) {
-					info = t(std::move(info));
-				}
-				
-				std::unique_ptr<uint8_t[]> current_data = std::move(data);
-				data = std::make_unique<uint8_t[]>(data_pos + info.second);
-				if (current_data != nullptr) {
-					memcpy(data.get(), current_data.get(), data_pos);
-				}
-				memcpy(data.get() + data_pos, info.first.get(), info.second);
-
-				data_pos += info.second;
 				remaining -= chunk;
 			} else {
 				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
@@ -59,16 +36,16 @@ namespace blaze::flame {
 			}
 		}
 
-		auto info = std::make_pair(std::move(data), data_pos);
-		for (auto& t : workflow.outer) {
+		auto info = std::make_pair(std::move(data), size);
+		for (auto& t : workflow.tasks) {
 			info = t(std::move(info));
 		}
 
 		return info;
 	}
 
-	ASyncData::ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow, bool chunk_markers) {
-		_future = std::async(std::launch::async, async_load, afs, size, offset, workflow, chunk_markers);
+	ASyncData::ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow) {
+		_future = std::async(std::launch::async, async_load, afs, size, offset, workflow);
 	}
 	ASyncData::ASyncData() {
 		_state = State::FAILED;
