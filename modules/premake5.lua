@@ -5,7 +5,6 @@ project "flame"
 	includedirs {
 		"flame/include",
 		"../third_party/cryptopp",
-		"../modules/flame-zlib/include",
 	}
 
 project "lua-flame"

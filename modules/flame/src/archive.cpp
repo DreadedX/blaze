@@ -10,9 +10,6 @@
 #include "rsa.h"
 #include "osrng.h"
 
-#include "compress.h"
-#include "decompress.h"
-
 #define CHUNK_SIZE 1024
 
 namespace blaze::flame {
@@ -71,6 +68,7 @@ namespace blaze::flame {
 					CryptoPP::Integer stored_digest_integer = rsa_public.ApplyFunction(CryptoPP::Integer(signature.get(), SIGNATURE_SIZE));
 
 					size_t length = stored_digest_integer.MinEncodedSize();
+					// @todo Fails sometimes, so this assumption is not entirely correct
 					assert(length == HASH_SIZE);
 					uint8_t stored_digest[length];
 					stored_digest_integer.Encode(stored_digest, length);

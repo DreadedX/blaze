@@ -6,5 +6,8 @@
 #include <cstring>
 
 namespace blaze::flame {
-	// We need to put the zlib tasks here
+	namespace zlib {
+		std::pair<std::unique_ptr<uint8_t[]>, uint32_t> compress(std::pair<std::unique_ptr<uint8_t[]>, uint32_t> info);
+		std::pair<std::unique_ptr<uint8_t[]>, uint32_t> decompress(std::pair<std::unique_ptr<uint8_t[]>, uint32_t> info);
+	}
 }
