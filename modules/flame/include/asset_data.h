@@ -1,14 +1,16 @@
 #pragma once
 
-#include "async_fstream.h"
-#include "asset.h"
+#include "flame.h"
+
+#include "file_handler.h"
+#include "meta_asset.h"
 
 #include <cstdint>
 #include <memory>
 #include <future>
 #include <vector>
 
-namespace blaze::flame {
+namespace FLAME_NAMESPACE {
 
 	enum class State : uint8_t {
 		LOADING,
@@ -16,15 +18,15 @@ namespace blaze::flame {
 		FAILED
 	};
 
-	class ASyncData {
+	class AssetData {
 		public:
-			ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow);
-			ASyncData();
+			AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow);
+			AssetData();
 
 			State get_state();
 			bool is_loaded();
 			uint32_t get_size();
-			// @note Never store the result of this function, as ASyncData going out of scope deletes it
+			// @note Never store the result of this function, as AssetData going out of scope deletes it
 			uint8_t* data();
 			uint8_t& operator[](uint32_t idx);
 

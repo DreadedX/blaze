@@ -1,14 +1,16 @@
 #pragma once
 
+#include "flame.h"
+
 #include <mutex>
 #include <fstream>
 
-namespace blaze::flame {
+namespace FLAME_NAMESPACE {
 	// @todo Rename this function
-	class ASyncFStream {
+	class FileHandler {
 		public:
-			ASyncFStream(std::string filename, std::ios::openmode openmode);
-			~ASyncFStream();
+			FileHandler(std::string filename, std::ios::openmode openmode);
+			~FileHandler();
 
 			void close();
 			std::fstream& lock();

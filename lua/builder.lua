@@ -14,23 +14,23 @@ local archive_template = {
 
 function builder.build (archives)
 	if (helper.verify(archives, archive_template)) then
-		for archive_name,archive_data in pairs(archives) do
-			local file = open_new_file(archive_data.path)
-			local archive = Archive.new(file, archive_name, archive_data.author, archive_data.description, archive_data.version)
+		for archive_name,archive_config in pairs(archives) do
+			local file = open_new_file(archive_config.path)
+			local archive = Archive.new(file, archive_name, archive_config.author, archive_config.description, archive_config.version)
 
-			for dependency,version in pairs(archive_data.dependencies) do
+			for dependency,version in pairs(archive_config.dependencies) do
 				archive:add_dependency(dependency, version)
 			end
 
 			archive:initialize()
 
-			for asset,asset_data in pairs(archive_data.assets) do
-				local asset = Asset.new(asset, open_file(asset_data[1]), asset_data[2], Workflow.new())
+			for asset,asset_data in pairs(archive_config.assets) do
+				local asset = MetaAsset.new(asset, open_file(asset_data[1]), asset_data[2], Workflow.new())
 				archive:add(asset)
 			end
 
-			print(archive_data.key)
-			archive:finalize(load_private_key(archive_data.key))
+			print(archive_config.key)
+			archive:finalize(load_private_key(archive_config.key))
 			file:close()
 		end
 	else

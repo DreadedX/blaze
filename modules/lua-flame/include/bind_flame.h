@@ -1,7 +1,9 @@
 #pragma once
 
+#include "flame.h"
+
 #include "sol.hpp"
 
-namespace blaze::flame::lua {
+namespace FLAME_NAMESPACE::lua {
 	void bind(sol::state& lua);
 }

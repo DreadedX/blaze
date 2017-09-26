@@ -1,5 +1,7 @@
 #pragma once
 
+#include "flame.h"
+
 #include <string>
 #include <cstdint>
 #include <ostream>
@@ -9,7 +11,7 @@
 #include "queue.h"
 #include "integer.h"
 
-namespace blaze::flame::binary {
+namespace FLAME_NAMESPACE::binary {
 	bool compare(const uint8_t array1[], const uint8_t array2[], const uint32_t size);
 
 	template <std::size_t S>

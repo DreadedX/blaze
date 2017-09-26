@@ -1,13 +1,13 @@
 #include "asset_list.h"
 
-namespace blaze::flame {
-	ASyncData AssetList::find_asset(std::string name) {
-		auto asset = _assets.find(name);
-		if (asset != _assets.end()) {
-			return asset->second.get_data();
+namespace FLAME_NAMESPACE {
+	AssetData AssetList::find_asset(std::string name) {
+		auto meta_asset = _meta_assets.find(name);
+		if (meta_asset != _meta_assets.end()) {
+			return meta_asset->second.get_data();
 		}
 		std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Can not find asset\n";
-		return ASyncData();
+		return AssetData();
 	}
 
 	void AssetList::add(Archive& archive) {
@@ -18,14 +18,14 @@ namespace blaze::flame {
 		}
 	}
 
-	void AssetList::add(Asset& asset) {
+	void AssetList::add(MetaAsset& meta_asset) {
 		// Check if we have already 
-		auto existing = _assets.find(asset.get_name());
-		if (existing != _assets.end()) {
-			if (existing->second.get_version() < asset.get_version()) {
-				std::cout << "Replacing asset with newer version: " << asset.get_name() << '\n';
-			} else if(existing->second.get_version() > asset.get_version()) {
-				std::cout << "Already loaded newer asset: " << asset.get_name() << '\n';
+		auto existing = _meta_assets.find(meta_asset.get_name());
+		if (existing != _meta_assets.end()) {
+			if (existing->second.get_version() < meta_asset.get_version()) {
+				std::cout << "Replacing asset with newer version: " << meta_asset.get_name() << '\n';
+			} else if(existing->second.get_version() > meta_asset.get_version()) {
+				std::cout << "Already loaded newer asset: " << meta_asset.get_name() << '\n';
 				return;
 			} else {
 				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Conflicting assets with same version\n";
@@ -34,7 +34,7 @@ namespace blaze::flame {
 			}
 		}
 
-		_assets[asset.get_name()] = asset;
+		_meta_assets[meta_asset.get_name()] = meta_asset;
 	}
 
 	bool AssetList::check_dependency(std::pair<std::string, uint16_t> dependency) {
@@ -62,15 +62,15 @@ namespace blaze::flame {
 				continue;
 			}
 
-			for (auto& asset : archive.get_assets()) {
-				add(asset);
+			for (auto& meta_asset : archive.get_meta_assets()) {
+				add(meta_asset);
 			}
 		}
 	}
 
-	void AssetList::debug_list_assets() {
-		for (auto& asset : _assets) {
-			std::cout << asset.first << '\n';
+	void AssetList::debug_list_meta_assets() {
+		for (auto& meta_asset : _meta_assets) {
+			std::cout << meta_asset.first << '\n';
 		}
 	}
 }

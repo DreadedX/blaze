@@ -1,5 +1,7 @@
 #pragma once
 
+#include "flame.h"
+
 #include "binary_helper.h"
 
 #include "sha3.h"
@@ -8,7 +10,7 @@
 #include <fstream>
 #include <memory>
 
-namespace blaze::flame {
+namespace FLAME_NAMESPACE {
 
 	constexpr uint8_t MAGIC[] = {'F','L','M','b'};
 	typedef CryptoPP::SHA3_256 HASH_ALOGRITHM;
@@ -17,20 +19,20 @@ namespace blaze::flame {
 	const int SIGNATURE_SIZE = PRIVATE_KEY_BIT_SIZE/8;
 	const int PUBLIC_KEY_SIZE = PRIVATE_KEY_BIT_SIZE/8 + 36;
 
-	class Asset;
-	class ASyncFStream;
+	class MetaAsset;
+	class FileHandler;
 	class AssetList;
 
 	// Archives only exist for writing files
 	class Archive {
 		public:
-			Archive(std::shared_ptr<ASyncFStream> afs);
-			Archive(std::shared_ptr<ASyncFStream> afs, std::string name, std::string author, std::string description, uint16_t version);
+			Archive(std::shared_ptr<FileHandler> fh);
+			Archive(std::shared_ptr<FileHandler> fh, std::string name, std::string author, std::string description, uint16_t version);
 
 			void initialize();
 			void finialize(std::array<uint8_t, 1217>& priv_key);
 
-			void add(Asset& asset);
+			void add(MetaAsset& meta_asset);
 			void add_dependency(std::string name, uint16_t version);
 
 			const bool& is_valid() const;
@@ -42,10 +44,10 @@ namespace blaze::flame {
 			const uint16_t& get_version() const;
 			const std::vector<std::pair<std::string, uint16_t>>& get_dependencies() const;
 
-			std::vector<Asset> get_assets();
+			std::vector<MetaAsset> get_meta_assets();
 
 		private:
-			std::shared_ptr<ASyncFStream> _afs;
+			std::shared_ptr<FileHandler> _fh;
 			std::string _name;
 			std::string _author;
 			std::string _description;

@@ -48,13 +48,13 @@ function print_archive_info(archive)
 		end
 	end
 
-	local assets = archive:get_assets()
-	if (assets:size() > 0) then
-		print("Assets: ")
-		for _,asset in pairs(assets) do
-			print(string.format(" %s (%i)", asset:get_name(), asset:get_version()))
+	local meta_assets = archive:get_meta_assets()
+	if (meta_assets:size() > 0) then
+		print("Meta Assets: ")
+		for _,meta_asset in pairs(meta_assets) do
+			print(string.format(" %s (%i)", meta_asset:get_name(), meta_asset:get_version()))
 			print("Content: \n")
-			debug_content(asset:get_data(Workflow.new()))
+			debug_content(meta_asset:get_data(Workflow.new()))
 		end
 	end
 end

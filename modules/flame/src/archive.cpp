@@ -1,9 +1,9 @@
 #include <iostream>
 
 #include "archive.h"
-#include "async_fstream.h"
-#include "async_data.h"
-#include "asset.h"
+#include "file_handler.h"
+#include "asset_data.h"
+#include "meta_asset.h"
 #include "asset_list.h"
 #include "tasks.h"
 
@@ -12,10 +12,10 @@
 
 #define CHUNK_SIZE 1024
 
-namespace blaze::flame {
+namespace FLAME_NAMESPACE {
 
-	std::unique_ptr<uint8_t[]> calculate_hash(std::shared_ptr<ASyncFStream> afs, uint32_t size) {
-		auto& fs = afs->lock();
+	std::unique_ptr<uint8_t[]> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size) {
+		auto& fs = fh->lock();
 
 		size -= SIGNATURE_SIZE + PUBLIC_KEY_SIZE + sizeof(MAGIC); 
 		fs.seekg(SIGNATURE_SIZE + PUBLIC_KEY_SIZE + sizeof(MAGIC));
@@ -35,14 +35,14 @@ namespace blaze::flame {
 		std::unique_ptr<uint8_t[]> digest = std::make_unique<uint8_t[]>(HASH_SIZE);
 		hash.Final(digest.get());
 
-		afs->unlock();
+		fh->unlock();
 
 		return digest;
 	}
 
-	Archive::Archive(std::shared_ptr<ASyncFStream> afs) : _afs(afs) {
-		if (_afs && _afs->is_open()) {
-			auto& fs = _afs->lock();
+	Archive::Archive(std::shared_ptr<FileHandler> fh) : _fh(fh) {
+		if (_fh && _fh->is_open()) {
+			auto& fs = _fh->lock();
 			fs.seekg(0, std::ios::end);
 			unsigned long size = fs.tellg();
 			fs.seekg(0);
@@ -68,14 +68,15 @@ namespace blaze::flame {
 					CryptoPP::Integer stored_digest_integer = rsa_public.ApplyFunction(CryptoPP::Integer(signature.get(), SIGNATURE_SIZE));
 
 					size_t length = stored_digest_integer.MinEncodedSize();
-					// @todo Fails sometimes, so this assumption is not entirely correct
+					// @todo length is sometimes 49 instead of 32
+					std::cout << "Length: " << length << ", HASH_SIZE: " << HASH_SIZE << '\n';
 					assert(length == HASH_SIZE);
 					uint8_t stored_digest[length];
 					stored_digest_integer.Encode(stored_digest, length);
 
-					_afs->unlock();
-					std::unique_ptr<uint8_t[]> digest = calculate_hash(_afs, size);
-					_afs->lock();
+					_fh->unlock();
+					std::unique_ptr<uint8_t[]> digest = calculate_hash(_fh, size);
+					_fh->lock();
 
 					fs.seekg(PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC));
 
@@ -110,13 +111,13 @@ namespace blaze::flame {
 			} else {
 				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File is to small\n";
 			}
-			_afs->unlock();
+			_fh->unlock();
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 		}
 	}
 
-	Archive::Archive(std::shared_ptr<ASyncFStream> afs, std::string name, std::string author, std::string description, uint16_t version) : _afs(afs), _name(name), _author(author), _description(description), _version(version) {}
+	Archive::Archive(std::shared_ptr<FileHandler> fh, std::string name, std::string author, std::string description, uint16_t version) : _fh(fh), _name(name), _author(author), _description(description), _version(version) {}
 
 	void Archive::initialize() {
 		if (_initialized) {
@@ -124,9 +125,9 @@ namespace blaze::flame {
 			return;
 		}
 
-		if (_afs && _afs->is_open()) {
+		if (_fh && _fh->is_open()) {
 			// Magic number
-			auto& fs = _afs->lock();
+			auto& fs = _fh->lock();
 			binary::write(fs, MAGIC, sizeof(MAGIC));
 
 			// Reserve space for Signature and Key
@@ -145,7 +146,7 @@ namespace blaze::flame {
 			}
 			binary::write(fs, (uint8_t) 0x00);
 
-			_afs->unlock();
+			_fh->unlock();
 
 			_initialized = true;
 		} else {
@@ -165,12 +166,12 @@ namespace blaze::flame {
 
 		// Calculate hash
 		std::unique_ptr<uint8_t[]> digest;
-		if (_afs && _afs->is_open()) {
-			auto& fs = _afs->lock();
+		if (_fh && _fh->is_open()) {
+			auto& fs = _fh->lock();
 			fs.seekp(0, std::ios::end);
 			auto size = fs.tellp();
-			_afs->unlock();
-			digest = calculate_hash(_afs, size);
+			_fh->unlock();
+			digest = calculate_hash(_fh, size);
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 			return;
@@ -193,13 +194,13 @@ namespace blaze::flame {
 		// Sign with private key
 		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.get(), HASH_SIZE));
 
-		if (_afs && _afs->is_open()) {
-			auto& fs = _afs->lock();
+		if (_fh && _fh->is_open()) {
+			auto& fs = _fh->lock();
 			fs.seekp(sizeof(MAGIC));
 			binary::write(fs, pubqueue);
 			binary::write(fs, signature);
 
-			_afs->unlock();
+			_fh->unlock();
 
 			// Store the public key
 			assert(pubqueue.CurrentSize() == PUBLIC_KEY_SIZE);
@@ -213,7 +214,7 @@ namespace blaze::flame {
 		}
 	}
 
-	void Archive::add(Asset& asset) {
+	void Archive::add(MetaAsset& meta_asset) {
 		if (_valid) {
 			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized\n";
 			return;
@@ -223,23 +224,23 @@ namespace blaze::flame {
 			return;
 		}
 
-		Asset::Workflow workflow;
+		MetaAsset::Workflow workflow;
 		workflow.tasks.push_back(zlib::compress);
 
-		auto data = asset.get_data(workflow);
+		auto data = meta_asset.get_data(workflow);
 
-		if (_afs && _afs->is_open()) {
-			auto& fs = _afs->lock();
+		if (_fh && _fh->is_open()) {
+			auto& fs = _fh->lock();
 
-			binary::write(fs, asset.get_name());
-			binary::write(fs, asset.get_version());
+			binary::write(fs, meta_asset.get_name());
+			binary::write(fs, meta_asset.get_version());
 			// We save the size of the data stream, not the size of the file on disk
 			// @note This blocks until the stream is finished loading
 			binary::write(fs, data.get_size());
 
 			binary::write(fs, data.data(), data.get_size());
 
-			_afs->unlock();
+			_fh->unlock();
 		} else {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
 		}
@@ -277,33 +278,33 @@ namespace blaze::flame {
 	}
 
 	// @todo Should we precompute this, or just compute it as we need it
-	std::vector<Asset> Archive::get_assets() {
-		std::vector<Asset> assets;
+	std::vector<MetaAsset> Archive::get_meta_assets() {
+		std::vector<MetaAsset> meta_assets;
 
 		if (!_valid) {
 			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Archive invalid\n";
-			return assets;
+			return meta_assets;
 		}
 
 		// Use the file stream to load all individual assets into Assets and add them to the list
-		auto& fs = _afs->lock();
+		auto& fs = _fh->lock();
 
 		fs.seekg(0, std::ios::end);
 		unsigned long archive_size = fs.tellg();
 
-		unsigned long next_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + _name.length()+1 + _author.length()+1 +_description.length()+1 + sizeof(uint16_t) /* version */;
+		unsigned long next_meta_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + _name.length()+1 + _author.length()+1 +_description.length()+1 + sizeof(uint16_t) /* version */;
 
 		for (auto& dependency : _dependencies) {
-			next_asset += dependency.first.length()+1 + sizeof(uint16_t);
+			next_meta_asset += dependency.first.length()+1 + sizeof(uint16_t);
 		}
 		// null terminator at the end of the dependency list
-		next_asset += 1;
+		next_meta_asset += 1;
 
-		Asset::Workflow workflow;
+		MetaAsset::Workflow workflow;
 		workflow.tasks.push_back(zlib::decompress);
 
-		while (next_asset < archive_size) {
-			fs.seekg(next_asset);
+		while (next_meta_asset < archive_size) {
+			fs.seekg(next_meta_asset);
 			std::string name;
 			binary::read(fs, name);
 			uint16_t version;
@@ -312,14 +313,13 @@ namespace blaze::flame {
 			binary::read(fs, size);
 			uint32_t offset = fs.tellg();
 
-			next_asset = offset + size;
+			next_meta_asset = offset + size;
 
-			// @todo We are assuming that all files in the archive use chunk markers, but that might not be the case
-			assets.push_back(Asset(name, _afs, version, offset, size, workflow));
+			meta_assets.push_back(MetaAsset(name, _fh, version, offset, size, workflow));
 		}
 
-		_afs->unlock();
+		_fh->unlock();
 
-		return assets;
+		return meta_assets;
 	}
 }

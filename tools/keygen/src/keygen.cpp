@@ -10,7 +10,7 @@ int main() {
 	CryptoPP::AutoSeededRandomPool rnd;
 
 	CryptoPP::RSA::PrivateKey rsa_private;
-	rsa_private.GenerateRandomWithKeySize(rnd, blaze::flame::PRIVATE_KEY_BIT_SIZE);
+	rsa_private.GenerateRandomWithKeySize(rnd, FLAME_NAMESPACE::PRIVATE_KEY_BIT_SIZE);
 
 	CryptoPP::RSA::PublicKey rsa_public(rsa_private);
 
@@ -20,6 +20,6 @@ int main() {
 	CryptoPP::ByteQueue privqueue;
 	rsa_public.Save(pubqueue);
 	rsa_private.Save(privqueue);
-	blaze::flame::binary::write(pubfile, pubqueue);
-	blaze::flame::binary::write(privfile, privqueue);
+	FLAME_NAMESPACE::binary::write(pubfile, pubqueue);
+	FLAME_NAMESPACE::binary::write(privfile, privqueue);
 }

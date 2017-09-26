@@ -1,4 +1,4 @@
-#include "async_data.h"
+#include "asset_data.h"
 
 #include "binary_helper.h"
 
@@ -7,27 +7,21 @@
 
 #define CHUNK_SIZE 16384
 
-namespace blaze::flame {
-	// @todo Make chunk marker optional in asset/archive
-	// @todo Outside of compression in chunks, is there really any good reason for the chunk markers, depends on how audio gets stored and if the chunk size for this is predictable
-	std::pair<std::unique_ptr<uint8_t[]>, uint32_t> async_load(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow) {
-		// The final data array grows each iteration of the loop with the size of the processed data, this is because we do not know what the final size will be
+namespace FLAME_NAMESPACE {
+	std::pair<std::unique_ptr<uint8_t[]>, uint32_t> async_load(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow) {
 		std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
 
 		uint32_t remaining = size;
 
-		// @todo This inner loop can be reused for streaming data, e.g. music
-		// @todo We are doing a lot of allocating here
 		while (remaining > 0) {
-			if (afs && afs->is_open()) {
-				auto& fs = afs->lock();
+			if (fh && fh->is_open()) {
+				auto& fs = fh->lock();
 				fs.seekg(offset + (size-remaining));
 
 				uint32_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
-				std::unique_ptr<uint8_t[]> tmp_data = std::make_unique<uint8_t[]>(chunk);
 
 				fs.read(reinterpret_cast<char*>(data.get() + (size-remaining) ), chunk);
-				afs->unlock();
+				fh->unlock();
 	
 				remaining -= chunk;
 			} else {
@@ -44,17 +38,16 @@ namespace blaze::flame {
 		return info;
 	}
 
-	ASyncData::ASyncData(std::shared_ptr<ASyncFStream> afs, uint32_t size, uint32_t offset, Asset::Workflow workflow) {
-		_future = std::async(std::launch::async, async_load, afs, size, offset, workflow);
+	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow) {
+		_future = std::async(std::launch::async, async_load, fh, size, offset, workflow);
 	}
-	ASyncData::ASyncData() {
+	AssetData::AssetData() {
 		_state = State::FAILED;
 		_data = nullptr;
 		_size = 0;
 	}
 
-	State ASyncData::get_state() {
-		// @todo Is _future invalid after calling get, if so we do not have to check the state
+	State AssetData::get_state() {
 		// @todo Zero size file give an error, do not know if that is the correct thing
 		if (_state == State::LOADING && _future.valid() && _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			auto info = _future.get();
@@ -69,21 +62,21 @@ namespace blaze::flame {
 		}
 		return _state;
 	}
-	bool ASyncData::is_loaded() {
+	bool AssetData::is_loaded() {
 		return get_state() == State::LOADED;
 	}
-	uint32_t ASyncData::get_size() {
+	uint32_t AssetData::get_size() {
 		_wait_until_loaded();
 		return _size;
 	}
 
-	// @note Never store the result of this function, as ASyncData going out of scope deletes it
-	uint8_t* ASyncData::data() {
+	// @note Never store the result of this function, as AssetData going out of scope deletes it
+	uint8_t* AssetData::data() {
 		_wait_until_loaded();
 		return _data.get();
 	}
 
-	uint8_t& ASyncData::operator[](uint32_t idx) {
+	uint8_t& AssetData::operator[](uint32_t idx) {
 		#if DEBUG
 			if (idx >= get_size()) {
 				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Array out of bounds\n";
@@ -92,7 +85,7 @@ namespace blaze::flame {
 		return data()[idx];
 	}
 
-	void ASyncData::_wait_until_loaded() {
+	void AssetData::_wait_until_loaded() {
 		if (_state == State::LOADING && _future.valid()) {
 			_future.wait();
 			get_state();
