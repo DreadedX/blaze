@@ -7,13 +7,15 @@ project "game"
 		"/usr/include/lua5.2",
 		"include",
 		"../modules/flame/include",
+		"../modules/blaze/include",
 		"../modules/lua-flame/include",
 		"../third_party/sol2/",
 		"../third_party/cryptopp",
 	}
 	links {
-		"lua-flame",
 		"flame",
+		"blaze",
+		"lua-flame",
 		"cryptopp",
 		"lua5.2",
 		"z",

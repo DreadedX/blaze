@@ -19,6 +19,7 @@ builder.build({
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
+			LuaTest = { "assets/test.lua", 1 },
 			LuaAsset = { "assets/lua.txt", 1 },
 			TestAsset = { "assets/test.txt", 3},
 			LoremAsset = { "assets/lorem.txt", 1}

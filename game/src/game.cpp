@@ -1,4 +1,5 @@
 #include "asset_list.h"
+#include "engine.h"
 
 using namespace blaze;
 
@@ -28,5 +29,12 @@ void test() {
 }
 
 int main() {
-	test();
+	// test();
+
+	blaze::initialize({"archives/test.flm", "archives/base.flm"});
+
+	LuaScript script("LuaTest");
+
+	script.run();
+	script.run();
 }
