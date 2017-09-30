@@ -25,7 +25,7 @@ namespace FLAME_NAMESPACE {
 	
 				remaining -= chunk;
 			} else {
-				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
+				// Instead of an exception we return a nullptr and throw the exception from is_loaded
 				return std::make_pair(nullptr, 0);
 			}
 		}
@@ -41,29 +41,20 @@ namespace FLAME_NAMESPACE {
 	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow) {
 		_future = std::async(std::launch::async, async_load, fh, size, offset, workflow);
 	}
-	AssetData::AssetData() {
-		_state = State::FAILED;
-		_data = nullptr;
-		_size = 0;
-	}
 
-	State AssetData::get_state() {
+	bool AssetData::is_loaded() {
 		// @todo Zero size file give an error, do not know if that is the correct thing
-		if (_state == State::LOADING && _future.valid() && _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		if (!_loaded && _future.valid() && _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			auto info = _future.get();
 			_data = std::move(info.first);
 			_size = info.second;
 			if (_data == nullptr) {
-				_state = State::FAILED;
-				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Failed to load\n";
+				throw std::runtime_error("Failed to load data");
 			} else {
-				_state = State::LOADED;
+				_loaded = true;
 			}
 		}
-		return _state;
-	}
-	bool AssetData::is_loaded() {
-		return get_state() == State::LOADED;
+		return _loaded;
 	}
 	uint32_t AssetData::get_size() {
 		_wait_until_loaded();
@@ -77,18 +68,17 @@ namespace FLAME_NAMESPACE {
 	}
 
 	uint8_t& AssetData::operator[](uint32_t idx) {
-		#if DEBUG
-			if (idx >= get_size()) {
-				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Array out of bounds\n";
-			}
-		#endif
+		// @todo Do we need to check this even in release mode
+		if (idx >= get_size()) {
+			throw std::out_of_range("Array out of bounds");
+		}
 		return data()[idx];
 	}
 
 	void AssetData::_wait_until_loaded() {
-		if (_state == State::LOADING && _future.valid()) {
+		if (!_loaded && _future.valid()) {
 			_future.wait();
-			get_state();
+			is_loaded();
 		}
 	}
 }

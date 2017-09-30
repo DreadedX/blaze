@@ -6,15 +6,23 @@ namespace FLAME_NAMESPACE {
 		if (meta_asset != _meta_assets.end()) {
 			return meta_asset->second.get_data();
 		}
-		std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Can not find asset\n";
-		return AssetData();
+		throw std::runtime_error("Can not find asset");
 	}
 
 	void AssetList::add(Archive& archive) {
 		if (archive.is_valid()) {
+			auto missing = missing_dependecies(archive);
+			if (!missing.empty()) {
+				/// @todo Maybe make a special exception that returns the list of all missing dependecies
+				throw std::runtime_error("Missing dependency");
+			}
+
 			_archives.push_back(archive);
+			for (auto& meta_asset : archive.get_meta_assets()) {
+				add(meta_asset);
+			}
 		} else {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Invalid archive\n";
+			throw std::runtime_error("Invalid archive");
 		}
 	}
 
@@ -28,9 +36,8 @@ namespace FLAME_NAMESPACE {
 				std::cout << "Already loaded newer asset: " << meta_asset.get_name() << '\n';
 				return;
 			} else {
-				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Conflicting assets with same version\n";
-				// There is no way we can handle this situation, so we just really on load order
-				return;
+				// @todo Make this a new type of exception so we can specifically catch this one
+				throw std::runtime_error("Conflicting asset with same version");
 			}
 		}
 
@@ -46,26 +53,19 @@ namespace FLAME_NAMESPACE {
 		return false;
 	}
 
-	void AssetList::load_archives() {
-		for (auto& archive : _archives) {
-			// Check if the dependecies are loaded
-			// @todo This needs testing
-			bool found = true;
-			for (auto& dependency : archive.get_dependencies()) {
-				found = check_dependency(dependency);
-				if (!found) {
-					std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Missing dependency: " << dependency.first << ':' << dependency.second << '\n';
-				}
-				break;
-			}
+	std::vector<std::pair<std::string, uint16_t>> AssetList::missing_dependecies(Archive& archive) {
+		std::vector<std::pair<std::string, uint16_t>> missing;
+		// Check if the dependecies are loaded
+		// @todo This needs testing
+		bool found = true;
+		for (auto& dependency : archive.get_dependencies()) {
+			found = check_dependency(dependency);
 			if (!found) {
-				continue;
-			}
-
-			for (auto& meta_asset : archive.get_meta_assets()) {
-				add(meta_asset);
+				missing.push_back(dependency);
 			}
 		}
+
+		return missing;
 	}
 
 	void AssetList::debug_list_meta_assets() {

@@ -15,7 +15,7 @@ namespace FLAME_NAMESPACE {
 			void add(Archive& archive);
 			void add(MetaAsset& meta_asset);
 			bool check_dependency(std::pair<std::string, uint16_t> dependency);
-			void load_archives();
+			std::vector<std::pair<std::string, uint16_t>> missing_dependecies(Archive& archive);
 			void debug_list_meta_assets();
 
 		private:

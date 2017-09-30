@@ -103,17 +103,20 @@ namespace FLAME_NAMESPACE {
 
 						_valid = true;
 					} else {
-						std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File is corrupted or not finalized\n";
+						_fh->unlock();
+						throw std::runtime_error("File is corrupted or not finalized");
 					}
 				} else {
-					std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File is not a FLMb file\n";
+					_fh->unlock();
+					throw std::runtime_error("File is not a FLMb file");
 				}
 			} else {
-				std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File is to small\n";
+				_fh->unlock();
+				throw std::runtime_error("File too small");
 			}
 			_fh->unlock();
 		} else {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
+			throw std::runtime_error("File stream closed");
 		}
 	}
 
@@ -121,8 +124,7 @@ namespace FLAME_NAMESPACE {
 
 	void Archive::initialize() {
 		if (_initialized) {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already initialized\n";
-			return;
+			throw std::logic_error("Archive is already initialized");
 		}
 
 		if (_fh && _fh->is_open()) {
@@ -150,18 +152,16 @@ namespace FLAME_NAMESPACE {
 
 			_initialized = true;
 		} else {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "File stream closed\n";
+			throw std::runtime_error("File stream closed");
 		}
 	}
 
 	void Archive::finialize(std::array<uint8_t, 1217>& priv_key) {
 		if (_valid) {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized";
-			return;
+			throw std::logic_error("Archive is already finalized");
 		}
 		if (!_initialized) {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "You need to initialze the archive first\n";
-			return;
+			throw std::logic_error("You need to initialize the archive first");
 		}
 
 		// Calculate hash
@@ -173,8 +173,7 @@ namespace FLAME_NAMESPACE {
 			_fh->unlock();
 			digest = calculate_hash(_fh, size);
 		} else {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
-			return;
+			throw std::runtime_error("File stream closed");
 		}
 
 		// Load keys
@@ -210,18 +209,16 @@ namespace FLAME_NAMESPACE {
 
 			_valid = true;
 		} else {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "File stream closed\n";
+			throw std::runtime_error("File stream closed");
 		}
 	}
 
 	void Archive::add(MetaAsset& meta_asset) {
 		if (_valid) {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "Archive is already finalized\n";
-			return;
+			throw std::logic_error("Archive is already finalized");
 		}
 		if (!_initialized) {
-			std::cerr << __FILE__ << ":" << __LINE__ << " " << "You need to initialze the archive first\n";
-			return;
+			throw std::logic_error("You need to initialize the archive first");
 		}
 
 		MetaAsset::Workflow workflow;
@@ -242,14 +239,13 @@ namespace FLAME_NAMESPACE {
 
 			_fh->unlock();
 		} else {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
+			throw std::runtime_error("File stream closed");
 		}
 	}
 
 	void Archive::add_dependency(std::string name, uint16_t version) {
 		if (_initialized) {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Can not add dependecies after initializing\n";
-			return;
+			throw std::logic_error("You cannot add dependecies after initializing");
 		}
 		_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
 	}
@@ -279,12 +275,11 @@ namespace FLAME_NAMESPACE {
 
 	// @todo Should we precompute this, or just compute it as we need it
 	std::vector<MetaAsset> Archive::get_meta_assets() {
-		std::vector<MetaAsset> meta_assets;
-
 		if (!_valid) {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "Archive invalid\n";
-			return meta_assets;
+			throw std::runtime_error("Archive invalid");
 		}
+
+		std::vector<MetaAsset> meta_assets;
 
 		// Use the file stream to load all individual assets into Assets and add them to the list
 		auto& fs = _fh->lock();

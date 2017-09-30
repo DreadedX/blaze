@@ -11,8 +11,7 @@ namespace FLAME_NAMESPACE {
 			_size = fs.tellg();
 			_fh->unlock();
 		} else {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
-			_size = 0;
+			throw std::runtime_error("File stream closed");
 		}
 	}
 
@@ -39,8 +38,7 @@ namespace FLAME_NAMESPACE {
 		}
 
 		if (!_fh || !_fh->is_open()) {
-			std::cerr << __FILE__ << ':' << __LINE__ << ' ' << "File stream closed\n";
-			return AssetData();
+			throw std::runtime_error("File stream closed");
 		} else {
 			return AssetData(_fh, _size, _offset, final_workflow);
 		}

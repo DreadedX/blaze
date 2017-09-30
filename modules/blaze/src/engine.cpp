@@ -16,11 +16,26 @@ namespace BLAZE_NAMESPACE {
 		});
 
 		for (auto& archive_name : archives) {
-			auto fh = std::make_shared<FLAME_NAMESPACE::FileHandler>(archive_name, std::ios::in);
-			FLAME_NAMESPACE::Archive archive(fh);
-			asset_list.add(archive);
+			// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
+			try {
+				auto fh = std::make_shared<FLAME_NAMESPACE::FileHandler>(archive_name, std::ios::in);
+				FLAME_NAMESPACE::Archive archive(fh);
+
+				asset_list.add(archive);
+
+				// This needs to be run when catching a special exception that returns a list of missing dependencies
+				// // We do not add the archive if it is missing a dependecy
+				// // @todo Post a event in a central message bus
+				// std::cerr << __FILE__ << ':' << __LINE__ << " =>\n\t" << "Missing dependencies:\n";
+				// for (auto& missing : missing_dependecies) {
+				// 	std::cerr << "\t\t" << missing.first << ':' << missing.second << '\n';
+				// }
+
+			} catch (std::exception& e) {
+				std::cerr << __FILE__ << ':' << __LINE__ << " =>\n\t" << "Failed to open '" << archive_name << "': " << e.what() << '\n';
+				// @todo Post a event in a central message bus
+			}
 		}
-		asset_list.load_archives();
 	}
 
 	FLAME_NAMESPACE::AssetList& get_asset_list() {
