@@ -1,6 +1,7 @@
 #include "bind_flame.h"
 
 #include "archive.h"
+#include "archive_writer.h"
 #include "meta_asset.h"
 #include "asset_data.h"
 
@@ -28,21 +29,25 @@ namespace FLAME_NAMESPACE::lua {
 
 		lua.new_usertype<Archive> ("Archive",
 			sol::constructors<
-				Archive(std::shared_ptr<FileHandler> fh, std::string, std::string, std::string, uint16_t),
 				Archive(std::shared_ptr<FileHandler> fh)
 			>(),
-			"add_dependency", &Archive::add_dependency,
-			"initialize", &Archive::initialize,
-			"finalize", &Archive::finialize,
-			"add", &Archive::add,
 			"is_trusted", &Archive::is_trusted,
-			"is_valid", &Archive::is_valid,
 			"get_name", &Archive::get_name,
 			"get_author", &Archive::get_author,
 			"get_description", &Archive::get_description,
 			"get_version", &Archive::get_version,
 			"get_dependencies", &Archive::get_dependencies,
 			"get_meta_assets", &Archive::get_meta_assets
+		);
+
+		lua.new_usertype<ArchiveWriter> ("ArchiveWriter",
+			sol::constructors<
+				ArchiveWriter(std::shared_ptr<FileHandler> fh, std::string, std::string, std::string, uint16_t)
+			>(),
+			"add_dependency", &ArchiveWriter::add_dependency,
+			"initialize", &ArchiveWriter::initialize,
+			"finalize", &ArchiveWriter::finalize,
+			"add", &ArchiveWriter::add
 		);
 
 		// @todo Test the functionality

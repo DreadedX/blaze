@@ -1,4 +1,5 @@
 #include "helper.h"
+#include "binary_helper.h"
 
 // Test
 #include "trusted_key.h"

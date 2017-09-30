@@ -1,14 +1,9 @@
 #pragma once
 
 #include "flame.h"
-
-#include "binary_helper.h"
+#include "file_handler.h"
 
 #include "sha3.h"
-
-#include <string>
-#include <fstream>
-#include <memory>
 
 namespace FLAME_NAMESPACE {
 
@@ -19,6 +14,8 @@ namespace FLAME_NAMESPACE {
 	const int SIGNATURE_SIZE = PRIVATE_KEY_BIT_SIZE/8;
 	const int PUBLIC_KEY_SIZE = PRIVATE_KEY_BIT_SIZE/8 + 36;
 
+	std::unique_ptr<uint8_t[]> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size);
+
 	class MetaAsset;
 	class FileHandler;
 	class AssetList;
@@ -27,23 +24,13 @@ namespace FLAME_NAMESPACE {
 	class Archive {
 		public:
 			Archive(std::shared_ptr<FileHandler> fh);
-			Archive(std::shared_ptr<FileHandler> fh, std::string name, std::string author, std::string description, uint16_t version);
-
-			void initialize();
-			void finialize(std::array<uint8_t, 1217>& priv_key);
-
-			void add(MetaAsset& meta_asset);
-			void add_dependency(std::string name, uint16_t version);
-
-			const bool& is_valid() const;
-			bool is_trusted(uint8_t trusted_key[]);
 
 			const std::string& get_name() const;
 			const std::string& get_author() const;
 			const std::string& get_description() const;
 			const uint16_t& get_version() const;
+			bool is_trusted(uint8_t trusted_key[]);
 			const std::vector<std::pair<std::string, uint16_t>>& get_dependencies() const;
-
 			std::vector<MetaAsset> get_meta_assets();
 
 		private:
@@ -54,8 +41,6 @@ namespace FLAME_NAMESPACE {
 			uint16_t _version;
 			std::vector<std::pair<std::string, uint16_t>> _dependencies;
 
-			bool _initialized = false;
-			bool _valid = false;
 			uint8_t _key[PUBLIC_KEY_SIZE];
 	};
 };

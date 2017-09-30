@@ -10,19 +10,15 @@ namespace FLAME_NAMESPACE {
 	}
 
 	void AssetList::add(Archive& archive) {
-		if (archive.is_valid()) {
-			auto missing = missing_dependecies(archive);
-			if (!missing.empty()) {
-				/// @todo Maybe make a special exception that returns the list of all missing dependecies
-				throw std::runtime_error("Missing dependency");
-			}
+		auto missing = missing_dependecies(archive);
+		if (!missing.empty()) {
+			/// @todo Maybe make a special exception that returns the list of all missing dependecies
+			throw std::runtime_error("Missing dependency");
+		}
 
-			_archives.push_back(archive);
-			for (auto& meta_asset : archive.get_meta_assets()) {
-				add(meta_asset);
-			}
-		} else {
-			throw std::runtime_error("Invalid archive");
+		_archives.push_back(archive);
+		for (auto& meta_asset : archive.get_meta_assets()) {
+			add(meta_asset);
 		}
 	}
 

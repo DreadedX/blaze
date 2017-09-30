@@ -13,9 +13,9 @@ project "game"
 		"../third_party/cryptopp",
 	}
 	links {
-		"flame",
 		"blaze",
 		"lua-flame",
+		"flame",
 		"cryptopp",
 		"lua5.2",
 		"z",

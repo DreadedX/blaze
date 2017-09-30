@@ -34,7 +34,6 @@ builder.build({
 
 function print_archive_info(archive)
 	print("======ARCHIVE======")
-	print(string.format("Valid: %s", archive:is_valid()))
 	print(string.format("Name: %s", archive:get_name()))
 	print(string.format("Author: %s", archive:get_author()))
 	print(string.format("Description: %s", archive:get_description()))
