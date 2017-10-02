@@ -1,10 +1,20 @@
-if (a == nil) then
-	print "a is nil"
-else
-	print "a is NOT nil"
+function chat_handler(event)
+	print(string.format("CHAT MESSAGE: %s", event:get_text()))
 end
 
-a = 0
+-- Called when script is loaded
+function init()
+	it = subscribe_chat_event(chat_handler)
+end
 
-print "Hello from lua!"
-test()
+-- Called every frame
+function update()
+end
+
+-- Called on desctructor
+function done()
+end
+
+init()
+
+-- unsubscribe_chat_event(it)

@@ -1,19 +1,31 @@
 #include "engine.h"
+#include "events.h"
 
 #include "bind_flame.h"
 
 sol::state lua;
 FLAME_NAMESPACE::AssetList asset_list;
+BLAZE_NAMESPACE::EventBus event_bus;
 
 namespace BLAZE_NAMESPACE {
+
+	void bind(sol::state& lua) {
+		lua.set_function("subscribe_chat_event", [](std::function<void(std::shared_ptr<blaze::ChatMessage>)> handler) {
+			return get_event_bus().subscribe<ChatMessage>(handler);
+		});
+		lua.set_function("unsubscribe_chat_event", [](std::list<std::function<void(std::shared_ptr<blaze::Event>)>>::iterator it) {
+			get_event_bus().unsubscribe<ChatMessage>(it);
+		});
+
+		lua.new_usertype<ChatMessage>("ChatMessage",
+			"get_text", &ChatMessage::get_text
+		);
+	}
+
 	void initialize(std::initializer_list<std::string> archives) {
 		lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
 		FLAME_NAMESPACE::lua::bind(lua);
-
-		// This is just a function to test if scripts have their own enviroment
-		lua.set_function("test", []{
-			std::cout << "Hello from C++\n";
-		});
+		bind(lua);
 
 		for (auto& archive_name : archives) {
 			// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
@@ -44,5 +56,9 @@ namespace BLAZE_NAMESPACE {
 
 	sol::state& get_lua_state() {
 		return lua;
+	}
+
+	EventBus& get_event_bus() {
+		return event_bus;
 	}
 }

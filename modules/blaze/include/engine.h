@@ -3,6 +3,7 @@
 #include "blaze.h"
 
 #include "asset_list.h"
+#include "events.h"
 
 #include "sol/state.hpp"
 
@@ -14,6 +15,7 @@ namespace BLAZE_NAMESPACE {
 	void initialize(std::initializer_list<std::string> archives);
 	FLAME_NAMESPACE::AssetList& get_asset_list();
 	sol::state& get_lua_state();
+	EventBus& get_event_bus();
 
 	class GameAsset {
 		public:

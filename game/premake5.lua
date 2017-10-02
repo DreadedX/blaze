@@ -1,5 +1,5 @@
 project "game"
-	kind "WindowedApp"
+	kind "ConsoleApp"
 	location "../build/game"
 	files "src/**.cpp"
 	includedirs {
