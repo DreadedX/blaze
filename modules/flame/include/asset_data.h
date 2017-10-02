@@ -24,9 +24,8 @@ namespace FLAME_NAMESPACE {
 
 		private:
 			bool _loaded = false;
-			uint32_t _size;
-			std::unique_ptr<uint8_t[]> _data;
-			std::future<std::pair<std::unique_ptr<uint8_t[]>, uint32_t>> _future;
+			std::vector<uint8_t> _data;
+			std::future<std::vector<uint8_t>> _future;
 
 			void _wait_until_loaded();
 	};

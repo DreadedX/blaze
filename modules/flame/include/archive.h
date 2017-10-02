@@ -14,7 +14,7 @@ namespace FLAME_NAMESPACE {
 	const int SIGNATURE_SIZE = PRIVATE_KEY_BIT_SIZE/8;
 	const int PUBLIC_KEY_SIZE = PRIVATE_KEY_BIT_SIZE/8 + 36;
 
-	std::unique_ptr<uint8_t[]> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size);
+	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size);
 
 	class MetaAsset;
 	class FileHandler;

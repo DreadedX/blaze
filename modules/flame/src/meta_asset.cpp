@@ -5,14 +5,14 @@
 
 namespace FLAME_NAMESPACE {
 	MetaAsset::MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, Workflow workflow) : _name(name), _fh(fh), _version(version), _offset(0), _base_workflow(workflow) {
-		if (_fh && _fh->is_open()) {
-			auto& fs = _fh->lock();
-			fs.seekg(0, std::ios::end);
-			_size = fs.tellg();
-			_fh->unlock();
-		} else {
+		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
+
+		auto& fs = _fh->lock();
+		fs.seekg(0, std::ios::end);
+		_size = fs.tellg();
+		_fh->unlock();
 	}
 
 	MetaAsset::MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, uint32_t offset, uint32_t size, Workflow workflow) : _name(name), _fh(fh), _version(version), _offset(offset), _size(size), _base_workflow(workflow) {}
@@ -37,10 +37,6 @@ namespace FLAME_NAMESPACE {
 			final_workflow.tasks.push_back(t);
 		}
 
-		if (!_fh || !_fh->is_open()) {
-			throw std::runtime_error("File stream closed");
-		} else {
-			return AssetData(_fh, _size, _offset, final_workflow);
-		}
+		return AssetData(_fh, _size, _offset, final_workflow);
 	}
 }

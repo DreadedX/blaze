@@ -47,7 +47,7 @@ namespace BLAZE_NAMESPACE {
 				static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
 				uint32_t uid = get_uid<T>();
 				_subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
-					handler(std::reinterpret_pointer_cast<T>(event));
+					handler(std::dynamic_pointer_cast<T>(event));
 				});
 
 				auto it = _subscribers[uid].end();

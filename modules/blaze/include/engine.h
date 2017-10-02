@@ -24,20 +24,15 @@ namespace BLAZE_NAMESPACE {
 
 	class LuaScript : public GameAsset {
 		public:
-			LuaScript(std::string asset_name) : environment(get_lua_state(), sol::create, get_lua_state().globals()) {
-				auto script = get_asset_list().find_asset(asset_name);
-				code = std::string(reinterpret_cast<const char*>(script.data()));
-			}
+			LuaScript(std::string asset_name) : script(get_asset_list().find_asset(asset_name)), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
 
 			void run() {
-				// @todo This need to run in it's own sandbox, otherwise it can access values stored in other scripts, but storage per script should be persistent
-				get_lua_state().safe_script(code, environment);
+				get_lua_state().safe_script(reinterpret_cast<const char*>(script.data()), environment);
 				std::cout << "Memory usage: " << get_lua_state().memory_used() << '\n';
 			}
 
 		private:
-			std::string code;
-			// Each script gets its own enviroment
+			flame::AssetData script;
 			sol::environment environment;
 	};
 }

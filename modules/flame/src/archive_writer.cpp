@@ -17,33 +17,33 @@ namespace FLAME_NAMESPACE {
 			throw std::logic_error("Archive is already initialized");
 		}
 
-		if (_fh && _fh->is_open()) {
-			// Magic number
-			auto& fs = _fh->lock();
-			binary::write(fs, MAGIC, sizeof(MAGIC));
-
-			// Reserve space for Signature and Key
-			for (size_t i = 0; i < SIGNATURE_SIZE + PUBLIC_KEY_SIZE; ++i) {
-				binary::write(fs, (uint8_t) 0x00);
-			}
-
-			binary::write(fs, _name);
-			binary::write(fs, _author);
-			binary::write(fs, _description);
-			binary::write(fs, _version);
-
-			for (auto& dependency : _dependencies) {
-				binary::write(fs, dependency.first);
-				binary::write(fs, dependency.second);
-			}
-			binary::write(fs, (uint8_t) 0x00);
-
-			_fh->unlock();
-
-			_initialized = true;
-		} else {
+		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
+
+		// Magic number
+		auto& fs = _fh->lock();
+		binary::write(fs, MAGIC, sizeof(MAGIC));
+
+		// Reserve space for Signature and Key
+		for (size_t i = 0; i < SIGNATURE_SIZE + PUBLIC_KEY_SIZE; ++i) {
+			binary::write(fs, (uint8_t) 0x00);
+		}
+
+		binary::write(fs, _name);
+		binary::write(fs, _author);
+		binary::write(fs, _description);
+		binary::write(fs, _version);
+
+		for (auto& dependency : _dependencies) {
+			binary::write(fs, dependency.first);
+			binary::write(fs, dependency.second);
+		}
+		binary::write(fs, (uint8_t) 0x00);
+
+		_fh->unlock();
+
+		_initialized = true;
 	}
 
 	void ArchiveWriter::finalize(std::array<uint8_t, 1217>& priv_key) {
@@ -54,17 +54,17 @@ namespace FLAME_NAMESPACE {
 			throw std::logic_error("You need to initialize the archive first");
 		}
 
-		// Calculate hash
-		std::unique_ptr<uint8_t[]> digest;
-		if (_fh && _fh->is_open()) {
-			auto& fs = _fh->lock();
-			fs.seekp(0, std::ios::end);
-			auto size = fs.tellp();
-			_fh->unlock();
-			digest = calculate_hash(_fh, size);
-		} else {
+		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
+		auto& fs = _fh->lock();
+
+		// Calculate hash
+		fs.seekp(0, std::ios::end);
+		auto size = fs.tellp();
+		_fh->unlock();
+
+		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
 		// Load keys
 		CryptoPP::AutoSeededRandomPool rnd;
@@ -81,23 +81,23 @@ namespace FLAME_NAMESPACE {
 		}
 
 		// Sign with private key
-		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.get(), HASH_SIZE));
+		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.data(), HASH_SIZE));
 
-		if (_fh && _fh->is_open()) {
-			auto& fs = _fh->lock();
-			fs.seekp(sizeof(MAGIC));
-			binary::write(fs, pubqueue);
-			binary::write(fs, signature);
-
-			_fh->unlock();
-
-			// Store the public key
-			assert(pubqueue.CurrentSize() == PUBLIC_KEY_SIZE);
-
-			_valid = true;
-		} else {
+		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
+		_fh->lock();
+
+		fs.seekp(sizeof(MAGIC));
+		binary::write(fs, pubqueue);
+		binary::write(fs, signature);
+
+		_fh->unlock();
+
+		// Store the public key
+		assert(pubqueue.CurrentSize() == PUBLIC_KEY_SIZE);
+
+		_valid = true;
 	}
 
 	void ArchiveWriter::add(MetaAsset& meta_asset) {
@@ -107,27 +107,26 @@ namespace FLAME_NAMESPACE {
 		if (!_initialized) {
 			throw std::logic_error("You need to initialize the archive first");
 		}
-
 		MetaAsset::Workflow workflow;
 		workflow.tasks.push_back(zlib::compress);
 
+		// Start loading
 		auto data = meta_asset.get_data(workflow);
 
-		if (_fh && _fh->is_open()) {
-			auto& fs = _fh->lock();
-
-			binary::write(fs, meta_asset.get_name());
-			binary::write(fs, meta_asset.get_version());
-			// We save the size of the data stream, not the size of the file on disk
-			// @note This blocks until the stream is finished loading
-			binary::write(fs, data.get_size());
-
-			binary::write(fs, data.data(), data.get_size());
-
-			_fh->unlock();
-		} else {
+		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
+
+		auto& fs = _fh->lock();
+		binary::write(fs, meta_asset.get_name());
+		binary::write(fs, meta_asset.get_version());
+		// We save the size of the data stream, not the size of the file on disk
+		// @note This blocks until the stream is finished loading
+
+		binary::write(fs, data.get_size());
+		binary::write(fs, data.data(), data.get_size());
+
+		_fh->unlock();
 	}
 
 	void ArchiveWriter::add_dependency(std::string name, uint16_t version) {

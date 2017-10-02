@@ -21,14 +21,11 @@ namespace FLAME_NAMESPACE {
 			struct Workflow {
 				std::vector<
 					std::function<
-						std::pair<
-							std::unique_ptr<uint8_t[]>,
-							uint32_t
-						>(std::pair<
-							std::unique_ptr<uint8_t[]>,
-							uint32_t
-						>
-					)>
+						std::vector<uint8_t>
+						(
+						std::vector<uint8_t>
+						)
+					>
 				> tasks;
 			};
 

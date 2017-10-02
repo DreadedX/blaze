@@ -2,12 +2,12 @@
 
 #include "flame.h"
 
-#include <utility>
+#include <vector>
 #include <cstdint>
 #include <memory>
 #include <cstring>
 
 namespace FLAME_NAMESPACE::zlib {
-	std::pair<std::unique_ptr<uint8_t[]>, uint32_t> compress(std::pair<std::unique_ptr<uint8_t[]>, uint32_t> info);
-	std::pair<std::unique_ptr<uint8_t[]>, uint32_t> decompress(std::pair<std::unique_ptr<uint8_t[]>, uint32_t> info);
+	std::vector<uint8_t> compress(std::vector<uint8_t> in);
+	std::vector<uint8_t> decompress(std::vector<uint8_t> in);
 }
