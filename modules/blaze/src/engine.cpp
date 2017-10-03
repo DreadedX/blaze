@@ -4,8 +4,6 @@
 #include "bind_flame.h"
 
 sol::state lua;
-FLAME_NAMESPACE::AssetList asset_list;
-// BLAZE_NAMESPACE::EventBus event_bus;
 
 namespace BLAZE_NAMESPACE {
 
@@ -25,16 +23,16 @@ namespace BLAZE_NAMESPACE {
 
 	void initialize(std::initializer_list<std::string> archives) {
 		lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
-		FLAME_NAMESPACE::lua::bind(lua);
+		flame::lua::bind(lua);
 		bind(lua);
 
 		for (auto& archive_name : archives) {
 			// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
 			try {
-				auto fh = std::make_shared<FLAME_NAMESPACE::FileHandler>(archive_name, std::ios::in);
-				FLAME_NAMESPACE::Archive archive(fh);
+				auto fh = std::make_shared<flame::FileHandler>(archive_name, std::ios::in);
+				flame::Archive archive(fh);
 
-				asset_list.add(archive);
+				flame::asset_list::add(archive);
 
 				// This needs to be run when catching a special exception that returns a list of missing dependencies
 				// // We do not add the archive if it is missing a dependecy
@@ -51,15 +49,7 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
-	FLAME_NAMESPACE::AssetList& get_asset_list() {
-		return asset_list;
-	}
-
 	sol::state& get_lua_state() {
 		return lua;
 	}
-
-	// EventBus& get_event_bus() {
-	// 	return event_bus;
-	// }
 }

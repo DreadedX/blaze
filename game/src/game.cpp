@@ -39,10 +39,10 @@ void key_handler(std::shared_ptr<SimpleEvent<Input>> event) {
 int main() {
 	blaze::initialize({"archives/base.flm", "archives/test.flm"});
 	
-	flame::AssetData test = get_asset_list().find_asset("TestAsset");
+	flame::AssetData test = flame::asset_list::find_asset("TestAsset");
 
 	std::cout << "====ASSETS====\n";
-	get_asset_list().debug_list_meta_assets();
+	flame::asset_list::debug_list_meta_assets();
 
 	std::cout << "====TEST====\n";
 	for (unsigned int i = 0; i < test.get_size(); ++i) {
@@ -54,7 +54,7 @@ int main() {
 	// @todo This should go into a lua script
 	auto fh = std::make_shared<flame::FileHandler>("assets/test.lua", std::ios::in);
 	flame::MetaAsset lua_asset("LuaTest", fh, 10, flame::MetaAsset::Workflow());
-	get_asset_list().add(lua_asset);
+	flame::asset_list::add(lua_asset);
 
 	{
 		LuaScript script("LuaTest");
@@ -66,7 +66,6 @@ int main() {
 	// event_bus.unsubscribe<ChatMessage>(subscription_handle);
 
 	event_bus::subscribe<SimpleEvent<Input>>(key_handler);
-
 
 	event_bus::send(std::make_shared<ChatMessage>("Hello world!"));
 	event_bus::send(std::make_shared<SimpleEvent<Input>>(Input::MOVE_FORWARD));
