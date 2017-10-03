@@ -5,17 +5,17 @@
 
 sol::state lua;
 FLAME_NAMESPACE::AssetList asset_list;
-BLAZE_NAMESPACE::EventBus event_bus;
+// BLAZE_NAMESPACE::EventBus event_bus;
 
 namespace BLAZE_NAMESPACE {
 
 	// @todo This needs to be moved to a lua bind module, rename lua-flame to bind_lua and put all lua binding there
 	void bind(sol::state& lua) {
 		lua.set_function("subscribe_chat_event", [](std::function<void(std::shared_ptr<blaze::ChatMessage>)> handler) {
-			return get_event_bus().subscribe<ChatMessage>(handler);
+			return event_bus::subscribe<ChatMessage>(handler);
 		});
 		lua.set_function("unsubscribe_chat_event", [](std::list<std::function<void(std::shared_ptr<blaze::Event>)>>::iterator it) {
-			get_event_bus().unsubscribe<ChatMessage>(it);
+			event_bus::unsubscribe<ChatMessage>(it);
 		});
 
 		lua.new_usertype<ChatMessage>("ChatMessage",
@@ -31,7 +31,6 @@ namespace BLAZE_NAMESPACE {
 		for (auto& archive_name : archives) {
 			// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
 			try {
-				std::cout << archive_name << '\n';
 				auto fh = std::make_shared<FLAME_NAMESPACE::FileHandler>(archive_name, std::ios::in);
 				FLAME_NAMESPACE::Archive archive(fh);
 
@@ -60,7 +59,7 @@ namespace BLAZE_NAMESPACE {
 		return lua;
 	}
 
-	EventBus& get_event_bus() {
-		return event_bus;
-	}
+	// EventBus& get_event_bus() {
+	// 	return event_bus;
+	// }
 }

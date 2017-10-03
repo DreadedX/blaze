@@ -62,15 +62,13 @@ int main() {
 	}
 
 	// test event bus
-	auto& event_bus = get_event_bus();
-	
-	auto subscription_handle = event_bus.subscribe<ChatMessage>(test_handler);
+	auto subscription_handle = event_bus::subscribe<ChatMessage>(test_handler);
 	// event_bus.unsubscribe<ChatMessage>(subscription_handle);
 
-	event_bus.subscribe<SimpleEvent<Input>>(key_handler);
+	event_bus::subscribe<SimpleEvent<Input>>(key_handler);
 
 
-	event_bus.send(std::make_shared<ChatMessage>("Hello world!"));
-	event_bus.send(std::make_shared<SimpleEvent<Input>>(Input::MOVE_FORWARD));
-	event_bus.send(std::make_shared<ChatMessage>("This is a test"));
+	event_bus::send(std::make_shared<ChatMessage>("Hello world!"));
+	event_bus::send(std::make_shared<SimpleEvent<Input>>(Input::MOVE_FORWARD));
+	event_bus::send(std::make_shared<ChatMessage>("This is a test"));
 }

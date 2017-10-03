@@ -1,3 +1,3 @@
 #pragma once
 
-#define FLAME_NAMESPACE blaze::flame
+#define FLAME_NAMESPACE flame

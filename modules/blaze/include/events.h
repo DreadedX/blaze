@@ -39,40 +39,38 @@ namespace BLAZE_NAMESPACE {
 			std::string _text;
 	};
 
-	class EventBus {
-		public:
-			// @todo This needs to return a handler that on destruction unsubscribes
-			template <typename T>
-			auto subscribe(std::function<void(std::shared_ptr<T>)> handler) {
-				static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
-				uint32_t uid = get_uid<T>();
-				_subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
+	namespace event_bus {
+		namespace _private {
+			// @todo Improve this
+			extern std::unordered_map<uint32_t, std::list<std::function<void(std::shared_ptr<Event>)>>> subscribers;
+		}
+
+		// @todo This needs to return a handler that on destruction unsubscribes
+		template <typename T>
+		static auto subscribe(std::function<void(std::shared_ptr<T>)> handler) {
+			static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
+			uint32_t uid = get_uid<T>();
+			_private::subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
 					handler(std::dynamic_pointer_cast<T>(event));
-				});
+					});
 
-				auto it = _subscribers[uid].end();
-				it--;
-				return it;
+			auto it = _private::subscribers[uid].end();
+			it--;
+			return it;
+		}
+
+		template <typename T>
+		static auto unsubscribe(std::list<std::function<void(std::shared_ptr<Event>)>>::iterator it) {
+			uint32_t uid = get_uid<T>();
+			_private::subscribers[uid].erase(it);
+		}
+
+		template <typename T>
+		static void send(std::shared_ptr<T> event) {
+			uint32_t uid = get_uid<T>();
+			for (auto handler : _private::subscribers[uid]) {
+				handler(event);
 			}
-
-			template <typename T>
-			auto unsubscribe(std::list<std::function<void(std::shared_ptr<Event>)>>::iterator it) {
-				uint32_t uid = get_uid<T>();
-				_subscribers[uid].erase(it);
-			}
-
-			template <typename T>
-			void send(std::shared_ptr<T> event) {
-				uint32_t uid = get_uid<T>();
-				for (auto handler : _subscribers[uid]) {
-					handler(event);
-				}
-			}
-
-		private:
-			std::unordered_map<std::string, uint32_t> _event_ids;
-
-			// This is terrible
-			std::unordered_map<uint32_t, std::list<std::function<void(std::shared_ptr<Event>)>>> _subscribers;
+		}
 	};
 }
