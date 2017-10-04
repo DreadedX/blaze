@@ -35,6 +35,9 @@ int main() {
 	// asset_manager
 	auto script = asset_manager::new_asset<LuaScript>("LuaTest");
 	{
+		auto lang = asset_manager::new_asset<LanguagePack>("LoremAsset");
+		std::cout << lang.get("STRING_1") << '\n';
+
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();
 		auto not_loaded_count = total_count;

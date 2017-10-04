@@ -81,4 +81,19 @@ namespace BLAZE_NAMESPACE {
 
 			bool _loaded = false;
 	};
+
+	class LanguagePack : public GameAsset {
+		public:
+			LanguagePack(std::string asset_name) : GameAsset(asset_name) {}
+
+			void post_load() {
+
+			}
+
+			std::string get(std::string name) {
+				return _strings[name];
+			}
+		private:
+			std::unordered_map<std::string, std::string> _strings;
+	};
 }
