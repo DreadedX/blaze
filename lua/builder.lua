@@ -30,7 +30,6 @@ function builder.build (archives)
 
 			print(archive_config.key)
 			archive:finalize(load_private_key(archive_config.key))
-			file:close()
 		end
 	else
 		print("ERROR")

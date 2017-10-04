@@ -13,16 +13,9 @@ int main() {
 	
 	// Flame tests
 	{
-		flame::AssetData test = flame::asset_list::find_asset("TestAsset");
-
 		std::cout << "====ASSETS====\n";
 		flame::asset_list::debug_list_meta_assets();
-
-		std::cout << "====TEST====\n";
-		for (unsigned int i = 0; i < test.get_size(); ++i) {
-			std::cout << test[i];
-		}
-		std::cout << '\n';
+		std::cout << "==============\n";
 	}
 
 	// Override LuaTest in archive with version from disk
@@ -35,8 +28,8 @@ int main() {
 	// asset_manager
 	auto script = asset_manager::new_asset<LuaScript>("LuaTest");
 	{
-		auto lang = asset_manager::new_asset<LanguagePack>("LoremAsset");
-		std::cout << lang.get("STRING_1") << '\n';
+		auto nl = asset_manager::new_asset<LanguagePack>("LANG_NL");
+		auto en = asset_manager::new_asset<LanguagePack>("LANG_EN");
 
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();
@@ -54,6 +47,9 @@ int main() {
 		for (int i = 0; i < 3; ++i) {
 			script->update();
 		}
+			
+		std::cout << nl->get("PROFIT", {std::to_string(47)}) << '\n';
+		std::cout << en->get("PROFIT", {std::to_string(47)}) << '\n';
 	}
 
 	// Event bus test

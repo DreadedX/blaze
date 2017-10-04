@@ -5,6 +5,8 @@
 #include "asset_list.h"
 #include "events.h"
 
+#include "binary_helper.h"
+
 #include "sol/state.hpp"
 
 #include <initializer_list>
@@ -17,18 +19,18 @@ namespace BLAZE_NAMESPACE {
 
 	class GameAsset {
 		public:
-			GameAsset(std::string asset_name) : data(flame::asset_list::find_asset(asset_name)) {}
+			GameAsset(std::string asset_name) : _data(flame::asset_list::find_asset(asset_name)) {}
 			virtual ~GameAsset() {}
 
 			// This function gets called after the data has been loaded from disk
 			virtual void post_load() = 0;
 
 			bool is_loaded() {
-				return data.is_loaded();
+				return _data.is_loaded();
 			}
 
 		protected:
-			flame::AssetData data;
+			flame::AssetData _data;
 	};
 
 	namespace asset_manager {
@@ -61,7 +63,7 @@ namespace BLAZE_NAMESPACE {
 
 			// Gets called after the data has actually loaded, so it will not block
 			void post_load() override {
-				get_lua_state().safe_script(reinterpret_cast<const char*>(data.data()), environment);
+				get_lua_state().safe_script(reinterpret_cast<const char*>(_data.data()), environment);
 				_loaded = true;
 
 				environment["init"]();
@@ -87,11 +89,55 @@ namespace BLAZE_NAMESPACE {
 			LanguagePack(std::string asset_name) : GameAsset(asset_name) {}
 
 			void post_load() {
+				auto size = _data.get_size();
+				uint32_t current = 0;
 
+				std::cout << "size: " << size << '\n';
+
+				// @todo This is a terrible way to do it
+				while (current < size) {
+					auto next = _data[current];
+					std::string name = "";
+					while (next != 0x0) {
+						name += next;
+						current++;
+						next = _data[current];
+					}
+
+					current++;
+					next = _data[current];
+					std::string value = "";
+					while (next != 0x0) {
+						value += next;
+						current++;
+						next = _data[current];
+					}
+					current++;
+
+					_strings[name] = value;
+				}
 			}
 
-			std::string get(std::string name) {
-				return _strings[name];
+			std::string get(std::string name, std::initializer_list<std::string> args = {}) {
+				// Find string
+				auto it = _strings.find(name);
+				if (it == _strings.end()) {
+					return "(undefined)";
+				}
+
+				// Substitution
+				std::string text = it->second;
+				auto i = 0;
+				for (auto& arg : args) {
+					std::string substring = "{" + std::to_string(i) + "}";
+					auto found = text.find(substring, 0);
+					if (found != std::string::npos) {
+						text.replace(found, substring.length(), arg);
+					}
+					i++;
+				}
+
+				return text;
 			}
 		private:
 			std::unordered_map<std::string, std::string> _strings;

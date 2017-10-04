@@ -20,9 +20,11 @@ builder.build({
 		key = "keys/unofficial.priv",
 		assets = {
 			LuaTest = { "assets/test.lua", 1 },
-			LuaAsset = { "assets/lua.txt", 1 },
-			TestAsset = { "assets/test.txt", 3},
-			LoremAsset = { "assets/lorem.txt", 1}
+			LANG_NL = { "assets/nl.lang", 1 },
+			LANG_EN = { "assets/en.lang", 1 },
+			-- LuaAsset = { "assets/lua.txt", 1 },
+			-- TestAsset = { "assets/test.txt", 3},
+			-- LoremAsset = { "assets/lorem.txt", 1}
 		},
 		dependencies = {
 			base = 1
@@ -59,7 +61,7 @@ function print_archive_info(archive)
 	end
 end
 
-local base = Archive.new(open_file("archives/base.flm"))
-print_archive_info(base);
-local test = Archive.new(open_file("archives/test.flm"))
-print_archive_info(test);
+-- local base = Archive.new(open_file("archives/base.flm"))
+-- print_archive_info(base);
+-- local test = Archive.new(open_file("archives/test.flm"))
+-- print_archive_info(test);
