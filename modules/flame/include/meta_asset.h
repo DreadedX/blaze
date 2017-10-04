@@ -29,6 +29,8 @@ namespace FLAME_NAMESPACE {
 				> tasks;
 			};
 
+			MetaAsset(std::string name, std::string filename, uint16_t version, Workflow workflow) : MetaAsset(name, std::make_shared<FileHandler>(filename, std::ios::in), version, workflow) {}
+
 			MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, Workflow workflow = Workflow());
 			MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, uint32_t offset, uint32_t size, Workflow workflow = Workflow());
 

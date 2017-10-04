@@ -12,20 +12,6 @@
 
 namespace BLAZE_NAMESPACE {
 
-	namespace {
-		uint32_t new_uid() {
-			static uint32_t i = 0;
-			i++;
-			return i;
-		}
-
-		template <typename T>
-		uint32_t get_uid() {
-			static uint32_t uid = new_uid();
-			return uid;
-		}
-	}
-
 	class Event {
 		public:
 			virtual ~Event() {}
@@ -42,52 +28,64 @@ namespace BLAZE_NAMESPACE {
 			std::string _text;
 	};
 
-	namespace event_bus {
-		namespace _private {
-			// @note The only reason this is here is because we cannot put template functions in cpp file
-			// @todo Improve this
-			extern std::unordered_map<uint32_t, std::list<std::function<void(std::shared_ptr<Event>)>>> subscribers;
-		}
-
-		template <typename T>
-		static void send(std::shared_ptr<T> event) {
-			uint32_t uid = get_uid<T>();
-			for (auto handler : _private::subscribers[uid]) {
-				handler(event);
+	class event_bus {
+		public:
+			template <typename T>
+			static void send(std::shared_ptr<T> event) {
+				uint32_t uid = get_uid<T>();
+				for (auto handler : _subscribers[uid]) {
+					handler(event);
+				}
 			}
-		}
 
-		template <typename T>
-		class Subscription {
-			public:
-				Subscription(std::function<void(std::shared_ptr<T>)> handler) {
-					static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
-					uint32_t uid = get_uid<T>();
-					_private::subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
-							handler(std::dynamic_pointer_cast<T>(event));
-					});
-
-					_it = _private::subscribers[uid].end();
-					_it--;
-				}
-				Subscription(const Subscription&) = delete;
-				Subscription(Subscription&& o) : _it(std::move(o._it)) {}
-
-				~Subscription() {
-					unsubscribe();
-				}
-
-				void unsubscribe() {
-					if (_valid) {
+			template <typename T>
+			class Subscription {
+				public:
+					// @todo Make a subscribe function that return this class
+					Subscription(std::function<void(std::shared_ptr<T>)> handler) {
+						static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
 						uint32_t uid = get_uid<T>();
-						_private::subscribers[uid].erase(_it);
-						_valid = false;
-					}
-				}
 
-			private:
-				std::list<std::function<void(std::shared_ptr<Event>)>>::iterator _it;
-				bool _valid = true;
-		};
-	}
+						_subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
+							handler(std::dynamic_pointer_cast<T>(event));
+						});
+
+						_it = _subscribers[uid].end();
+						_it--;
+					}
+
+					Subscription(const Subscription&) = delete;
+					Subscription(Subscription&& o) : _it(std::move(o._it)) {}
+
+					~Subscription() {
+						unsubscribe();
+					}
+
+					void unsubscribe() {
+						if (_valid) {
+							uint32_t uid = get_uid<T>();
+							_subscribers[uid].erase(_it);
+							_valid = false;
+						}
+					}
+
+				private:
+
+					std::list<std::function<void(std::shared_ptr<Event>)>>::iterator _it;
+					bool _valid = true;
+			};
+
+		private:
+			// @todo Make sure this does not create multiple id's for one type
+			template <typename T>
+			static uint32_t get_uid() {
+				static uint32_t uid = _id_counter;
+				_id_counter++;
+				return uid;
+			}
+
+			// @todo Improve this
+			static std::unordered_map<uint32_t, std::list<std::function<void(std::shared_ptr<Event>)>>> _subscribers;
+			static uint32_t _id_counter;
+	};
 }

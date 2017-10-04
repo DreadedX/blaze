@@ -15,8 +15,7 @@ local archive_template = {
 function builder.build (archives)
 	if (helper.verify(archives, archive_template)) then
 		for archive_name,archive_config in pairs(archives) do
-			local file = open_new_file(archive_config.path)
-			local archive = ArchiveWriter.new(file, archive_name, archive_config.author, archive_config.description, archive_config.version)
+			local archive = ArchiveWriter.new(archive_name, archive_config.path, archive_config.author, archive_config.description, archive_config.version)
 
 			for dependency,version in pairs(archive_config.dependencies) do
 				archive:add_dependency(dependency, version)
@@ -25,7 +24,7 @@ function builder.build (archives)
 			archive:initialize()
 
 			for asset,asset_data in pairs(archive_config.assets) do
-				local asset = MetaAsset.new(asset, open_file(asset_data[1]), asset_data[2], Workflow.new())
+				local asset = MetaAsset.new(asset, asset_data[1], asset_data[2], Workflow.new())
 				archive:add(asset)
 			end
 

@@ -10,7 +10,7 @@
 
 namespace FLAME_NAMESPACE {
 
-	ArchiveWriter::ArchiveWriter(std::shared_ptr<FileHandler> fh, std::string name, std::string author, std::string description, uint16_t version) : _fh(fh), _name(name), _author(author), _description(description), _version(version) {}
+	ArchiveWriter::ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version) : _fh(fh), _name(name), _author(author), _description(description), _version(version) {}
 
 	void ArchiveWriter::initialize() {
 		if (_initialized) {

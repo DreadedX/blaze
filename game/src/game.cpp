@@ -28,19 +28,13 @@ int main() {
 	// Override LuaTest in archive with version from disk
 	{
 		// @todo This should go into a lua script
-		auto fh = std::make_shared<flame::FileHandler>("assets/test.lua", std::ios::in);
-		flame::MetaAsset lua_asset("LuaTest", fh, 10, flame::MetaAsset::Workflow());
+		flame::MetaAsset lua_asset("LuaTest", "assets/test.lua", 10, flame::MetaAsset::Workflow());
 		flame::asset_list::add(lua_asset);
 	}
 
 	// asset_manager
 	auto script = asset_manager::new_asset<LuaScript>("LuaTest");
 	{
-		// List of assets to load
-		auto test = asset_manager::new_asset<GameAsset>("TestAsset");
-		auto loream = asset_manager::new_asset<GameAsset>("LoremAsset");
-		auto lua = asset_manager::new_asset<GameAsset>("LuaAsset");
-
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();
 		auto not_loaded_count = total_count;

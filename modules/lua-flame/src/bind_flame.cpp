@@ -11,7 +11,9 @@
 namespace FLAME_NAMESPACE::lua {
 	void bind(sol::state& lua) {
 		lua.new_usertype<MetaAsset> ("MetaAsset",
+			// @todo This should not be available in the game (constructors), MetaAssets in general are not really usefull in the game
 			sol::constructors<
+				MetaAsset(std::string, std::string, uint16_t, MetaAsset::Workflow),
 				MetaAsset(std::string, std::shared_ptr<FileHandler>, uint16_t, MetaAsset::Workflow),
 				MetaAsset(std::string, std::shared_ptr<FileHandler>, uint16_t, uint32_t, uint32_t, MetaAsset::Workflow)
 			>(),
@@ -35,9 +37,11 @@ namespace FLAME_NAMESPACE::lua {
 			"get_meta_assets", &Archive::get_meta_assets
 		);
 
+		// @todo This should not be available in the game
 		lua.new_usertype<ArchiveWriter> ("ArchiveWriter",
 			sol::constructors<
-				ArchiveWriter(std::shared_ptr<FileHandler> fh, std::string, std::string, std::string, uint16_t)
+				ArchiveWriter(std::string, std::string, std::string, std::string, uint16_t),
+				ArchiveWriter(std::string, std::shared_ptr<FileHandler> fh, std::string, std::string, uint16_t)
 			>(),
 			"add_dependency", &ArchiveWriter::add_dependency,
 			"initialize", &ArchiveWriter::initialize,
@@ -45,9 +49,7 @@ namespace FLAME_NAMESPACE::lua {
 			"add", &ArchiveWriter::add
 		);
 
-		// @todo Test the functionality
 		lua.new_usertype<FileHandler> ("FileHandler",
-			// This needs to be called if done, because garbage collector
 			"close", &FileHandler::close,
 			"lock", &FileHandler::lock,
 			"is_open", &FileHandler::is_open,

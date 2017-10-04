@@ -21,8 +21,7 @@ namespace BLAZE_NAMESPACE {
 			virtual ~GameAsset() {}
 
 			// This function gets called after the data has been loaded from disk
-			// virtual void post_load() = 0;
-			virtual void post_load() {}
+			virtual void post_load() = 0;
 
 			bool is_loaded() {
 				return data.is_loaded();
