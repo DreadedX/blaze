@@ -23,10 +23,11 @@ namespace FLAME_NAMESPACE {
 			uint8_t& operator[](uint32_t idx);
 
 		private:
+			void _wait_until_loaded();
+
 			bool _loaded = false;
 			std::vector<uint8_t> _data;
 			std::future<std::vector<uint8_t>> _future;
 
-			void _wait_until_loaded();
 	};
 };

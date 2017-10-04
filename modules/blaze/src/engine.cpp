@@ -7,18 +7,39 @@ sol::state lua;
 
 namespace BLAZE_NAMESPACE {
 
+	namespace asset_manager {
+		std::list<std::shared_ptr<GameAsset>> _private::loading_assets;
+
+		void load_assets() {
+			_private::loading_assets.remove_if([](std::shared_ptr<GameAsset> asset){
+				bool loaded = asset->is_loaded();
+				if (loaded) {
+					asset->post_load();
+				}
+				return loaded;
+			});
+		}
+
+		size_t loading_count() {
+			return _private::loading_assets.size();
+		}
+	}
+
+	template <typename T>
+	void bind_event_subscription(sol::state& lua, std::string name) {
+		lua.new_usertype<event_bus::Subscription<T>>(name,
+			sol::constructors<
+				event_bus::Subscription<T>(std::function<void(std::shared_ptr<T>)>)
+			>(),
+			"unsubscribe", &event_bus::Subscription<T>::unsubscribe
+		);
+	}
+
 	// @todo This needs to be moved to a lua bind module, rename lua-flame to bind_lua and put all lua binding there
 	void bind(sol::state& lua) {
-		lua.set_function("subscribe_chat_event", [](std::function<void(std::shared_ptr<blaze::ChatMessage>)> handler) {
-			return event_bus::subscribe<ChatMessage>(handler);
-		});
-		lua.set_function("unsubscribe_chat_event", [](std::list<std::function<void(std::shared_ptr<blaze::Event>)>>::iterator it) {
-			event_bus::unsubscribe<ChatMessage>(it);
-		});
 
-		lua.new_usertype<ChatMessage>("ChatMessage",
-			"get_text", &ChatMessage::get_text
-		);
+		bind_event_subscription<ChatMessage>(lua, "ChatSubscription");
+		lua.new_usertype<ChatMessage>("ChatMessage", "get_text", &ChatMessage::get_text);
 	}
 
 	void initialize(std::initializer_list<std::string> archives) {

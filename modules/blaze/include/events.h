@@ -7,6 +7,9 @@
 #include <functional>
 #include <memory>
 
+#include <iostream>
+#include <iterator>
+
 namespace BLAZE_NAMESPACE {
 
 	namespace {
@@ -41,28 +44,9 @@ namespace BLAZE_NAMESPACE {
 
 	namespace event_bus {
 		namespace _private {
+			// @note The only reason this is here is because we cannot put template functions in cpp file
 			// @todo Improve this
 			extern std::unordered_map<uint32_t, std::list<std::function<void(std::shared_ptr<Event>)>>> subscribers;
-		}
-
-		// @todo This needs to return a handler that on destruction unsubscribes
-		template <typename T>
-		static auto subscribe(std::function<void(std::shared_ptr<T>)> handler) {
-			static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
-			uint32_t uid = get_uid<T>();
-			_private::subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
-					handler(std::dynamic_pointer_cast<T>(event));
-					});
-
-			auto it = _private::subscribers[uid].end();
-			it--;
-			return it;
-		}
-
-		template <typename T>
-		static auto unsubscribe(std::list<std::function<void(std::shared_ptr<Event>)>>::iterator it) {
-			uint32_t uid = get_uid<T>();
-			_private::subscribers[uid].erase(it);
 		}
 
 		template <typename T>
@@ -72,5 +56,38 @@ namespace BLAZE_NAMESPACE {
 				handler(event);
 			}
 		}
-	};
+
+		template <typename T>
+		class Subscription {
+			public:
+				Subscription(std::function<void(std::shared_ptr<T>)> handler) {
+					static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
+					uint32_t uid = get_uid<T>();
+					_private::subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
+							handler(std::dynamic_pointer_cast<T>(event));
+					});
+
+					_it = _private::subscribers[uid].end();
+					_it--;
+				}
+				Subscription(const Subscription&) = delete;
+				Subscription(Subscription&& o) : _it(std::move(o._it)) {}
+
+				~Subscription() {
+					unsubscribe();
+				}
+
+				void unsubscribe() {
+					if (_valid) {
+						uint32_t uid = get_uid<T>();
+						_private::subscribers[uid].erase(_it);
+						_valid = false;
+					}
+				}
+
+			private:
+				std::list<std::function<void(std::shared_ptr<Event>)>>::iterator _it;
+				bool _valid = true;
+		};
+	}
 }

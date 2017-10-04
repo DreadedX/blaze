@@ -24,5 +24,5 @@ namespace FLAME_NAMESPACE {
 			extern std::vector<Archive> _archives;
 			extern std::unordered_map<std::string, MetaAsset> _meta_assets;
 		}
-	};
+	}
 }

@@ -17,15 +17,10 @@ namespace FLAME_NAMESPACE::lua {
 			>(),
 			"get_name", &MetaAsset::get_name,
 			"get_version", &MetaAsset::get_version,
-			// @todo Test if this works
 			"get_data", &MetaAsset::get_data
-			// add_load_task
 		);
 
 		lua.new_usertype<MetaAsset::Workflow> ("Workflow");
-		// lua.set_function("debug_new_workflow", []{
-		// 	return Asset::Workflow();
-		// });
 
 		lua.new_usertype<Archive> ("Archive",
 			sol::constructors<
