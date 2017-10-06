@@ -1,6 +1,8 @@
 #include "helper.h"
 #include "binary_helper.h"
 
+#include "external_task.h"
+
 // Test
 #include "trusted_key.h"
 
@@ -28,6 +30,8 @@ void bind(sol::state& lua) {
 	lua.set_function("open_new_file", &open_new_file);
 	lua.set_function("load_private_key", &load_private_key);
 	lua.set_function("get_trusted_key", []{ return trusted_key; });
+
+	lua.set_function("get_external_task", &get_external_task);
 
 	lua.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data){
 		std::cout << "Size: " << data.get_size() << '\n';

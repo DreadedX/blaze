@@ -1,7 +1,15 @@
 #include "file_handler.h"
 
+#include <sstream>
+
 namespace FLAME_NAMESPACE {
-	FileHandler::FileHandler(std::string filename, std::ios::openmode openmode) : _fs(filename, openmode) {}
+	FileHandler::FileHandler(std::string filename, std::ios::openmode openmode) : _fs(filename, openmode) {
+		if (!_fs.is_open()) {
+			std::stringstream ss;
+			ss << "Failed to open file: '" << filename << '\'';
+			throw std::runtime_error(ss.str());
+		}
+	}
 
 	FileHandler::~FileHandler() {
 		close();

@@ -1,0 +1,8 @@
+; @todo Write a custom syntax file for VIM
+PROFIT=You made a profit of {0} dollars!
+TEST=This is a test
+NAMEAGE=Hello {0}, you are {1} years old.
+; @todo Allow categories: ITEM.NAME
+[ITEM]
+NAME=Item name
+DESC=Item description

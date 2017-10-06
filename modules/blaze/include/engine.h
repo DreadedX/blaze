@@ -94,7 +94,7 @@ namespace BLAZE_NAMESPACE {
 
 				std::cout << "size: " << size << '\n';
 
-				// @todo This is a terrible way to do it
+				// @todo Improve this
 				while (current < size) {
 					auto next = _data[current];
 					std::string name = "";

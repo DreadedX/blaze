@@ -49,7 +49,12 @@ int main() {
 		}
 			
 		std::cout << nl->get("PROFIT", {std::to_string(47)}) << '\n';
+		std::cout << nl->get("NAMEAGE", {"Tim", std::to_string(19)}) << '\n';
+		std::cout << nl->get("TEST") << '\n';
 		std::cout << en->get("PROFIT", {std::to_string(47)}) << '\n';
+		std::cout << en->get("NAMEAGE", {"Tim", std::to_string(19)}) << '\n';
+		std::cout << en->get("TEST") << '\n';
+
 	}
 
 	// Event bus test

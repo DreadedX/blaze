@@ -22,7 +22,9 @@ namespace FLAME_NAMESPACE::lua {
 			"get_data", &MetaAsset::get_data
 		);
 
-		lua.new_usertype<MetaAsset::Workflow> ("Workflow");
+		lua.new_usertype<MetaAsset::Workflow> ("Workflow",
+			"tasks", &MetaAsset::Workflow::tasks
+		);
 
 		lua.new_usertype<Archive> ("Archive",
 			sol::constructors<

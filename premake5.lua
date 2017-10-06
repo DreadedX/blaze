@@ -7,6 +7,7 @@ workspace "blaze"
 	location "build"
 	flags { "MultiProcessorCompile" }
 	warnings "Extra"
+	pic "On"
 
 	filter "configurations:Debug"
 		defines "DEBUG"

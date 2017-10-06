@@ -9,6 +9,7 @@ end
 
 -- @todo Refactor this, maybe using recursion
 -- @todo Is assets are not given a name it will cause an exception
+-- @todo This is GARBAGE just redo everything
 function helper.verify(archives, archive_template)
 	valid = true
 	for archive_name,archive in pairs(archives) do

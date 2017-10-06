@@ -2,13 +2,14 @@ local helper = require "lua.helper"
 
 local builder = {}
 
+-- @todo Improve this
 local archive_template = {
 	path = "string",
 	author = "string",
 	description = "string",
 	version = "number",
 	key = "string",
-	assets = {{ "string", "number" }},
+	assets = {{ "string", "number", "string" }},
 	dependencies = { "number" }
 }
 
@@ -24,7 +25,12 @@ function builder.build (archives)
 			archive:initialize()
 
 			for asset,asset_data in pairs(archive_config.assets) do
-				local asset = MetaAsset.new(asset, asset_data[1], asset_data[2], Workflow.new())
+				workflow = Workflow.new()
+				task = asset_data[3];
+				if task ~= "" then
+					workflow.tasks:add(get_external_task("build/langpack/bin/Linux/Debug/liblangpack.so"));
+				end
+				local asset = MetaAsset.new(asset, asset_data[1], asset_data[2], workflow)
 				archive:add(asset)
 			end
 
