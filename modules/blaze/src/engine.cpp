@@ -26,8 +26,8 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	template <typename T>
-	void bind_event_subscription(sol::state& lua, std::string name) {
-		lua.new_usertype<event_bus::Subscription<T>>(name,
+	void bind_event_subscription(sol::table& blaze, std::string name) {
+		blaze.new_usertype<event_bus::Subscription<T>>(name,
 			sol::constructors<
 				event_bus::Subscription<T>(std::function<void(std::shared_ptr<T>)>)
 			>(),
@@ -38,8 +38,10 @@ namespace BLAZE_NAMESPACE {
 	// @todo This needs to be moved to a lua bind module, rename lua-flame to bind_lua and put all lua binding there
 	void bind(sol::state& lua) {
 
-		bind_event_subscription<ChatMessage>(lua, "ChatSubscription");
-		lua.new_usertype<ChatMessage>("ChatMessage", "get_text", &ChatMessage::get_text);
+		sol::table blaze = lua.create_table("blaze");
+
+		bind_event_subscription<ChatMessage>(blaze, "ChatSubscription");
+		blaze.new_usertype<ChatMessage>("ChatMessage", "get_text", &ChatMessage::get_text);
 	}
 
 	void initialize(std::initializer_list<std::string> archives) {

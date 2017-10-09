@@ -10,7 +10,10 @@
 
 namespace FLAME_NAMESPACE::lua {
 	void bind(sol::state& lua) {
-		lua.new_usertype<MetaAsset> ("MetaAsset",
+
+		sol::table flame = lua.create_table("flame");
+
+		flame.new_usertype<MetaAsset> ("MetaAsset",
 			// @todo This should not be available in the game (constructors), MetaAssets in general are not really usefull in the game
 			sol::constructors<
 				MetaAsset(std::string, std::string, uint16_t, MetaAsset::Workflow),
@@ -22,11 +25,11 @@ namespace FLAME_NAMESPACE::lua {
 			"get_data", &MetaAsset::get_data
 		);
 
-		lua.new_usertype<MetaAsset::Workflow> ("Workflow",
+		flame.new_usertype<MetaAsset::Workflow> ("Workflow",
 			"tasks", &MetaAsset::Workflow::tasks
 		);
 
-		lua.new_usertype<Archive> ("Archive",
+		flame.new_usertype<Archive> ("Archive",
 			sol::constructors<
 				Archive(std::shared_ptr<FileHandler> fh)
 			>(),
@@ -40,7 +43,7 @@ namespace FLAME_NAMESPACE::lua {
 		);
 
 		// @todo This should not be available in the game
-		lua.new_usertype<ArchiveWriter> ("ArchiveWriter",
+		flame.new_usertype<ArchiveWriter> ("ArchiveWriter",
 			sol::constructors<
 				ArchiveWriter(std::string, std::string, std::string, std::string, uint16_t),
 				ArchiveWriter(std::string, std::shared_ptr<FileHandler> fh, std::string, std::string, uint16_t)
@@ -51,7 +54,7 @@ namespace FLAME_NAMESPACE::lua {
 			"add", &ArchiveWriter::add
 		);
 
-		lua.new_usertype<FileHandler> ("FileHandler",
+		flame.new_usertype<FileHandler> ("FileHandler",
 			"close", &FileHandler::close,
 			"lock", &FileHandler::lock,
 			"is_open", &FileHandler::is_open,

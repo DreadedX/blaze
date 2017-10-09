@@ -1,7 +1,7 @@
 -- Called when script is loaded
 function init()
 	print("Init code goes here");
-	subscription = ChatSubscription.new(chat_handler);
+	subscription = blaze.ChatSubscription.new(chat_handler);
 end
 
 -- Called every frame
@@ -14,7 +14,6 @@ function done()
 	print("Cleanup code goes here");
 	subscription:unsubscribe();
 end
-
 
 function chat_handler(event)
 	print(string.format("CHAT MESSAGE: %s", event:get_text()));

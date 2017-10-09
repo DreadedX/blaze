@@ -26,14 +26,20 @@ std::shared_ptr<FLAME_NAMESPACE::FileHandler> open_new_file(std::string path) {
 }
 
 void bind(sol::state& lua) {
-	lua.set_function("open_file", &open_file);
-	lua.set_function("open_new_file", &open_new_file);
-	lua.set_function("load_private_key", &load_private_key);
-	lua.set_function("get_trusted_key", []{ return trusted_key; });
+	sol::table helper = lua.create_named_table("helper");
+	helper.set_function("new_byte_vector", []{
+			return std::vector<uint8_t>();
+	});
+	helper.set_function("open_file", &open_file);
+	helper.set_function("open_new_file", &open_new_file);
+	helper.set_function("load_private_key", &load_private_key);
+	helper.set_function("get_trusted_key", []{
+		return trusted_key;
+	});
 
-	lua.set_function("get_external_task", &get_external_task);
+	helper.set_function("get_external_task", &get_external_task);
 
-	lua.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data){
+	helper.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data){
 		std::cout << "Size: " << data.get_size() << '\n';
 		for (uint32_t i = 0; i < data.get_size(); ++i) {
 			auto dat = data[i];

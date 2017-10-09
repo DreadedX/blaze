@@ -28,8 +28,8 @@ int main() {
 	// asset_manager
 	auto script = asset_manager::new_asset<LuaScript>("LuaTest");
 	{
-		auto nl = asset_manager::new_asset<LanguagePack>("LANG_NL");
-		auto en = asset_manager::new_asset<LanguagePack>("LANG_EN");
+		auto nl = asset_manager::new_asset<LanguagePack>("Dutch");
+		auto en = asset_manager::new_asset<LanguagePack>("English");
 
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();

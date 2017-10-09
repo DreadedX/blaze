@@ -2,6 +2,21 @@ local builder = require "lua.builder"
 
 priv_key = "keys/test.priv"
 
+-- @todo Figure out how to actually process data here
+function test(input)
+	for i=1,10 do
+		print(input[i])
+	end
+	output = helper.new_byte_vector()
+	output[1] = 0
+	output[2] = 1
+
+	return input
+end
+
+-- @todo This needs to be platform independent
+langpack = helper.get_external_task("build/langpack/bin/Linux/Debug/liblangpack.so")
+
 builder.build({
 	base = {
 		path = "archives/base.flm",
@@ -19,18 +34,43 @@ builder.build({
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			LuaTest = { "assets/test.lua", 1, "" },
-			LANG_NL = { "assets/lang/nl.lang", 1, "langpack" },
-			LANG_EN = { "assets/lang/en.lang", 1, "langpack" },
-			-- LuaAsset = { "assets/lua.txt", 1 },
-			-- TestAsset = { "assets/test.txt", 3},
-			-- LoremAsset = { "assets/lorem.txt", 1}
+			LuaTest = { "assets/test.lua", 1, tasks = { test } },
+			-- Language packs
+			Dutch = { "assets/lang/nl.lang", 1, tasks = { langpack } },
+			English = { "assets/lang/en.lang", 1, tasks = { langpack } },
 		},
 		dependencies = {
 			base = 1
 		}
 	}
 })
+
+-- @todo Add support for folder, this will propably have to come from within blaze
+prototype = {
+	test = {
+		path = "archives/test.flm",
+		author = "Dreaded_X",
+		description = "This is the first archive being made using the new scripting stuff",
+		version = 1,
+		key = "keys/unofficial.priv",
+		assets = {
+			folder = {
+				-- Will end up in folder.LuaTest
+				LuaTest = { "assets/test.lua", 1, tasks = { test } },
+			},
+			Languages = {
+				-- Will end up in Languages.Dutch
+				Dutch = { "assets/lang/nl.lang", 1, tasks = { langpack } },
+				-- Will end up in Languages.English
+				English = { "assets/lang/en.lang", 1, tasks = { langpack } },
+			}
+		},
+		dependencies = {
+			base = 1
+		}
+	}
+}
+
 
 -- Just some testing
 
