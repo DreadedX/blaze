@@ -1,13 +1,39 @@
 #include "asset_list.h"
 #include "engine.h"
 
+#define LOGURU_IMPLEMENTATION 1
+#include <loguru.hpp>
+
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
 	std::cout << "<Dreaded_X> " << event->get_text() << '\n';;
 }
 
-int main() {
+int main(int argc, char** argv) {
+
+	// @todo Make this part of the engine
+	// Logging test
+	{
+		// This whill be 
+		loguru::init(argc, argv);
+		loguru::add_file("logs/everything.log", loguru::Append, loguru::Verbosity_MAX);
+		loguru::add_file("logs/latest_readable.log", loguru::Truncate, loguru::Verbosity_INFO);
+
+		// loguru::g_stderr_verbosity = 1;
+
+		LOG_SCOPE_F(INFO, "Will indent all log messages within this scope.");
+		LOG_F(INFO, "I'm hungry for some %.3f!", 3.14159);
+		LOG_F(2, "Will only show if verbosity is 2 or higher");
+		LOG_F(ERROR, "This is an error");
+		// VLOG_F(get_log_level(), "Use vlog for dynamic log level (integer in the range 0-9, inclusive)");
+		// LOG_IF_F(ERROR, badness, "Will only show if badness happens");
+		// auto fp = fopen(filename, "r");
+		// CHECK_F(fp != nullptr, "Failed to open file '%s'", filename);
+		// CHECK_GT_F(length, 0); // Will print the value of `length` on failure.
+		// CHECK_EQ_F(a, b, "You can also supply a custom message, like to print something: %d", a + b);
+	}
+
 	// Initialze engine
 	blaze::initialize({"archives/base.flm", "archives/test.flm"});
 	

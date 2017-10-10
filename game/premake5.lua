@@ -10,6 +10,7 @@ project "game"
 		"../modules/blaze/include",
 		"../modules/lua-flame/include",
 		"../third_party/sol2/",
+		"../third_party/loguru/",
 		"../third_party/cryptopp",
 	}
 	links {
@@ -20,4 +21,5 @@ project "game"
 		"lua5.2",
 		"z",
 		"pthread",
+		"dl",
 	}
