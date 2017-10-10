@@ -11,6 +11,7 @@
 
 #include <initializer_list>
 #include <string>
+#include <any>
 
 // @todo Refactor the shit out of this, most of this is just the first iteration
 namespace BLAZE_NAMESPACE {
@@ -115,10 +116,25 @@ namespace BLAZE_NAMESPACE {
 					current++;
 
 					_strings[name] = value;
+
+					std::cout << name << '=' << value << '\n';
 				}
 			}
 
-			std::string get(std::string name, std::initializer_list<std::string> args = {}) {
+			// @todo This appears to be the best we can do for now
+			std::string to_string(std::any value) {
+				auto& type = value.type();
+				if (type == typeid(std::string)) {
+					return std::any_cast<std::string>(value);
+				}
+				if (type == typeid(int)) {
+					return std::to_string(std::any_cast<int>(value));
+				}
+				throw std::runtime_error("Subtitution type has no known conversion to string");
+			}
+
+			template <typename... Args>
+			std::string get(std::string name, Args... args) {
 				// Find string
 				auto it = _strings.find(name);
 				if (it == _strings.end()) {
@@ -128,11 +144,13 @@ namespace BLAZE_NAMESPACE {
 				// Substitution
 				std::string text = it->second;
 				auto i = 0;
-				for (auto& arg : args) {
+				for (const std::any arg : std::initializer_list<std::any>({args...})) {
 					std::string substring = "{" + std::to_string(i) + "}";
 					auto found = text.find(substring, 0);
 					if (found != std::string::npos) {
-						text.replace(found, substring.length(), arg);
+						text.replace(found, substring.length(), to_string(arg));
+					} else {
+						throw std::runtime_error("Too many substitution arguments");
 					}
 					i++;
 				}

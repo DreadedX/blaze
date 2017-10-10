@@ -35,26 +35,3 @@ project "packager"
 		"pthread",
 		"dl",
 	}
-
-project "langpack"
-	kind "SharedLib"
-	location "../build/langpack"
-	files "langpack/src/**.cpp"
-	includedirs {
-		-- Find better way to link to 5.2
-		"/usr/include/lua5.2",
-		"packager/include",
-		"langpack/include",
-		"../modules/flame/include",
-		"../modules/lua-flame/include",
-		"../third_party/sol2/",
-		"../third_party/cryptopp",
-	}
-	links {
-		"lua-flame",
-		"flame",
-		"cryptopp",
-		"lua5.2",
-		"z",
-		"pthread",
-	}

@@ -7,6 +7,12 @@ void handle_chat_message(std::shared_ptr<ChatMessage> event) {
 	std::cout << "<Dreaded_X> " << event->get_text() << '\n';;
 }
 
+void langpack_test(std::shared_ptr<blaze::LanguagePack> lang) {
+		std::cout << lang->get("pickaxe.name") << '\n';
+		std::cout << lang->get("pickaxe.description", 47, 100) << '\n';
+
+}
+
 int main() {
 	// Initialze engine
 	blaze::initialize({"archives/base.flm", "archives/test.flm"});
@@ -48,13 +54,8 @@ int main() {
 			script->update();
 		}
 			
-		std::cout << nl->get("PROFIT", {std::to_string(47)}) << '\n';
-		std::cout << nl->get("NAMEAGE", {"Tim", std::to_string(19)}) << '\n';
-		std::cout << nl->get("TEST") << '\n';
-		std::cout << en->get("PROFIT", {std::to_string(47)}) << '\n';
-		std::cout << en->get("NAMEAGE", {"Tim", std::to_string(19)}) << '\n';
-		std::cout << en->get("TEST") << '\n';
-
+		langpack_test(en);
+		langpack_test(nl);
 	}
 
 	// Event bus test

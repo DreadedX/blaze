@@ -1,21 +1,9 @@
 local builder = require "lua.builder"
+local langpack = require "lua.langpack"
 
 priv_key = "keys/test.priv"
 
--- @todo Figure out how to actually process data here
-function test(input)
-	for i=1,10 do
-		print(input[i])
-	end
-	output = helper.new_byte_vector()
-	output[1] = 0
-	output[2] = 1
-
-	return input
-end
-
--- @todo This needs to be platform independent
-langpack = helper.get_external_task("build/langpack/bin/Linux/Debug/liblangpack.so")
+-- langpack = helper.get_external_task("build/langpack/bin/Linux/Debug/liblangpack.so")
 
 builder.build({
 	base = {
@@ -34,7 +22,7 @@ builder.build({
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			LuaTest = { "assets/test.lua", 1, tasks = { test } },
+			LuaTest = { "assets/test.lua", 1, tasks = { } },
 			-- Language packs
 			Dutch = { "assets/lang/nl.lang", 1, tasks = { langpack } },
 			English = { "assets/lang/en.lang", 1, tasks = { langpack } },
@@ -46,6 +34,7 @@ builder.build({
 })
 
 -- @todo Add support for folder, this will propably have to come from within blaze
+-- @todo Add error handler that tells us on which file the error happend
 prototype = {
 	test = {
 		path = "archives/test.flm",
@@ -56,7 +45,7 @@ prototype = {
 		assets = {
 			folder = {
 				-- Will end up in folder.LuaTest
-				LuaTest = { "assets/test.lua", 1, tasks = { test } },
+				LuaTest = { "assets/test.lua", 1, tasks = { } },
 			},
 			Languages = {
 				-- Will end up in Languages.Dutch
@@ -76,11 +65,11 @@ prototype = {
 
 function print_archive_info(archive)
 	print("======ARCHIVE======")
-	print(string.format("Name: %s", archive:get_name()))
-	print(string.format("Author: %s", archive:get_author()))
-	print(string.format("Description: %s", archive:get_description()))
-	print(string.format("Version: %s", archive:get_version()))
-	print(string.format("Official: %s", archive:is_trusted(get_trusted_key())))
+	print("Name: " .. archive:get_name())
+	print("Author: " .. archive:get_author())
+	print("Description: " .. archive:get_description())
+	print("Version: " .. archive:get_version())
+	print("Official: " .. archive:is_trusted(get_trusted_key()))
 
 	local dependencies = archive:get_dependencies()
 	if (dependencies:size() > 0) then

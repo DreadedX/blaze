@@ -1,3 +1,5 @@
-PROFIT=Je hebt een winst van {0} euro!
-TEST=Dit is een test
-NAMEAGE=Hallo {0}, je bent {1} jaar oud.
+[pickaxe] ; Group
+; pickaxe.name
+name=Pikhouweel
+; pickaxe.description
+description=Duurzaamheid {0}/{1}
