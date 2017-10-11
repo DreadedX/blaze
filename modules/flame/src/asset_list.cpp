@@ -16,7 +16,7 @@ namespace FLAME_NAMESPACE {
 		auto missing = missing_dependecies(archive);
 		if (!missing.empty()) {
 			/// @todo Maybe make a special exception that returns the list of all missing dependecies
-			throw std::runtime_error("Missing dependency");
+			throw MissingDependencies(missing);
 		}
 
 		_archives.push_back(archive);

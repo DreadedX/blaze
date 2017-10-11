@@ -28,6 +28,23 @@ namespace BLAZE_NAMESPACE {
 			std::string _text;
 	};
 
+	class MissingDependencies : public Event {
+		public:
+			MissingDependencies(std::string name, std::vector<std::pair<std::string, uint16_t>> missing) : _name(name), _missing(missing) {}
+
+			const auto& get_missing() const {
+				return _missing;
+			}
+
+			const auto& get_name() const {
+				return _name;
+			}
+
+		private:
+			std::string _name;
+			std::vector<std::pair<std::string, uint16_t>> _missing;
+	};
+
 	class event_bus {
 		public:
 			template <typename T>

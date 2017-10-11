@@ -57,14 +57,8 @@ namespace BLAZE_NAMESPACE {
 
 				flame::asset_list::add(archive);
 
-				// This needs to be run when catching a special exception that returns a list of missing dependencies
-				// // We do not add the archive if it is missing a dependecy
-				// // @todo Post a event in a central message bus
-				// std::cerr << __FILE__ << ':' << __LINE__ << " =>\n\t" << "Missing dependencies:\n";
-				// for (auto& missing : missing_dependecies) {
-				// 	std::cerr << "\t\t" << missing.first << ':' << missing.second << '\n';
-				// }
-
+			} catch (flame::MissingDependencies& e) {
+				event_bus::send(std::make_shared<MissingDependencies>(archive_name, e.get_missing()));
 			} catch (std::exception& e) {
 				std::cerr << __FILE__ << ':' << __LINE__ << " =>\n\t" << "Failed to open '" << archive_name << "': " << e.what() << '\n';
 				// @todo Post a event in a central message bus

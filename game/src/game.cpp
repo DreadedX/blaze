@@ -7,6 +7,13 @@ void handle_chat_message(std::shared_ptr<ChatMessage> event) {
 	std::cout << "<Dreaded_X> " << event->get_text() << '\n';;
 }
 
+void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
+	std::cout << "Archive '" << event->get_name() << "' is missing the following dependencies:\n";
+	for (auto dependency : event->get_missing()) {
+		std::cout << dependency.first << ':' << dependency.second << '\n';
+	}
+}
+
 void langpack_test(std::shared_ptr<blaze::LanguagePack> lang) {
 		std::cout << lang->get("pickaxe.name") << '\n';
 		std::cout << lang->get("pickaxe.description", 47, 100) << '\n';
@@ -15,8 +22,10 @@ void langpack_test(std::shared_ptr<blaze::LanguagePack> lang) {
 
 int main() {
 	// Initialze engine
+	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
+	auto asdf = event_bus::Subscription<MissingDependencies>(std::ref(handle_missing_dependencies));
 	blaze::initialize({"archives/base.flm", "archives/test.flm"});
-	
+
 	// Flame tests
 	{
 		std::cout << "====ASSETS====\n";

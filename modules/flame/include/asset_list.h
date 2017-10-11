@@ -9,6 +9,19 @@
 #include <unordered_map>
 
 namespace FLAME_NAMESPACE {
+
+	class MissingDependencies {
+		public:
+			MissingDependencies(std::vector<std::pair<std::string, uint16_t>> missing) : _missing(missing) {}
+
+			const auto& get_missing() const {
+				return _missing;
+			}
+
+		private:
+			std::vector<std::pair<std::string, uint16_t>> _missing;
+	};
+
 	class asset_list {
 		public:
 			static AssetData find_asset(std::string name);
