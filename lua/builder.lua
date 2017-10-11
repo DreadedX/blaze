@@ -16,7 +16,8 @@ local archive_template = {
 function builder.build (archives)
 	if (lua_helper.verify(archives, archive_template)) then
 		for archive_name,archive_config in pairs(archives) do
-			local archive = flame.ArchiveWriter.new(archive_name, archive_config.path, archive_config.author, archive_config.description, archive_config.version)
+			file = helper.open_new_file(archive_config.path)
+			local archive = flame.ArchiveWriter.new(archive_name, file, archive_config.author, archive_config.description, archive_config.version)
 
 			for dependency,version in pairs(archive_config.dependencies) do
 				archive:add_dependency(dependency, version)
@@ -38,6 +39,8 @@ function builder.build (archives)
 
 			print(archive_config.key)
 			archive:finalize(helper.load_private_key(archive_config.key))
+
+			file:close()
 		end
 	else
 		print("ERROR")

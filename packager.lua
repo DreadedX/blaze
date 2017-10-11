@@ -3,8 +3,6 @@ local langpack = require "lua.langpack"
 
 priv_key = "keys/test.priv"
 
--- langpack = helper.get_external_task("build/langpack/bin/Linux/Debug/liblangpack.so")
-
 builder.build({
 	base = {
 		path = "archives/base.flm",
@@ -69,13 +67,13 @@ function print_archive_info(archive)
 	print("Author: " .. archive:get_author())
 	print("Description: " .. archive:get_description())
 	print("Version: " .. archive:get_version())
-	print("Official: " .. archive:is_trusted(get_trusted_key()))
+	print("Official: " .. tostring(archive:is_trusted(helper.get_trusted_key())))
 
 	local dependencies = archive:get_dependencies()
 	if (dependencies:size() > 0) then
 		print("Dependencies: ")
 		for _,dependency,version in pairs(dependencies) do
-			print(string.format(" %s == %i", dependency, version))
+			print(' ' .. dependency .. " == " .. version)
 		end
 	end
 
@@ -83,14 +81,13 @@ function print_archive_info(archive)
 	if (meta_assets:size() > 0) then
 		print("Meta Assets: ")
 		for _,meta_asset in pairs(meta_assets) do
-			print(string.format(" %s (%i)", meta_asset:get_name(), meta_asset:get_version()))
-			print("Content: \n")
-			debug_content(meta_asset:get_data(Workflow.new()))
+			print("===" .. meta_asset:get_name() .. '=(' .. meta_asset:get_version() .. ")===")
+			helper.debug_content(meta_asset:get_data(flame.Workflow.new()))
 		end
 	end
 end
 
--- local base = Archive.new(open_file("archives/base.flm"))
+-- local base = flame.Archive.new(helper.open_file("archives/base.flm"))
 -- print_archive_info(base);
--- local test = Archive.new(open_file("archives/test.flm"))
+-- local test = flame.Archive.new(helper.open_file("archives/test.flm"))
 -- print_archive_info(test);

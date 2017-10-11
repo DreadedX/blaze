@@ -93,8 +93,6 @@ namespace BLAZE_NAMESPACE {
 				auto size = _data.get_size();
 				uint32_t current = 0;
 
-				std::cout << "size: " << size << '\n';
-
 				// @todo Improve this
 				while (current < size) {
 					auto next = _data[current];
@@ -116,8 +114,6 @@ namespace BLAZE_NAMESPACE {
 					current++;
 
 					_strings[name] = value;
-
-					std::cout << name << '=' << value << '\n';
 				}
 			}
 

@@ -5,7 +5,6 @@
 namespace FLAME_NAMESPACE {
 	class ArchiveWriter {
 		public:
-			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version) : ArchiveWriter(name, std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc), author, description, version) {}
 			ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version);
 
 			void initialize();

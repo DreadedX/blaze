@@ -1,10 +1,10 @@
 local helper = {}
 
 local function verify_error_type(name, archive_name, found, expected)
-	print(string.format("'%s' in archive '%s' has type '%s', expected '%s'", name, archive_name, found, expected))
+	print('\'' .. name .. "' in archive '" .. archive_name .. "' has type '" .. found .. "', expected '" .. expected .. '\'')
 end
 local function verify_error_missing(archive_name, expected, name)
-	print(string.format("Archive '%s' is missing '%s' '%s'", archive_name, expected, name))
+	print("Archive '" .. archive_name.. "' is missing '" .. expected .. "' '" .. name .. '\'')
 end
 
 -- @todo Refactor this, maybe using recursion
@@ -42,7 +42,7 @@ function helper.verify(archives, archive_template)
 				end
 			end
 		else
-			print(string.format("Archive '%s' is '%s', should be 'table'", archive_name, type(archive)))
+			print("Archive '" .. archive_name .. "' is '" .. type(archive) .. "', should be 'table'")
 		end
 	end
 

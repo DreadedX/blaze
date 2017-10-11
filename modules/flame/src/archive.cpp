@@ -97,8 +97,6 @@ namespace FLAME_NAMESPACE {
 
 		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
-		std::cout << (uint32_t)digest[0] << ' ' << (uint32_t)stored_digest[0] << '\n';
-
 		if (!binary::compare(digest.data(), stored_digest, HASH_SIZE)) {
 			throw std::runtime_error("File is corrupted");
 		}
