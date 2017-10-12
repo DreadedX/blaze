@@ -16,6 +16,25 @@ local function langpack(input)
 			if not lines[i] then
 				lines[i] = ""
 			end
+
+			-- Remove whitespaces at start and end
+			lines[i] = lines[i]:match("^%s*(.-)%s*$")
+
+			-- Escape characters, needs to be improved and error out on invalid escape characters \0 is banned
+			-- \ at the end of the line should continue on the next line
+			lines[i] = lines[i]:gsub("\\a", '\a') -- Bell
+			lines[i] = lines[i]:gsub("\\b", '\b') -- Backspace
+			lines[i] = lines[i]:gsub("\\f", '\f') -- Form feed
+			lines[i] = lines[i]:gsub("\\n", '\n') -- Newline
+			lines[i] = lines[i]:gsub("\\r", '\r') -- Carriage return
+			lines[i] = lines[i]:gsub("\\t", '\t') -- Horizontal tab
+			lines[i] = lines[i]:gsub("\\v", '\v') -- Vertical tab
+			-- lines[i] = lines[i]:gsub("\\\\", '\\') -- Backslash
+			-- lines[i] = lines[i]:gsub("\\\"", '\"') -- Double quote
+			-- lines[i] = lines[i]:gsub("\\\'", '\'') -- Single quote
+			-- lines[i] = lines[i]:gsub("\\\[", '\[') -- Left square bracket
+			-- lines[i] = lines[i]:gsub("\\\]", '\]') -- Right square bracket
+
 			i = i + 1
 		elseif storing then
 			if lines[i] == nil then
@@ -30,7 +49,6 @@ local function langpack(input)
 
 	section = ""
 	for i,line in ipairs(lines) do
-		line = line:match("^%s*(.-)%s*$")
 
 		if line ~= "" then
 			matched = false
@@ -44,6 +62,8 @@ local function langpack(input)
 
 			key, value = line:match('^([%w|_]+)%s-=%s-(.+)$')
 			if key and value then
+				-- Remove leading spaces in value
+				value = value:match("^%s*(.-)%s*$")
 				if section ~= "" then
 					key = section .. '.' .. key
 				end

@@ -1,0 +1,7 @@
+; Author: Dreaded_X
+[tutorial]
+part1 = Dit is het eerste deel van de tutorial:\tDeze tekst is na een tab
+
+[pickaxe]
+name        = Pikhouweel
+description = Duurzaamheid {0}/{1}

@@ -14,7 +14,9 @@ void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
 	}
 }
 
-void langpack_test(std::shared_ptr<blaze::LanguagePack> lang) {
+void lang_test(std::shared_ptr<blaze::Language> lang) {
+		std::cout << lang->get("tutorial.part1") << '\n';
+
 		std::cout << lang->get("pickaxe.name") << '\n';
 		std::cout << lang->get("pickaxe.description", 47, 100) << '\n';
 
@@ -36,15 +38,15 @@ int main() {
 	// Override LuaTest in archive with version from disk
 	{
 		// @todo This should go into a lua script
-		flame::MetaAsset lua_asset("LuaTest", "assets/test.lua", 10, flame::MetaAsset::Workflow());
+		flame::MetaAsset lua_asset("Test", "assets/script/Test.lua", 10, flame::MetaAsset::Workflow());
 		flame::asset_list::add(lua_asset);
 	}
 
 	// asset_manager
-	auto script = asset_manager::new_asset<LuaScript>("LuaTest");
+	auto script = asset_manager::new_asset<Script>("Test");
 	{
-		auto nl = asset_manager::new_asset<LanguagePack>("Dutch");
-		auto en = asset_manager::new_asset<LanguagePack>("English");
+		auto nl = asset_manager::new_asset<Language>("Dutch");
+		auto en = asset_manager::new_asset<Language>("English");
 
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();
@@ -63,8 +65,8 @@ int main() {
 			script->update();
 		}
 			
-		langpack_test(en);
-		langpack_test(nl);
+		lang_test(en);
+		lang_test(nl);
 	}
 
 	// Event bus test

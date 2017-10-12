@@ -1,5 +1,0 @@
-[pickaxe] ; Group
-; pickaxe.name
-name=Pickaxe
-; pickaxe.description
-description=Durability {0}/{1}

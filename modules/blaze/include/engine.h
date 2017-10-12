@@ -51,11 +51,11 @@ namespace BLAZE_NAMESPACE {
 		size_t loading_count();
 	}
 
-	class LuaScript : public GameAsset {
+	class Script : public GameAsset {
 		public:
-			LuaScript(std::string asset_name) : GameAsset(asset_name), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
+			Script(std::string asset_name) : GameAsset(asset_name), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
 
-			~LuaScript() {
+			~Script() {
 				// Should always be true as loading_assets will have a valid reference to this object until it is loaded
 				if (_loaded) {
 					environment["done"]();
@@ -85,9 +85,9 @@ namespace BLAZE_NAMESPACE {
 			bool _loaded = false;
 	};
 
-	class LanguagePack : public GameAsset {
+	class Language : public GameAsset {
 		public:
-			LanguagePack(std::string asset_name) : GameAsset(asset_name) {}
+			Language(std::string asset_name) : GameAsset(asset_name) {}
 
 			void post_load() {
 				auto size = _data.get_size();

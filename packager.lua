@@ -20,10 +20,10 @@ builder.build({
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			LuaTest = { "assets/test.lua", 1, tasks = { } },
+			Test = { "assets/script/Test.lua", 1, tasks = { } },
 			-- Language packs
-			Dutch = { "assets/lang/nl.lang", 1, tasks = { langpack } },
-			English = { "assets/lang/en.lang", 1, tasks = { langpack } },
+			Dutch = { "assets/language/Dutch.lang", 1, tasks = { langpack } },
+			English = { "assets/language/English.lang", 1, tasks = { langpack } },
 		},
 		dependencies = {
 			base = 1
@@ -41,15 +41,15 @@ prototype = {
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			folder = {
+			script = {
 				-- Will end up in folder.LuaTest
-				LuaTest = { "assets/test.lua", 1, tasks = { } },
+				LuaTest = { "assets/script/Test.lua", 1, tasks = { } },
 			},
-			Languages = {
+			language = {
 				-- Will end up in Languages.Dutch
-				Dutch = { "assets/lang/nl.lang", 1, tasks = { langpack } },
+				Dutch = { "assets/language/Dutch.lang", 1, tasks = { langpack } },
 				-- Will end up in Languages.English
-				English = { "assets/lang/en.lang", 1, tasks = { langpack } },
+				English = { "assets/language/en.lang", 1, tasks = { langpack } },
 			}
 		},
 		dependencies = {
