@@ -79,7 +79,7 @@ namespace BLAZE_NAMESPACE {
 					}
 
 					void unsubscribe() {
-						if (_valid) {
+						if (_valid && !_subscribers.empty()) {
 							uint32_t uid = get_uid<T>();
 							_subscribers[uid].erase(_it);
 							_valid = false;

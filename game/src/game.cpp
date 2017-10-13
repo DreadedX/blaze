@@ -18,7 +18,7 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 		std::cout << lang->get("tutorial.part1") << '\n';
 
 		std::cout << lang->get("pickaxe.name") << '\n';
-		std::cout << lang->get("pickaxe.description", 47, 100) << '\n';
+		std::cout << lang->get("pickaxe.description", {std::to_string(47), std::to_string(100)}) << '\n';
 
 }
 
@@ -44,9 +44,12 @@ int main() {
 
 	// asset_manager
 	auto script = asset_manager::new_asset<Script>("Test");
+	auto en = asset_manager::new_asset<Language>("English");
+	get_lua_state().set_function("get_lang", [en]{
+		return en;
+	});
 	{
 		auto nl = asset_manager::new_asset<Language>("Dutch");
-		auto en = asset_manager::new_asset<Language>("English");
 
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();

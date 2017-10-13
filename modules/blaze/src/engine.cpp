@@ -41,7 +41,15 @@ namespace BLAZE_NAMESPACE {
 		sol::table blaze = lua.create_table("blaze");
 
 		bind_event_subscription<ChatMessage>(blaze, "ChatSubscription");
-		blaze.new_usertype<ChatMessage>("ChatMessage", "get_text", &ChatMessage::get_text);
+		blaze.new_usertype<ChatMessage>("ChatMessage",
+			sol::base_classes, sol::bases<Event>(),
+			"text", sol::property(&ChatMessage::get_text)
+		);
+
+		blaze.new_usertype<Language>("Language",
+			sol::base_classes, sol::bases<GameAsset>(),
+			"get", &Language::get<sol::variadic_args>
+		);
 	}
 
 	void initialize(std::initializer_list<std::string> archives) {

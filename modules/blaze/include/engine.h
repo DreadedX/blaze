@@ -117,20 +117,15 @@ namespace BLAZE_NAMESPACE {
 				}
 			}
 
-			// @todo This appears to be the best we can do for now
-			std::string to_string(std::any value) {
-				auto& type = value.type();
-				if (type == typeid(std::string)) {
-					return std::any_cast<std::string>(value);
-				}
-				if (type == typeid(int)) {
-					return std::to_string(std::any_cast<int>(value));
-				}
-				throw std::runtime_error("Subtitution type has no known conversion to string");
+			// Simplify template excess
+			inline std::string get(std::string name) {
+				return get(name, {});
 			}
-
-			template <typename... Args>
-			std::string get(std::string name, Args... args) {
+			inline std::string get(std::string name, std::initializer_list<std::string> args) {
+				return get<std::initializer_list<std::string>>(name, args);
+			}
+			template <typename T>
+			std::string get(std::string name, T args) {
 				// Find string
 				auto it = _strings.find(name);
 				if (it == _strings.end()) {
@@ -140,11 +135,11 @@ namespace BLAZE_NAMESPACE {
 				// Substitution
 				std::string text = it->second;
 				auto i = 0;
-				for (const std::any arg : std::initializer_list<std::any>({args...})) {
+				for (const auto& arg : args) {
 					std::string substring = "{" + std::to_string(i) + "}";
 					auto found = text.find(substring, 0);
 					if (found != std::string::npos) {
-						text.replace(found, substring.length(), to_string(arg));
+						text.replace(found, substring.length(), arg);
 					} else {
 						throw std::runtime_error("Too many substitution arguments");
 					}
