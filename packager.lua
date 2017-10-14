@@ -87,7 +87,7 @@ function print_archive_info(archive)
 	end
 end
 
-local base = flame.Archive.new(helper.open_file("archives/base.flm"))
-print_archive_info(base);
-local test = flame.Archive.new(helper.open_file("archives/test.flm"))
-print_archive_info(test);
+-- local base = flame.Archive.new(helper.open_file("archives/base.flm"))
+-- print_archive_info(base);
+-- local test = flame.Archive.new(helper.open_file("archives/test.flm"))
+-- print_archive_info(test);

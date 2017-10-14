@@ -1,6 +1,6 @@
 ; Author: Dreaded_X
 [tutorial]
-part1 = Dit is het eerste deel van de tutorial:\tDeze tekst is na een tab
+part1 = Dit is het eerste deel van de tutorial:\t\tDeze tekst is dubbel getabbed!
 
 [pickaxe]
 name        = Pikhouweel

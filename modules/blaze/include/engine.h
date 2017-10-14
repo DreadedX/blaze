@@ -11,7 +11,7 @@
 
 #include <initializer_list>
 #include <string>
-#include <any>
+#include <variant>
 
 // @todo Refactor the shit out of this, most of this is just the first iteration
 namespace BLAZE_NAMESPACE {
@@ -117,12 +117,12 @@ namespace BLAZE_NAMESPACE {
 				}
 			}
 
-			// Simplify template excess
+			typedef std::variant<std::string, int, double> SupportedTypes;
 			inline std::string get(std::string name) {
 				return get(name, {});
 			}
-			inline std::string get(std::string name, std::initializer_list<std::string> args) {
-				return get<std::initializer_list<std::string>>(name, args);
+			inline std::string get(std::string name, std::initializer_list<SupportedTypes> args) {
+				return get<decltype(args)>(name, args);
 			}
 			template <typename T>
 			std::string get(std::string name, T args) {
@@ -136,10 +136,11 @@ namespace BLAZE_NAMESPACE {
 				std::string text = it->second;
 				auto i = 0;
 				for (const auto& arg : args) {
+					// @todo Add more formatting options
 					std::string substring = "{" + std::to_string(i) + "}";
 					auto found = text.find(substring, 0);
 					if (found != std::string::npos) {
-						text.replace(found, substring.length(), arg);
+						text.replace(found, substring.length(), to_string(arg));
 					} else {
 						throw std::runtime_error("Too many substitution arguments");
 					}
@@ -148,7 +149,18 @@ namespace BLAZE_NAMESPACE {
 
 				return text;
 			}
+
 		private:
+			std::string to_string(const sol::stack_proxy& value) {
+				return value;
+			}
+			// @todo This is kind of shitty
+			std::string to_string(const SupportedTypes& value) {
+				if (auto s = std::get_if<std::string>(&value)) { return *s; }
+				if (auto s = std::get_if<int>(&value)) { return std::to_string(*s); }
+				if (auto s = std::get_if<double>(&value)) { return std::to_string(*s); }
+				throw std::logic_error("Type included in SupportedTypes, but not implemented");
+			}
 			std::unordered_map<std::string, std::string> _strings;
 	};
 }

@@ -18,7 +18,7 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 		std::cout << lang->get("tutorial.part1") << '\n';
 
 		std::cout << lang->get("pickaxe.name") << '\n';
-		std::cout << lang->get("pickaxe.description", {std::to_string(47), std::to_string(100)}) << '\n';
+		std::cout << lang->get("pickaxe.description", {47, 100}) << '\n';
 
 }
 

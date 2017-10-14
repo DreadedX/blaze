@@ -1,4 +1,9 @@
-[pickaxe] ; @todo This is a test
+[tutorial]
+part1 = This is just some example text to show of the lang format\n\
+Using the backslash you can continue writing long strings \
+without breaking the flow of the text
+
+[pickaxe] ; @note This is a test
 ; pickaxe.name
 name = Pickaxe
 ; pickaxe.description

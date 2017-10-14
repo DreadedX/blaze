@@ -18,6 +18,7 @@ local function langpack(input)
 			end
 
 			-- Remove whitespaces at start and end
+			-- @todo Just no store leading whitespace
 			lines[i] = lines[i]:match("^%s*(.-)%s*$")
 
 			-- Escape characters, needs to be improved and error out on invalid escape characters \0 is banned
@@ -35,7 +36,13 @@ local function langpack(input)
 			-- lines[i] = lines[i]:gsub("\\\[", '\[') -- Left square bracket
 			-- lines[i] = lines[i]:gsub("\\\]", '\]') -- Right square bracket
 
-			i = i + 1
+			if string.sub(lines[i], -1, -1) == '\\' then
+				-- @todo Should we insert a newline in continuing on next line
+				lines[i] = string.sub(lines[i], 0, -2)
+				-- @todo Properly remove whitespace before \
+			else
+				i = i + 1
+			end
 		elseif storing then
 			if lines[i] == nil then
 				lines[i] = ""
@@ -80,6 +87,7 @@ local function langpack(input)
 				matched = true
 			end
 
+			-- @todo This is completely wrong if multiline stuff is used, solution, mrege this with the other loop and keep an actual counter of the line number
 			assert(matched, "Invalid formating on line " .. i)
 
 		end
