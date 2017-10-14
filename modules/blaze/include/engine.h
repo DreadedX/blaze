@@ -117,7 +117,7 @@ namespace BLAZE_NAMESPACE {
 				}
 			}
 
-			typedef std::variant<std::string, int, double> SupportedTypes;
+			typedef std::variant<std::string, int> SupportedTypes;
 			inline std::string get(std::string name) {
 				return get(name, {});
 			}
@@ -154,13 +154,18 @@ namespace BLAZE_NAMESPACE {
 			std::string to_string(const sol::stack_proxy& value) {
 				return value;
 			}
-			// @todo This is kind of shitty
+
+			template <typename T>
+			struct always_false : std::false_type {};
 			std::string to_string(const SupportedTypes& value) {
-				if (auto s = std::get_if<std::string>(&value)) { return *s; }
-				if (auto s = std::get_if<int>(&value)) { return std::to_string(*s); }
-				if (auto s = std::get_if<double>(&value)) { return std::to_string(*s); }
-				throw std::logic_error("Type included in SupportedTypes, but not implemented");
+				return std::visit([](auto&& arg) -> std::string {
+					using T = std::decay_t<decltype(arg)>;
+					if constexpr (std::is_same_v<T, std::string>) { return arg; }
+					else if constexpr (std::is_same_v<T, int>) {return std::to_string(arg); }
+					else { static_assert(always_false<T>::value, "Non-exhaustive visitor!");}
+				}, value);
 			}
+
 			std::unordered_map<std::string, std::string> _strings;
 	};
 }
