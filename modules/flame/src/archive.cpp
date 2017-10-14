@@ -2,7 +2,6 @@
 
 #include "archive.h"
 #include "asset_data.h"
-#include "meta_asset.h"
 #include "asset_list.h"
 #include "tasks.h"
 #include "binary_helper.h"
@@ -107,6 +106,9 @@ namespace FLAME_NAMESPACE {
 		_fh->lock();
 
 		fs.seekg(PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC));
+		uint8_t x;
+		binary::read(fs, x);
+		_compression = static_cast<Compression>(x);
 		binary::read(fs, _name);
 		binary::read(fs, _author);
 		binary::read(fs, _description);
@@ -154,6 +156,22 @@ namespace FLAME_NAMESPACE {
 		return _dependencies;
 	}
 
+	MetaAsset::Workflow Archive::create_workflow() {
+		MetaAsset::Workflow workflow;
+
+		switch (_compression) {
+			case Compression::none:
+				break;
+			case Compression::zlib:
+				workflow.tasks.push_back(zlib::decompress);
+				break;
+			default:
+				throw std::logic_error("Decompression type not implemented");
+		}
+
+		return workflow;
+	}
+
 	// @todo Should we precompute this, or just compute it as we need it
 	std::vector<MetaAsset> Archive::get_meta_assets() {
 		std::vector<MetaAsset> meta_assets;
@@ -164,7 +182,7 @@ namespace FLAME_NAMESPACE {
 		fs.seekg(0, std::ios::end);
 		unsigned long archive_size = fs.tellg();
 
-		unsigned long next_meta_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + _name.length()+1 + _author.length()+1 +_description.length()+1 + sizeof(uint16_t) /* version */;
+		unsigned long next_meta_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + sizeof(Compression) + _name.length()+1 + _author.length()+1 +_description.length()+1 + sizeof(uint16_t) /* version */;
 
 		for (auto& dependency : _dependencies) {
 			next_meta_asset += dependency.first.length()+1 + sizeof(uint16_t);
@@ -172,8 +190,7 @@ namespace FLAME_NAMESPACE {
 		// null terminator at the end of the dependency list
 		next_meta_asset += 1;
 
-		MetaAsset::Workflow workflow;
-		workflow.tasks.push_back(zlib::decompress);
+		auto workflow = create_workflow();
 
 		while (next_meta_asset < archive_size) {
 			fs.seekg(next_meta_asset);

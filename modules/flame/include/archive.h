@@ -2,10 +2,16 @@
 
 #include "flame.h"
 #include "file_handler.h"
+#include "meta_asset.h"
 
 #include "sha3.h"
 
 namespace FLAME_NAMESPACE {
+
+	enum class Compression: uint8_t {
+		none,
+		zlib
+	};
 
 	constexpr uint8_t MAGIC[] = {'F','L','M','b'};
 	typedef CryptoPP::SHA3_256 HASH_ALOGRITHM;
@@ -34,6 +40,8 @@ namespace FLAME_NAMESPACE {
 			std::vector<MetaAsset> get_meta_assets();
 
 		private:
+			MetaAsset::Workflow create_workflow();
+
 			std::shared_ptr<FileHandler> _fh;
 			std::string _name;
 			std::string _author;
@@ -42,5 +50,7 @@ namespace FLAME_NAMESPACE {
 			std::vector<std::pair<std::string, uint16_t>> _dependencies;
 
 			uint8_t _key[PUBLIC_KEY_SIZE];
+
+			Compression _compression;
 	};
 };

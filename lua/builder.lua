@@ -5,6 +5,7 @@ local builder = {}
 -- @todo Improve this
 local archive_template = {
 	path = "string",
+	compression = "number",
 	author = "string",
 	description = "string",
 	version = "number",
@@ -17,7 +18,7 @@ function builder.build (archives)
 	if (lua_helper.verify(archives, archive_template)) then
 		for archive_name,archive_config in pairs(archives) do
 			file = helper.open_new_file(archive_config.path)
-			local archive = flame.ArchiveWriter.new(archive_name, file, archive_config.author, archive_config.description, archive_config.version)
+			local archive = flame.ArchiveWriter.new(archive_name, file, archive_config.author, archive_config.description, archive_config.version, archive_config.compression)
 
 			for dependency,version in pairs(archive_config.dependencies) do
 				archive:add_dependency(dependency, version)

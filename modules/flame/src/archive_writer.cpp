@@ -2,7 +2,6 @@
 #include "file_handler.h"
 #include "asset_data.h"
 #include "binary_helper.h"
-#include "meta_asset.h"
 #include "tasks.h"
 
 #include "rsa.h"
@@ -10,8 +9,9 @@
 
 namespace FLAME_NAMESPACE {
 
-	ArchiveWriter::ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version) : _fh(fh), _name(name), _author(author), _description(description), _version(version) {}
+	ArchiveWriter::ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version, flame::Compression compression) : _fh(fh), _name(name), _author(author), _description(description), _version(version), _compression(compression) {}
 
+	// @todo This needs to go in the constructor
 	void ArchiveWriter::initialize() {
 		if (_initialized) {
 			throw std::logic_error("Archive is already initialized");
@@ -30,6 +30,7 @@ namespace FLAME_NAMESPACE {
 			binary::write(fs, (uint8_t) 0x00);
 		}
 
+		binary::write(fs, static_cast<uint8_t>(_compression));
 		binary::write(fs, _name);
 		binary::write(fs, _author);
 		binary::write(fs, _description);
@@ -100,6 +101,22 @@ namespace FLAME_NAMESPACE {
 		_valid = true;
 	}
 
+	MetaAsset::Workflow ArchiveWriter::create_workflow() {
+		MetaAsset::Workflow workflow;
+
+		switch (_compression) {
+			case Compression::none:
+				break;
+			case Compression::zlib:
+				workflow.tasks.push_back(zlib::compress);
+				break;
+			default:
+				throw std::logic_error("Compression type not implemented");
+		}
+
+		return workflow;
+	}
+
 	void ArchiveWriter::add(MetaAsset& meta_asset) {
 		if (_valid) {
 			throw std::logic_error("Archive is already finalized");
@@ -107,11 +124,9 @@ namespace FLAME_NAMESPACE {
 		if (!_initialized) {
 			throw std::logic_error("You need to initialize the archive first");
 		}
-		MetaAsset::Workflow workflow;
-		workflow.tasks.push_back(zlib::compress);
 
 		// Start loading
-		auto data = meta_asset.get_data(workflow);
+		auto data = meta_asset.get_data(create_workflow());
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
@@ -129,6 +144,7 @@ namespace FLAME_NAMESPACE {
 		_fh->unlock();
 	}
 
+	// @todo This should just be set in the constructor
 	void ArchiveWriter::add_dependency(std::string name, uint16_t version) {
 		if (_initialized) {
 			throw std::logic_error("You cannot add dependecies after initializing");

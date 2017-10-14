@@ -45,12 +45,17 @@ namespace FLAME_NAMESPACE::lua {
 		// @todo This should not be available in the game
 		flame.new_usertype<ArchiveWriter> ("ArchiveWriter",
 			sol::constructors<
-				ArchiveWriter(std::string, std::shared_ptr<FileHandler> fh, std::string, std::string, uint16_t)
+				ArchiveWriter(std::string, std::shared_ptr<FileHandler> fh, std::string, std::string, uint16_t, Compression)
 			>(),
 			"add_dependency", &ArchiveWriter::add_dependency,
 			"initialize", &ArchiveWriter::initialize,
 			"finalize", &ArchiveWriter::finalize,
 			"add", &ArchiveWriter::add
+		);
+
+		flame.new_enum("Compression",
+			"none", Compression::none,
+			"zlib", Compression::zlib
 		);
 
 		flame.new_usertype<FileHandler> ("FileHandler",

@@ -6,6 +6,7 @@ priv_key = "keys/test.priv"
 builder.build({
 	base = {
 		path = "archives/base.flm",
+		compression = flame.Compression.zlib,
 		author = "Dreaded_X",
 		description = "This archive contains all the required assets for the game engine to function",
 		version = 1,
@@ -15,6 +16,7 @@ builder.build({
 	},
 	test = {
 		path = "archives/test.flm",
+		compression = flame.Compression.zlib,
 		author = "Dreaded_X",
 		description = "This is the first archive being made using the new scripting stuff",
 		version = 1,
@@ -87,7 +89,7 @@ function print_archive_info(archive)
 	end
 end
 
--- local base = flame.Archive.new(helper.open_file("archives/base.flm"))
--- print_archive_info(base);
--- local test = flame.Archive.new(helper.open_file("archives/test.flm"))
--- print_archive_info(test);
+local base = flame.Archive.new(helper.open_file("archives/base.flm"))
+print_archive_info(base);
+local test = flame.Archive.new(helper.open_file("archives/test.flm"))
+print_archive_info(test);
