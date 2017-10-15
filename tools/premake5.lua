@@ -1,5 +1,3 @@
-local pkgconfig = require 'pkgconfig'
-
 project "keygen"
 	kind "ConsoleApp"
 	files "keygen/src/**.cpp"
@@ -20,10 +18,12 @@ project "packager"
 		"packager/include",
 		"../modules/flame/include",
 		"../modules/lua-flame/include",
+		"../modules/generated/include",
 		"../third_party/sol2/",
 		"../third_party/cryptopp",
 	}
 	links {
+		"generated",
 		"lua-flame",
 		"flame",
 		"lua",

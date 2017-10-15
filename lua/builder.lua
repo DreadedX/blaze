@@ -15,37 +15,38 @@ local archive_template = {
 }
 
 function builder.build (archives)
-	if (lua_helper.verify(archives, archive_template)) then
-		for archive_name,archive_config in pairs(archives) do
-			file = helper.open_new_file(archive_config.path)
-			local archive = flame.ArchiveWriter.new(archive_name, file, archive_config.author, archive_config.description, archive_config.version, archive_config.compression)
+	-- @todo We need to first make the verify thing better
+	-- if (lua_helper.verify(archives, archive_template)) then
+		for _,archive in ipairs(archives) do
+			file = helper.open_new_file(archive.path)
+			local archive_writer = flame.ArchiveWriter.new(archive.name, file, archive.author, archive.description, archive.version, archive.compression)
 
-			for dependency,version in pairs(archive_config.dependencies) do
-				archive:add_dependency(dependency, version)
+			for _,dependency in ipairs(archive.dependencies) do
+				archive_writer:add_dependency(dependency.name, dependency.version)
 			end
 
-			archive:initialize()
+			archive_writer:initialize()
 
-			for asset,asset_data in pairs(archive_config.assets) do
+			for _,asset in ipairs(archive.assets) do
 				workflow = flame.Workflow.new()
-				tasks = asset_data["tasks"];
+				tasks = asset.tasks;
 				if tasks ~= nil then
 					for _, task in ipairs(tasks) do
 						workflow.tasks:add(task);
 					end
 				end
-				local asset = flame.MetaAsset.new(asset, asset_data[1], asset_data[2], workflow)
-				archive:add(asset)
+				local meta_asset = flame.MetaAsset.new(asset.name, asset.path, asset.version, workflow)
+				archive_writer:add(meta_asset)
 			end
 
-			print(archive_config.key)
-			archive:finalize(helper.load_private_key(archive_config.key))
+			print(archive.key)
+			archive_writer:finalize(helper.load_private_key(archive.key))
 
 			file:close()
 		end
-	else
-		print("ERROR")
-	end
+	-- else
+	-- 	print("ERROR")
+	-- end
 end
 
 return builder

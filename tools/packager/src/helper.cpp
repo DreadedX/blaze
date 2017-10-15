@@ -33,9 +33,7 @@ void bind(sol::state& lua) {
 	helper.set_function("open_file", &open_file);
 	helper.set_function("open_new_file", &open_new_file);
 	helper.set_function("load_private_key", &load_private_key);
-	helper.set_function("get_trusted_key", []{
-		return trusted_key;
-	});
+	helper.set_function("get_trusted_key", &get_trusted_key);
 
 	helper.set_function("get_external_task", &get_external_task);
 

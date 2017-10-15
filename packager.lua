@@ -4,7 +4,8 @@ local langpack = require "lua.langpack"
 priv_key = "keys/test.priv"
 
 builder.build({
-	base = {
+	{
+		name = "base",
 		path = "archives/base.flm",
 		compression = flame.Compression.zlib,
 		author = "Dreaded_X",
@@ -14,7 +15,8 @@ builder.build({
 		assets = {},
 		dependencies = {}
 	},
-	test = {
+	{
+		name = "test",
 		path = "archives/test.flm",
 		compression = flame.Compression.zlib,
 		author = "Dreaded_X",
@@ -22,13 +24,13 @@ builder.build({
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			Test = { "assets/script/Test.lua", 1, tasks = { } },
+			{ name = "Test", path = "assets/script/Test.lua", version = 1, tasks = { } },
 			-- Language packs
-			Dutch = { "assets/language/Dutch.lang", 1, tasks = { langpack } },
-			English = { "assets/language/English.lang", 1, tasks = { langpack } },
+			{ name = "Dutch", path = "assets/language/Dutch.lang", version = 1, tasks = { langpack } },
+			{ name = "English", path = "assets/language/English.lang", version = 1, tasks = { langpack } },
 		},
 		dependencies = {
-			base = 1
+			{name = "base", version = 1}
 		}
 	}
 })

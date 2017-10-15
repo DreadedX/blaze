@@ -1,3 +1,10 @@
+project "generated"
+	kind "StaticLib"
+	files "generated/src/**.cpp"
+	includedirs {
+		"generated/include"
+	}
+
 project "flame"
 	kind "StaticLib"
 	files "flame/src/**.cpp"

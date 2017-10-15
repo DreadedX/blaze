@@ -1,6 +1,8 @@
 #include "asset_list.h"
 #include "engine.h"
 
+#include "version.h"
+
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
@@ -23,6 +25,9 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 }
 
 int main() {
+	std::cout << "Version number: " << get_version_number() <<'\n';
+	std::cout << "Version string: " << get_version_string() <<'\n';
+
 	// Initialze engine
 	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
 	auto asdf = event_bus::Subscription<MissingDependencies>(std::ref(handle_missing_dependencies));
