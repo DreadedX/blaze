@@ -14,13 +14,28 @@ end
 do
 	-- @todo This will fail if we are building from scratch
 	local key = readAll("../keys/test.pub")
-	local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
-	io.output(file)
-	io.write("#include \"trusted_key.h\"\n\n")
-	io.write("uint8_t trusted_key[] = {" .. key:tohex() .. "};\n\n")
-	io.write("uint8_t* get_trusted_key() {\n")
-	io.write("\treturn trusted_key;\n")
-	io.write("}")
+
+	local content = ""
+	content = content .. "#include \"trusted_key.h\"\n\n"
+	content = content .. "uint8_t trusted_key[] = {" .. key:tohex() .. "};\n\n"
+	content = content .. "uint8_t* get_trusted_key() {\n"
+	content = content .. "\treturn trusted_key;\n"
+	content = content .. "}"
+
+	local file = io.open("../modules/generated/src/trusted_key.cpp", "rb")
+	local current = ""
+	if file ~= nil then
+		current = file:read("*all")
+		file:close()
+	end
+
+	if (current ~= content) then
+		local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
+		io.output(file)
+		io.write(content)
+		print "Regenerating trusted_key.cpp"
+		file:close()
+	end
 end
 
 -- Write version
@@ -35,13 +50,27 @@ do
 	local version_string = string.sub(handle:read("a*"), 0, -2)
 	handle:close()
 
-	local file = io.open("../modules/generated/src/version.cpp", "w+")
-	io.output(file)
-	io.write("#include \"version.h\"\n\n")
-	io.write("uint32_t get_version_number() {\n")
-	io.write("\treturn " .. version_number .. ";\n")
-	io.write("}\n\n")
-	io.write("std::string get_version_string() {\n")
-	io.write("\treturn \"" .. version_string .. "\";\n")
-	io.write("}")
+	local content = ""
+	content = content .. "#include \"version.h\"\n\n"
+	content = content .. "uint32_t get_version_number() {\n"
+	content = content .. "\treturn " .. version_number .. ";\n"
+	content = content .. "}\n\n"
+	content = content .. "std::string get_version_string() {\n"
+	content = content .. "\treturn \"" .. version_string .. "\";\n"
+	content = content .. "}"
+
+	local file = io.open("../modules/generated/src/version.cpp", "rb")
+	local current = ""
+	if file ~= nil then
+		current = file:read("*all")
+		file:close()
+	end
+
+	if (current ~= content) then
+		local file = io.open("../modules/generated/src/version.cpp", "w+")
+		io.output(file)
+		io.write(content)
+		print "Regenerating version.cpp"
+		file:close()
+	end
 end
