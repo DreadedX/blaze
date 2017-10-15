@@ -6,7 +6,7 @@
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
-	std::cout << "<Dreaded_X> " << event->get_text() << '\n';;
+	std::cout << "<Dreaded_X> " << event->get_text() << '\n';
 }
 
 void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {

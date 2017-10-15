@@ -1,0 +1,3 @@
+let &makeprg="premake5 gmake && make -C build -j6 && ./build/bin/Linux/Debug/packager"
+map <silent> <F9> :Make<cr>
+map <silent> <F10> :Start ./build/bin/Linux/Debug/game && read<cr>
