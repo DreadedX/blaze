@@ -1,10 +1,8 @@
 project "game"
-	kind "ConsoleApp"
-	location "../build/game"
+	kind "WindowedApp"
 	files "src/**.cpp"
 	includedirs {
-		-- Find better way to link to 5.2
-		"/usr/include/lua5.2",
+		"../third_party/lua",
 		"include",
 		"../modules/flame/include",
 		"../modules/blaze/include",
@@ -16,8 +14,8 @@ project "game"
 		"blaze",
 		"lua-flame",
 		"flame",
+		"lua",
 		"cryptopp",
-		"lua5.2",
 		"z",
 		"pthread",
 	}

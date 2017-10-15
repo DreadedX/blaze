@@ -1,6 +1,5 @@
 project "flame"
 	kind "StaticLib"
-	location "../build/flame"
 	files "flame/src/**.cpp"
 	includedirs {
 		"flame/include",
@@ -9,11 +8,9 @@ project "flame"
 
 project "lua-flame"
 	kind "StaticLib"
-	location "../build/lua-flame"
 	files "lua-flame/src/**.cpp"
 	includedirs {
-		-- Find better way to link to 5.2
-		"/usr/include/lua5.2",
+		"../third_party/lua",
 		"lua-flame/include",
 		"flame/include",
 		"../third_party/sol2/",
@@ -22,11 +19,9 @@ project "lua-flame"
 
 project "blaze"
 	kind "StaticLib"
-	location "../build/blaze"
 	files "blaze/src/**.cpp"
 	includedirs {
-		-- Find better way to link to 5.2
-		"/usr/include/lua5.2",
+		"../third_party/lua",
 		"blaze/include",
 		"flame/include",
 		"lua-flame/include",

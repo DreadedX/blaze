@@ -1,6 +1,5 @@
 project "cryptopp"
 	kind "StaticLib"
-	location "../build/cryptopp"
 	files "cryptopp/*.cpp"
 	removefiles {
 		"cryptopp/test.cpp",
@@ -22,3 +21,9 @@ project "cryptopp"
 		"cryptopp/cryptlib_bds.cpp",
 	}
 	includedirs "cryptopp"
+	includedirs "lua"
+
+project "lua"
+	kind "StaticLib"
+	files "lua/*.c"
+	includedirs "lua"

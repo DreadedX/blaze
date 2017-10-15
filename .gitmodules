@@ -7,3 +7,9 @@
 [submodule "third_party/fmt"]
 	path = third_party/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "third_party/premake-androidmk"]
+	path = third_party/premake-androidmk
+	url = https://github.com/Meoo/premake-androidmk
+[submodule "third_party/lua"]
+	path = third_party/lua
+	url = https://github.com/lua/lua

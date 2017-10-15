@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <iterator>
+#include <vector>
 
 namespace BLAZE_NAMESPACE {
 

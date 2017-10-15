@@ -2,7 +2,6 @@ local pkgconfig = require 'pkgconfig'
 
 project "keygen"
 	kind "ConsoleApp"
-	location "../build/keygen"
 	files "keygen/src/**.cpp"
 	includedirs {
 		"../modules/flame/include",
@@ -15,11 +14,9 @@ project "keygen"
 
 project "packager"
 	kind "ConsoleApp"
-	location "../build/packager"
 	files "packager/src/**.cpp"
 	includedirs {
-		-- Find better way to link to 5.2
-		"/usr/include/lua5.2",
+		"../third_party/lua",
 		"packager/include",
 		"../modules/flame/include",
 		"../modules/lua-flame/include",
@@ -29,8 +26,8 @@ project "packager"
 	links {
 		"lua-flame",
 		"flame",
+		"lua",
 		"cryptopp",
-		"lua5.2",
 		"z",
 		"pthread",
 		"dl",

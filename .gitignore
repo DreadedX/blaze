@@ -21,6 +21,9 @@ Makefile
 *.make
 build/
 
+### premake-androidmk ###
+android/
+
 ### Vim ###
 # swap
 [._]*.s[a-v][a-z]

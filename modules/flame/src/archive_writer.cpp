@@ -7,6 +7,8 @@
 #include "rsa.h"
 #include "osrng.h"
 
+#include <array>
+
 namespace FLAME_NAMESPACE {
 
 	ArchiveWriter::ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version, flame::Compression compression) : _fh(fh), _name(name), _author(author), _description(description), _version(version), _compression(compression) {}
