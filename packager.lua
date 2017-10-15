@@ -1,5 +1,5 @@
-local builder = require "lua.builder"
-local langpack = require "lua.langpack"
+local builder = require "scripts.builder"
+local langpack = require "scripts.langpack"
 
 priv_key = "keys/test.priv"
 
@@ -91,7 +91,7 @@ function print_archive_info(archive)
 	end
 end
 
-local base = flame.Archive.new(helper.open_file("archives/base.flm"))
-print_archive_info(base);
-local test = flame.Archive.new(helper.open_file("archives/test.flm"))
-print_archive_info(test);
+-- local base = flame.Archive.new(helper.open_file("archives/base.flm"))
+-- print_archive_info(base);
+-- local test = flame.Archive.new(helper.open_file("archives/test.flm"))
+-- print_archive_info(test);

@@ -1,4 +1,4 @@
-local lua_helper = require "lua.helper" 
+local lua_helper = require "scripts.helper" 
 
 local builder = {}
 
@@ -35,11 +35,11 @@ function builder.build (archives)
 						workflow.tasks:add(task);
 					end
 				end
+
 				local meta_asset = flame.MetaAsset.new(asset.name, asset.path, asset.version, workflow)
 				archive_writer:add(meta_asset)
 			end
 
-			print(archive.key)
 			archive_writer:finalize(helper.load_private_key(archive.key))
 
 			file:close()

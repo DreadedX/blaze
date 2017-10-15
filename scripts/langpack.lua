@@ -51,8 +51,6 @@ local function langpack(input)
 					matched = true
 				end
 
-				print(line)
-
 				-- Line must end directly after section name
 				new_section = line:match('^%[([^%[%]]+)%]$')
 				if new_section then

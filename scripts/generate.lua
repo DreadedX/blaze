@@ -1,4 +1,3 @@
-#!/usr/sbin/lua
 function readAll(file)
     local f = io.open(file, "rb")
     local content = f:read("*all")
@@ -13,6 +12,7 @@ end
 
 -- Write trusted key
 do
+	-- @todo This will fail if we are building from scratch
 	local key = readAll("../keys/test.pub")
 	local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
 	io.output(file)

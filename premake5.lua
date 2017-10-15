@@ -1,5 +1,5 @@
 require "third_party.premake-androidmk.androidmk"
-require "lua.generate"
+require "scripts.generate"
 
 language "C++"
 cppdialect "C++17"
