@@ -14,8 +14,15 @@ int main() {
 
 	CryptoPP::RSA::PublicKey rsa_public(rsa_private);
 
-	std::fstream pubfile("keys/test.pub", std::ios::out);
-	std::fstream privfile("keys/test.priv", std::ios::out);
+	// @todo We need to make these not hardcoded
+	std::fstream pubfile("../keys/test.pub", std::ios::out);
+	if (!pubfile.is_open()) {
+		throw std::runtime_error("Failed to open keys/test.pub");
+	}
+	std::fstream privfile("../keys/test.priv", std::ios::out);
+	if (!privfile.is_open()) {
+		throw std::runtime_error("Failed to open keys/test.priv");
+	}
 	CryptoPP::ByteQueue pubqueue;
 	CryptoPP::ByteQueue privqueue;
 	rsa_public.Save(pubqueue);

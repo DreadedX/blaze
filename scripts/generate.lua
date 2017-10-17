@@ -1,8 +1,11 @@
+#!/bin/lua
 function readAll(file)
     local f = io.open(file, "rb")
-    local content = f:read("*all")
-    f:close()
-    return content
+	if f then
+		local content = f:read("*all")
+		f:close()
+		return content
+	end
 end
 function string.tohex(str)
     return (str:gsub('.', function (c)
@@ -15,26 +18,28 @@ do
 	-- @todo This will fail if we are building from scratch
 	local key = readAll("../keys/test.pub")
 
-	local content = ""
-	content = content .. "#include \"trusted_key.h\"\n\n"
-	content = content .. "uint8_t trusted_key[] = {" .. key:tohex() .. "};\n\n"
-	content = content .. "uint8_t* get_trusted_key() {\n"
-	content = content .. "\treturn trusted_key;\n"
-	content = content .. "}"
+	if key then
+		local content = ""
+		content = content .. "#include \"trusted_key.h\"\n\n"
+		content = content .. "uint8_t trusted_key[] = {" .. key:tohex() .. "};\n\n"
+		content = content .. "uint8_t* get_trusted_key() {\n"
+		content = content .. "\treturn trusted_key;\n"
+		content = content .. "}"
 
-	local file = io.open("../modules/generated/src/trusted_key.cpp", "rb")
-	local current = ""
-	if file ~= nil then
-		current = file:read("*all")
-		file:close()
-	end
+		local file = io.open("../modules/generated/src/trusted_key.cpp", "rb")
+		local current = ""
+		if file then
+			current = file:read("*all")
+			file:close()
+		end
 
-	if (current ~= content) then
-		local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
-		io.output(file)
-		io.write(content)
-		print "Regenerating trusted_key.cpp"
-		file:close()
+		if (current ~= content) then
+			local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
+			io.output(file)
+			io.write(content)
+			print "Regenerating trusted_key.cpp"
+			file:close()
+		end
 	end
 end
 

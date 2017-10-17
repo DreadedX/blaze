@@ -1,12 +1,15 @@
 require "third_party.premake-androidmk.androidmk"
 require "scripts.generate"
+require "scripts.functions"
+
+defaultAction("linux", "gmake")
 
 language "C++"
 cppdialect "C++17"
 
 workspace "blaze"
 	configurations { "Debug", "Release" }
-	platforms { "Linux", "Windows" }
+	platforms { "Linux" }
 	location "build"
 	flags { "MultiProcessorCompile" }
 	warnings "Extra"
@@ -32,12 +35,60 @@ workspace "blaze"
 		system "linux"
 		architecture "x86_64"
 
-	filter "platforms:Windows"
-		system "windows"
-		architecture "x86_64"
+project "cryptopp"
+	kind "StaticLib"
+	files "third_party/cryptopp/*.cpp"
+	removefiles { "third_party/cryptopp/test.cpp", "third_party/cryptopp/bench1.cpp", "third_party/cryptopp/bench2.cpp", "third_party/cryptopp/validat1.cpp", "third_party/cryptopp/validat2.cpp", "third_party/cryptopp/validat3.cpp", "third_party/cryptopp/adhoc.cpp", "third_party/cryptopp/datatest.cpp", "third_party/cryptopp/regtest.cpp", "third_party/cryptopp/fipsalgt.cpp", "third_party/cryptopp/dlltest.cpp", "third_party/cryptopp/fipstest.cpp", "third_party/cryptopp/pch.cpp", "third_party/cryptopp/simple.cpp", "third_party/cryptopp/winpipes.cpp", "third_party/cryptopp/cryptlib_bds.cpp" }
+	includeCryptoPP()
 
+project "lua"
+	kind "StaticLib"
+	files "third_party/lua/**"
 
-	include "third_party"
-	include "modules"
-	include "tools"
-	include "game"
+project "generated"
+	kind "StaticLib"
+	files "modules/generated/src/**"
+	includeGenerated()
+
+	dependson "keygen"
+
+project "flame"
+	kind "StaticLib"
+	files "modules/flame/src/**"
+	includeFlame()
+
+project "blaze"
+	kind "StaticLib"
+	files "modules/blaze/src/**"
+	includeBlaze()
+
+project "lua-bind"
+	kind "StaticLib"
+	files "modules/lua-flame/src/**"
+	includeLuaBind()
+
+project "keygen"
+	-- removeplatforms { "Android" }
+	kind "ConsoleApp"
+	files "tools/keygen/src/**"
+	includedirs "tools/keygen/include"
+	includeFlame()
+
+	-- @todo Run this if the keys does not yet exist even after keygen has been build
+	postbuildcommands {"%{cfg.buildtarget.abspath}", "../scripts/generate.lua"}
+
+project "packager"
+	kind "ConsoleApp"
+	files "tools/packager/src/**"
+	includedirs "tools/packager/include"
+	includeGenerated()
+	includeLuaBind()
+	includeFlame()
+	-- @todo This depends on the platform
+	links "dl"
+
+project "game"
+	kind "WindowedApp"
+	files "game/src/**"
+	includedirs "game/include"
+	includeBlaze()
