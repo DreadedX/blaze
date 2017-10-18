@@ -2,60 +2,16 @@
 #include "events.h"
 
 #include "bind_flame.h"
+#include "bind_blaze.h"
 
-sol::state lua;
+sol::state lua_state;
 
 namespace BLAZE_NAMESPACE {
 
-	namespace asset_manager {
-		std::list<std::shared_ptr<GameAsset>> _private::loading_assets;
-
-		void load_assets() {
-			_private::loading_assets.remove_if([](std::shared_ptr<GameAsset> asset){
-				bool loaded = asset->is_loaded();
-				if (loaded) {
-					asset->post_load();
-				}
-				return loaded;
-			});
-		}
-
-		size_t loading_count() {
-			return _private::loading_assets.size();
-		}
-	}
-
-	template <typename T>
-	void bind_event_subscription(sol::table& blaze, std::string name) {
-		blaze.new_usertype<event_bus::Subscription<T>>(name,
-			sol::constructors<
-				event_bus::Subscription<T>(std::function<void(std::shared_ptr<T>)>)
-			>(),
-			"unsubscribe", &event_bus::Subscription<T>::unsubscribe
-		);
-	}
-
-	// @todo This needs to be moved to a lua bind module, rename lua-flame to bind_lua and put all lua binding there
-	void bind(sol::state& lua) {
-
-		sol::table blaze = lua.create_table("blaze");
-
-		bind_event_subscription<ChatMessage>(blaze, "ChatSubscription");
-		blaze.new_usertype<ChatMessage>("ChatMessage",
-			sol::base_classes, sol::bases<Event>(),
-			"text", sol::property(&ChatMessage::get_text)
-		);
-
-		blaze.new_usertype<Language>("Language",
-			sol::base_classes, sol::bases<GameAsset>(),
-			"get", &Language::get<sol::variadic_args>
-		);
-	}
-
 	void initialize(std::initializer_list<std::string> archives) {
-		lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
-		flame::lua::bind(lua);
-		bind(lua);
+		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+		flame::lua::bind(lua_state);
+		blaze::lua::bind(lua_state);
 
 		for (auto& archive_name : archives) {
 			// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
@@ -75,6 +31,6 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	sol::state& get_lua_state() {
-		return lua;
+		return lua_state;
 	}
 }

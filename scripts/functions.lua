@@ -47,14 +47,13 @@ function includeBlaze()
 		links "blaze"
 	filter {}
 	includeGenerated()
-	includeFlame()
 	includeLuaBind()
+	includeFlame()
 end
 function includeLuaBind()
-	includedirs "modules/lua-flame/include"
+	includedirs "modules/lua-bind/include"
 	filter "kind:not StaticLib"
 		links "lua-bind"
 	filter {}
-	includeFlame()
 	includeSol2()
 end

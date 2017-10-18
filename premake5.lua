@@ -64,8 +64,10 @@ project "blaze"
 
 project "lua-bind"
 	kind "StaticLib"
-	files "modules/lua-flame/src/**"
+	files "modules/lua-bind/src/**"
 	includeLuaBind()
+	includeFlame()
+	includeBlaze()
 
 project "keygen"
 	-- removeplatforms { "Android" }

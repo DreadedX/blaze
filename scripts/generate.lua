@@ -33,7 +33,7 @@ do
 			file:close()
 		end
 
-		if (current ~= content) then
+		if current ~= content then
 			local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
 			io.output(file)
 			io.write(content)
@@ -71,7 +71,7 @@ do
 		file:close()
 	end
 
-	if (current ~= content) then
+	if current ~= content then
 		local file = io.open("../modules/generated/src/version.cpp", "w+")
 		io.output(file)
 		io.write(content)

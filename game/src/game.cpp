@@ -1,5 +1,6 @@
 #include "asset_list.h"
 #include "engine.h"
+#include "asset_manager.h"
 
 #include "version.h"
 

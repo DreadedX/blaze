@@ -20,10 +20,8 @@ namespace BLAZE_NAMESPACE {
 
 	class ChatMessage : public Event {
 		public:
-			ChatMessage(std::string text) : _text(text) {}
-			const std::string& get_text() const {
-				return _text;
-			}
+			ChatMessage(std::string text);
+			const std::string& get_text() const;
 
 		private:
 			std::string _text;
@@ -31,15 +29,10 @@ namespace BLAZE_NAMESPACE {
 
 	class MissingDependencies : public Event {
 		public:
-			MissingDependencies(std::string name, std::vector<std::pair<std::string, uint16_t>> missing) : _name(name), _missing(missing) {}
+			MissingDependencies(std::string name, std::vector<std::pair<std::string, uint16_t>> missing);
 
-			const auto& get_missing() const {
-				return _missing;
-			}
-
-			const auto& get_name() const {
-				return _name;
-			}
+			const std::vector<std::pair<std::string, uint16_t>>& get_missing() const;
+			const std::string& get_name() const;
 
 		private:
 			std::string _name;
