@@ -1,21 +1,25 @@
 -- Called when script is loaded
 function init()
-	print("Init code goes here");
-	subscription = blaze.ChatSubscription.new(chat_handler);
+	print("This is the init script of the test archive")
+	subscription = blaze.ChatSubscription.new(chat_handler)
+
+	durability = 12
 end
 
 -- Called every frame
 function update()
-	print("Update code goes here");
-	print(get_lang():get("pickaxe.description", 12, 100))
+	print(get_lang():get("pickaxe.name"))
+	print(get_lang():get("pickaxe.description", durability, 100))
+
+	durability = durability - 1
 end
 
 -- Called on desctructor
 function done()
-	print("Cleanup code goes here");
+	print("Cleanup for test archive")
 	-- subscription:unsubscribe();
 end
 
 function chat_handler(event)
-	print(string.format("CHAT MESSAGE: %s", event.text));
+	print(string.format("<USERNAME> %s", event.text))
 end

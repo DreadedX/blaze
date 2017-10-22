@@ -29,6 +29,13 @@ int main() {
 	std::cout << "Version number: " << get_version_number() <<'\n';
 	std::cout << "Version string: " << get_version_string() <<'\n';
 
+	// Override LuaTest in archive with version from disk
+	{
+		// @todo This should go into a lua script
+		flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10, flame::MetaAsset::Workflow());
+		flame::asset_list::add(lua_asset);
+	}
+
 	// Initialze engine
 	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
 	auto asdf = event_bus::Subscription<MissingDependencies>(std::ref(handle_missing_dependencies));
@@ -45,15 +52,8 @@ int main() {
 		std::cout << "==============\n";
 	}
 
-	// Override LuaTest in archive with version from disk
-	{
-		// @todo This should go into a lua script
-		// flame::MetaAsset lua_asset("Test", "assets/script/Test.lua", 10, flame::MetaAsset::Workflow());
-		// flame::asset_list::add(lua_asset);
-	}
-
 	// asset_manager
-	auto script = asset_manager::new_asset<Script>("Test");
+	// auto script = asset_manager::new_asset<Script>("Test");
 	auto en = asset_manager::new_asset<Language>("English");
 	get_lua_state().set_function("get_lang", [en]{
 		return en;
@@ -75,7 +75,8 @@ int main() {
 
 		// Simulate the core game loop
 		for (int i = 0; i < 3; ++i) {
-			script->update();
+			update();
+			// script->update();
 		}
 			
 		lang_test(en);

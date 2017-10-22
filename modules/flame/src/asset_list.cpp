@@ -11,9 +11,7 @@ namespace FLAME_NAMESPACE {
 		if (meta_asset != _meta_assets.end()) {
 			return meta_asset->second.get_data();
 		}
-		std::stringstream ss;
-		ss << "Can not find asset: '" << name << '\'';
-		throw std::runtime_error(ss.str());
+		throw std::runtime_error("Can not find asset: '" + name + '\'');
 	}
 
 	void asset_list::add(Archive& archive) {

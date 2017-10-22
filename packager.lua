@@ -24,7 +24,7 @@ builder.build({
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			{ name = "Test", path = "assets/script/Test.lua", version = 1, tasks = { } },
+			{ name = "test/Script", path = "assets/script/Test.lua", version = 1, tasks = { } },
 			-- Language packs
 			{ name = "Dutch", path = "assets/language/Dutch.lang", version = 1, tasks = { langpack } },
 			{ name = "English", path = "assets/language/English.lang", version = 1, tasks = { langpack } },
