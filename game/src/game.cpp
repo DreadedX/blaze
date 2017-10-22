@@ -32,7 +32,11 @@ int main() {
 	// Initialze engine
 	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
 	auto asdf = event_bus::Subscription<MissingDependencies>(std::ref(handle_missing_dependencies));
-	blaze::initialize({"archives/base.flm", "archives/test.flm"});
+	#ifdef ANDROID
+		blaze::initialize({"/data/data/nl.mtgames.blazebootstrap/files/base.flm", "/data/data/nl.mtgames.blazebootstrap/files/test.flm"});
+	#else
+		blaze::initialize({"archives/base.flm", "archives/test.flm"});
+	#endif
 
 	// Flame tests
 	{
@@ -44,8 +48,8 @@ int main() {
 	// Override LuaTest in archive with version from disk
 	{
 		// @todo This should go into a lua script
-		flame::MetaAsset lua_asset("Test", "assets/script/Test.lua", 10, flame::MetaAsset::Workflow());
-		flame::asset_list::add(lua_asset);
+		// flame::MetaAsset lua_asset("Test", "assets/script/Test.lua", 10, flame::MetaAsset::Workflow());
+		// flame::asset_list::add(lua_asset);
 	}
 
 	// asset_manager
@@ -87,3 +91,47 @@ int main() {
 		event_bus::send(std::make_shared<ChatMessage>("This is a test"));
 	}
 }
+
+#ifdef ANDROID
+#include <jni.h>
+#include <android/log.h>
+
+class androidbuf : public std::streambuf {
+	public:
+		enum { bufsize = 128 }; // ... or some other suitable buffer size
+		androidbuf() { this->setp(buffer, buffer + bufsize - 1); }
+
+	private:
+		int overflow(int c)
+		{
+			if (c == traits_type::eof()) {
+				*this->pptr() = traits_type::to_char_type(c);
+				this->sbumpc();
+			}
+			return this->sync()? traits_type::eof(): traits_type::not_eof(c);
+		}
+
+		int sync()
+		{
+			int rc = 0;
+			if (this->pbase() != this->pptr()) {
+				char writebuf[bufsize+1];
+				memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
+				writebuf[this->pptr() - this->pbase()] = '\0';
+
+				rc = __android_log_write(ANDROID_LOG_INFO, "std", writebuf) > 0;
+				this->setp(buffer, buffer + bufsize - 1);
+			}
+			return rc;
+		}
+
+		char buffer[bufsize];
+};
+
+extern "C" {
+	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject thiz) {
+		std::cout.rdbuf(new androidbuf);
+		main();
+	}
+}
+#endif

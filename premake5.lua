@@ -10,14 +10,18 @@ cppdialect "C++17"
 workspace "blaze"
 	configurations { "Debug", "Release" }
 	platforms { "Linux" }
-	location "build"
+	if _ACTION == "androidmk" then
+		location "android/jni"
+	else
+		location "build"
+	end
 	flags { "MultiProcessorCompile" }
 	warnings "Extra"
 	rtti "On"
 	exceptionhandling "On"
 	pic "On"
 
-	ndkabi "armeabi-v7a"
+	ndkabi "arm64-v8a"
 	ndkplatform "android-23"
 	ndktoolchainversion "clang"
 	ndkstl "c++_shared"
@@ -37,6 +41,7 @@ workspace "blaze"
 
 project "cryptopp"
 	kind "StaticLib"
+	cppdialect "C++14"
 	files "third_party/cryptopp/*.cpp"
 	removefiles { "third_party/cryptopp/test.cpp", "third_party/cryptopp/bench1.cpp", "third_party/cryptopp/bench2.cpp", "third_party/cryptopp/validat1.cpp", "third_party/cryptopp/validat2.cpp", "third_party/cryptopp/validat3.cpp", "third_party/cryptopp/adhoc.cpp", "third_party/cryptopp/datatest.cpp", "third_party/cryptopp/regtest.cpp", "third_party/cryptopp/fipsalgt.cpp", "third_party/cryptopp/dlltest.cpp", "third_party/cryptopp/fipstest.cpp", "third_party/cryptopp/pch.cpp", "third_party/cryptopp/simple.cpp", "third_party/cryptopp/winpipes.cpp", "third_party/cryptopp/cryptlib_bds.cpp" }
 	includeCryptoPP()
@@ -94,3 +99,4 @@ project "game"
 	files "game/src/**"
 	includedirs "game/include"
 	includeBlaze()
+	includePlatform()

@@ -4,6 +4,17 @@ function defaultAction(os_name, action_name)
 	end
 end
 
+function includeThreads() 
+	if _ACTION == "androidmk" then
+	else
+		links "pthread"
+	end
+end
+function includePlatform()
+	if _ACTION == "androidmk" then
+		links "log"
+	end
+end
 -- @todo We should only build when zlib is not available on system
 function includeZlib()
 	links "z"
@@ -38,8 +49,7 @@ function includeFlame()
 	filter {}
 	includeCryptoPP()
 	includeZlib()
-	-- @todo This depends on the platform
-	links "pthread"
+	includeThreads()
 end
 function includeBlaze()
 	includedirs "modules/blaze/include"

@@ -1,5 +1,7 @@
 #include "asset_list.h"
 
+#include <iostream>
+
 namespace FLAME_NAMESPACE {
 	std::vector<Archive> asset_list::_archives;
 	std::unordered_map<std::string, MetaAsset> asset_list::_meta_assets;
@@ -9,7 +11,9 @@ namespace FLAME_NAMESPACE {
 		if (meta_asset != _meta_assets.end()) {
 			return meta_asset->second.get_data();
 		}
-		throw std::runtime_error("Can not find asset");
+		std::stringstream ss;
+		ss << "Can not find asset: '" << name << '\'';
+		throw std::runtime_error(ss.str());
 	}
 
 	void asset_list::add(Archive& archive) {

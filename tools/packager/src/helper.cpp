@@ -6,6 +6,8 @@
 // Test
 #include "trusted_key.h"
 
+#include <iostream>
+
 std::array<uint8_t, 1217> load_private_key(std::string path) {
 	std::fstream priv_key_file(path, std::ios::in);
 	std::array<uint8_t, 1217> priv_key;
