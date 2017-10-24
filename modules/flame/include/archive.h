@@ -29,7 +29,7 @@ namespace FLAME_NAMESPACE {
 	// Archives only exist for writing files
 	class Archive {
 		public:
-			Archive(std::shared_ptr<FileHandler> fh);
+			Archive(std::string filename);
 
 			const std::string& get_name() const;
 			const std::string& get_author() const;
@@ -40,7 +40,7 @@ namespace FLAME_NAMESPACE {
 			std::vector<MetaAsset> get_meta_assets();
 
 		private:
-			MetaAsset::Workflow create_workflow();
+			std::vector<MetaAsset::Task> create_workflow();
 
 			std::shared_ptr<FileHandler> _fh;
 			std::string _name;

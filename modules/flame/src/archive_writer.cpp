@@ -11,14 +11,7 @@
 
 namespace FLAME_NAMESPACE {
 
-	ArchiveWriter::ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version, flame::Compression compression) : _fh(fh), _name(name), _author(author), _description(description), _version(version), _compression(compression) {}
-
-	// @todo This needs to go in the constructor
-	void ArchiveWriter::initialize() {
-		if (_initialized) {
-			throw std::logic_error("Archive is already initialized");
-		}
-
+	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, flame::Compression compression, std::vector<std::pair<std::string, uint16_t>> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc)), _name(name), _author(author), _description(description), _version(version), _compression(compression), _dependencies(dependencies) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -45,16 +38,11 @@ namespace FLAME_NAMESPACE {
 		binary::write(fs, (uint8_t) 0x00);
 
 		_fh->unlock();
-
-		_initialized = true;
 	}
 
-	void ArchiveWriter::finalize(std::array<uint8_t, 1217>& priv_key) {
-		if (_valid) {
+	void ArchiveWriter::sign(std::array<uint8_t, 1217>& priv_key) {
+		if (_signed) {
 			throw std::logic_error("Archive is already finalized");
-		}
-		if (!_initialized) {
-			throw std::logic_error("You need to initialize the archive first");
 		}
 
 		if (!_fh || !_fh->is_open()) {
@@ -100,17 +88,17 @@ namespace FLAME_NAMESPACE {
 		// Store the public key
 		assert(pubqueue.CurrentSize() == PUBLIC_KEY_SIZE);
 
-		_valid = true;
+		_signed = true;
 	}
 
-	MetaAsset::Workflow ArchiveWriter::create_workflow() {
-		MetaAsset::Workflow workflow;
+	std::vector<MetaAsset::Task> ArchiveWriter::create_workflow() {
+		std::vector<MetaAsset::Task> workflow;
 
 		switch (_compression) {
 			case Compression::none:
 				break;
 			case Compression::zlib:
-				workflow.tasks.push_back(zlib::compress);
+				workflow.push_back(zlib::compress);
 				break;
 			default:
 				throw std::logic_error("Compression type not implemented");
@@ -120,11 +108,8 @@ namespace FLAME_NAMESPACE {
 	}
 
 	void ArchiveWriter::add(MetaAsset& meta_asset) {
-		if (_valid) {
+		if (_signed) {
 			throw std::logic_error("Archive is already finalized");
-		}
-		if (!_initialized) {
-			throw std::logic_error("You need to initialize the archive first");
 		}
 
 		// Start loading
@@ -144,13 +129,5 @@ namespace FLAME_NAMESPACE {
 		binary::write(fs, data.data(), data.get_size());
 
 		_fh->unlock();
-	}
-
-	// @todo This should just be set in the constructor
-	void ArchiveWriter::add_dependency(std::string name, uint16_t version) {
-		if (_initialized) {
-			throw std::logic_error("You cannot add dependecies after initializing");
-		}
-		_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
 	}
 }

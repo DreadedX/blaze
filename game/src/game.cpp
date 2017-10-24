@@ -32,7 +32,7 @@ int main() {
 	// Override LuaTest in archive with version from disk
 	{
 		// @todo This should go into a lua script
-		flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10, flame::MetaAsset::Workflow());
+		flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10);
 		flame::asset_list::add(lua_asset);
 	}
 

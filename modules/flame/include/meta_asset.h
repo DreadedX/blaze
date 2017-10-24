@@ -15,29 +15,18 @@ namespace FLAME_NAMESPACE {
 	class AssetData;
 	class MetaAsset {
 		public:
+			typedef std::function<std::vector<uint8_t>(std::vector<uint8_t>)> Task;
+
 			// @todo Ehm... We somehow need this to make the asset list work
 			MetaAsset() {}
 
-			struct Workflow {
-				std::vector<
-					std::function<
-						std::vector<uint8_t>
-						(
-						std::vector<uint8_t>
-						)
-					>
-				> tasks;
-			};
-
-			MetaAsset(std::string name, std::string filename, uint16_t version, Workflow workflow) : MetaAsset(name, std::make_shared<FileHandler>(filename, std::ios::in), version, workflow) {}
-
-			MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, Workflow workflow = Workflow());
-			MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, uint32_t offset, uint32_t size, Workflow workflow = Workflow());
+			MetaAsset(std::string name, std::string filename, uint16_t version, std::vector<Task> workflow = std::vector<Task>());
+			MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, uint32_t offset, uint32_t size, std::vector<Task> workflow = std::vector<Task>());
 
 			const std::string& get_name() const;
 			uint16_t get_version() const;
 
-			AssetData get_data(Workflow workflow = Workflow());
+			AssetData get_data(std::vector<Task> workflow = std::vector<Task>());
 
 		private:
 			std::string _name;
@@ -47,7 +36,7 @@ namespace FLAME_NAMESPACE {
 			// The size of the data on disk, really only for internal use
 			uint32_t _size;
 
-			Workflow _base_workflow;
+			std::vector<Task> _base_workflow;
 	};
 };
 

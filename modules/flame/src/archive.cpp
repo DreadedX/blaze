@@ -43,7 +43,7 @@ namespace FLAME_NAMESPACE {
 		return digest;
 	}
 
-	Archive::Archive(std::shared_ptr<FileHandler> fh) : _fh(fh) {
+	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in)) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -156,14 +156,14 @@ namespace FLAME_NAMESPACE {
 		return _dependencies;
 	}
 
-	MetaAsset::Workflow Archive::create_workflow() {
-		MetaAsset::Workflow workflow;
+	std::vector<MetaAsset::Task> Archive::create_workflow() {
+		std::vector<MetaAsset::Task> workflow;
 
 		switch (_compression) {
 			case Compression::none:
 				break;
 			case Compression::zlib:
-				workflow.tasks.push_back(zlib::decompress);
+				workflow.push_back(zlib::decompress);
 				break;
 			default:
 				throw std::logic_error("Decompression type not implemented");

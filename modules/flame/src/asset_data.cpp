@@ -8,7 +8,7 @@
 #define CHUNK_SIZE 16384
 
 namespace FLAME_NAMESPACE {
-	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow) {
+	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
 		std::vector<uint8_t> data(size);
 
 		uint32_t remaining = size;
@@ -30,14 +30,14 @@ namespace FLAME_NAMESPACE {
 			remaining -= chunk;
 		}
 
-		for (auto& t : workflow.tasks) {
+		for (auto& t : workflow) {
 			data = t(std::move(data));
 		}
 
 		return data;
 	}
 
-	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow) {
+	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
 		_future = std::async(std::launch::async, async_load, fh, size, offset, workflow);
 	}
 

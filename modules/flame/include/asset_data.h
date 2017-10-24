@@ -14,7 +14,7 @@ namespace FLAME_NAMESPACE {
 
 	class AssetData {
 		public:
-			AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, MetaAsset::Workflow workflow);
+			AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow);
 
 			bool is_loaded();
 			uint32_t get_size();

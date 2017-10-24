@@ -16,22 +16,23 @@ namespace FLAME_NAMESPACE::lua {
 		flame.new_usertype<MetaAsset> ("MetaAsset",
 			// @todo This should not be available in the game (constructors), MetaAssets in general are not really usefull in the game
 			sol::constructors<
-				MetaAsset(std::string, std::string, uint16_t, MetaAsset::Workflow),
-				MetaAsset(std::string, std::shared_ptr<FileHandler>, uint16_t, MetaAsset::Workflow),
-				MetaAsset(std::string, std::shared_ptr<FileHandler>, uint16_t, uint32_t, uint32_t, MetaAsset::Workflow)
+				MetaAsset(std::string, std::string, uint16_t, std::vector<MetaAsset::Task>),
+				MetaAsset(std::string, std::shared_ptr<FileHandler>, uint16_t, uint32_t, uint32_t, std::vector<MetaAsset::Task>)
 			>(),
 			"name", sol::property(&MetaAsset::get_name),
 			"version", sol::property(&MetaAsset::get_version),
 			"get_data", &MetaAsset::get_data
 		);
 
-		flame.new_usertype<MetaAsset::Workflow> ("Workflow",
-			"tasks", &MetaAsset::Workflow::tasks
+		flame.set_function(
+			"new_workflow", []{
+				return std::vector<MetaAsset::Task>();
+			}
 		);
 
 		flame.new_usertype<Archive> ("Archive",
 			sol::constructors<
-				Archive(std::shared_ptr<FileHandler> fh)
+				Archive(std::string)
 			>(),
 			"is_trusted", &Archive::is_trusted,
 			"name", sol::property(&Archive::get_name),
@@ -45,24 +46,21 @@ namespace FLAME_NAMESPACE::lua {
 		// @todo This should not be available in the game
 		flame.new_usertype<ArchiveWriter> ("ArchiveWriter",
 			sol::constructors<
-				ArchiveWriter(std::string, std::shared_ptr<FileHandler> fh, std::string, std::string, uint16_t, Compression)
+				ArchiveWriter(std::string, std::string, std::string, std::string, uint16_t, Compression, std::vector<std::pair<std::string, uint16_t>>)
 			>(),
-			"add_dependency", &ArchiveWriter::add_dependency,
-			"initialize", &ArchiveWriter::initialize,
-			"finalize", &ArchiveWriter::finalize,
+			"sign", &ArchiveWriter::sign,
 			"add", &ArchiveWriter::add
+		);
+
+		flame.set_function(
+			"new_dependency_list", []{
+				return std::vector<std::pair<std::string, uint16_t>>();
+			}
 		);
 
 		flame.new_enum("Compression",
 			"none", Compression::none,
 			"zlib", Compression::zlib
-		);
-
-		flame.new_usertype<FileHandler> ("FileHandler",
-			"close", &FileHandler::close,
-			"lock", &FileHandler::lock,
-			"open", sol::property(&FileHandler::is_open),
-			"unlock", &FileHandler::unlock
 		);
 	}
 }

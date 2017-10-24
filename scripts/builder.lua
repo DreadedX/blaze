@@ -18,21 +18,20 @@ function builder.build (archives)
 	-- @todo We need to first make the verify thing better
 	-- if (lua_helper.verify(archives, archive_template)) then
 		for _,archive in ipairs(archives) do
-			file = helper.open_new_file(archive.path)
-			local archive_writer = flame.ArchiveWriter.new(archive.name, file, archive.author, archive.description, archive.version, archive.compression)
-
+			-- @todo It would be nice if we could just turn archive.dependencies into the correct type
+			dependencies = flame.new_dependency_list();
 			for _,dependency in ipairs(archive.dependencies) do
-				archive_writer:add_dependency(dependency.name, dependency.version)
+				dependencies:add(dependency.name, dependency.version)
 			end
 
-			archive_writer:initialize()
+			local archive_writer = flame.ArchiveWriter.new(archive.name, archive.path, archive.author, archive.description, archive.version, archive.compression, dependencies)
 
 			for _,asset in ipairs(archive.assets) do
-				workflow = flame.Workflow.new()
+				workflow = flame.new_workflow()
 				tasks = asset.tasks;
 				if tasks ~= nil then
 					for _, task in ipairs(tasks) do
-						workflow.tasks:add(task);
+						workflow:add(task);
 					end
 				end
 
@@ -40,9 +39,7 @@ function builder.build (archives)
 				archive_writer:add(meta_asset)
 			end
 
-			archive_writer:finalize(helper.load_private_key(archive.key))
-
-			file:close()
+			archive_writer:sign(helper.load_private_key(archive.key))
 		end
 	-- else
 	-- 	print("ERROR")

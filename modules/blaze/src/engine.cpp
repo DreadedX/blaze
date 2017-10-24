@@ -14,8 +14,7 @@ namespace BLAZE_NAMESPACE {
 	void load_archive(std::string archive_name) {
 		// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
 		try {
-			auto fh = std::make_shared<flame::FileHandler>(archive_name, std::ios::in);
-			flame::Archive archive(fh);
+			flame::Archive archive(archive_name);
 
 			flame::asset_list::add(archive);
 

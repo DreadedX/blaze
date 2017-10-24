@@ -6,27 +6,25 @@
 namespace FLAME_NAMESPACE {
 	class ArchiveWriter {
 		public:
-			ArchiveWriter(std::string name, std::shared_ptr<FileHandler> fh, std::string author, std::string description, uint16_t version, flame::Compression compression);
+			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, flame::Compression compression, std::vector<std::pair<std::string, uint16_t>> dependencies);
 
-			void initialize();
-			void finalize(std::array<uint8_t, 1217>& priv_key);
+			void sign(std::array<uint8_t, 1217>& priv_key);
 
 			void add(MetaAsset& meta_asset);
 			void add_dependency(std::string name, uint16_t version);
 
 		private:
-			MetaAsset::Workflow create_workflow();
+			std::vector<MetaAsset::Task> create_workflow();
 
 			std::shared_ptr<FileHandler> _fh;
 			std::string _name;
 			std::string _author;
 			std::string _description;
 			uint16_t _version;
+			Compression _compression;
 			std::vector<std::pair<std::string, uint16_t>> _dependencies;
 
-			bool _initialized = false;
-			bool _valid = false;
+			bool _signed = false;
 
-			Compression _compression;
 	};
 }

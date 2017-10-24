@@ -32,8 +32,6 @@ void bind(sol::state& lua) {
 	helper.set_function("new_byte_vector", []{
 			return std::vector<uint8_t>();
 	});
-	helper.set_function("open_file", &open_file);
-	helper.set_function("open_new_file", &open_new_file);
 	helper.set_function("load_private_key", &load_private_key);
 	helper.set_function("get_trusted_key", &get_trusted_key);
 
