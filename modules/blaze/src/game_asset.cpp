@@ -1,7 +1,7 @@
 #include "game_asset.h"
 
 namespace BLAZE_NAMESPACE {
-	GameAsset::GameAsset(std::string asset_name) : _data(flame::asset_list::find_asset(asset_name)) {}
+	GameAsset::GameAsset(std::string asset_name) : _data(blaze::asset_list::find_asset(asset_name)) {}
 
 	bool GameAsset::is_loaded() {
 		return _data.is_loaded();

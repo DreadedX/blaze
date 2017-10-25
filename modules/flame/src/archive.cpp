@@ -2,7 +2,6 @@
 
 #include "archive.h"
 #include "asset_data.h"
-#include "asset_list.h"
 #include "tasks.h"
 #include "binary_helper.h"
 

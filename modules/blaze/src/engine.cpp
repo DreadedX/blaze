@@ -25,16 +25,15 @@ namespace BLAZE_NAMESPACE {
 		try {
 			flame::Archive archive(filename);
 
-			flame::asset_list::add(archive);
+			blaze::asset_list::add(archive);
 
 			try {
 				auto script = blaze::asset_manager::new_asset<blaze::Script>(archive.get_name() + "/Script");
 				scripts.push_back(std::move(script));
 			} catch (std::exception& e) {
+				// @todo We should have a custom exception for this as we now assume an exception means not found
 				std::cout << "Archive '" << archive.get_name() << "' does not have a script.\n";
 			}
-		} catch (flame::MissingDependencies& e) {
-			event_bus::send(std::make_shared<MissingDependencies>(archive_name, e.get_missing()));
 		} catch (std::exception& e) {
 			event_bus::send(std::make_shared<Error>("Failed to load archive '" + archive_name + "': " + e.what(), __FILE__, __LINE__));
 		}

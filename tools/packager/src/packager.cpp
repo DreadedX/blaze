@@ -1,8 +1,6 @@
 #include "bind_flame.h"
 #include "helper.h"
 
-#include "asset_list.h"
-
 // Just to make everything compile
 int main() {
 	sol::state lua;

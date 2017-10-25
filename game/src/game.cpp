@@ -18,7 +18,7 @@ void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
 }
 
 void handle_error(std::shared_ptr<Error> event) {
-	std::cerr << event->get_context() << "\n\t" << event->get_error() << '\n';
+	std::cerr << event->get_context() << "\n=>\t " << event->get_error() << '\n';
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
@@ -40,7 +40,7 @@ int main() {
 	{
 		// @todo This should go into a lua script
 		flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10);
-		flame::asset_list::add(lua_asset);
+		blaze::asset_list::add(lua_asset);
 	}
 
 	// Initialze engine
@@ -50,7 +50,7 @@ int main() {
 	// Flame tests
 	{
 		std::cout << "====ASSETS====\n";
-		flame::asset_list::debug_list_meta_assets();
+		blaze::asset_list::debug_list_meta_assets();
 		std::cout << "==============\n";
 	}
 
