@@ -11,10 +11,14 @@ void handle_chat_message(std::shared_ptr<ChatMessage> event) {
 }
 
 void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
-	std::cout << "Archive '" << event->get_name() << "' is missing the following dependencies:\n";
+	std::cerr << "Archive '" << event->get_name() << "' is missing the following dependencies:\n";
 	for (auto dependency : event->get_missing()) {
-		std::cout << dependency.first << ':' << dependency.second << '\n';
+		std::cerr << dependency.first << ':' << dependency.second << '\n';
 	}
+}
+
+void handle_error(std::shared_ptr<Error> event) {
+	std::cerr << event->get_context() << "\n\t" << event->get_error() << '\n';
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
@@ -26,6 +30,9 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 }
 
 int main() {
+	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
+	event_bus::subscribe<Error>(std::ref(handle_error));
+
 	std::cout << "Version number: " << get_version_number() <<'\n';
 	std::cout << "Version string: " << get_version_string() <<'\n';
 
@@ -38,12 +45,7 @@ int main() {
 
 	// Initialze engine
 	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
-	auto asdf = event_bus::Subscription<MissingDependencies>(std::ref(handle_missing_dependencies));
-	#ifdef ANDROID
-		blaze::initialize({"/data/data/nl.mtgames.blazebootstrap/files/base.flm", "/data/data/nl.mtgames.blazebootstrap/files/test.flm"});
-	#else
-		blaze::initialize({"archives/base.flm", "archives/test.flm"});
-	#endif
+	blaze::initialize({"base", "test"});
 
 	// Flame tests
 	{

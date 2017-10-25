@@ -1,19 +1,19 @@
 #include "game_asset.h"
 
 namespace BLAZE_NAMESPACE {
-	bool finish_load(std::shared_ptr<GameAsset> asset) {
+	GameAsset::GameAsset(std::string asset_name) : _data(flame::asset_list::find_asset(asset_name)) {}
+
+	bool GameAsset::is_loaded() {
+		return _data.is_loaded();
+	}
+
+	bool GameAsset::finish_if_loaded(std::shared_ptr<GameAsset> asset) {
 		bool loaded = asset->is_loaded();
 		if (loaded) {
 			asset->post_load();
 		}
 
 		return loaded;
-	}
-
-	GameAsset::GameAsset(std::string asset_name) : _data(flame::asset_list::find_asset(asset_name)) {}
-
-	bool GameAsset::is_loaded() {
-		return _data.is_loaded();
 	}
 
 

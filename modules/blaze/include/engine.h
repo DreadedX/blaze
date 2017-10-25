@@ -18,9 +18,9 @@
 #include <string>
 #include <variant>
 
-// @todo Refactor the shit out of this, most of this is just the first iteration
 namespace BLAZE_NAMESPACE {
 	void initialize(std::initializer_list<std::string> archives);
+	void load_archive(std::string archive_name);
 	void update();
 	sol::state& get_lua_state();
 }

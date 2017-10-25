@@ -15,7 +15,8 @@ namespace FLAME_NAMESPACE {
 
 		while (remaining > 0) {
 			if (!fh || !fh->is_open()) {
-				// Instead of an exception we return a nullptr and throw the exception from is_loaded
+				// @todo Eventbus executes everything on the thread of the caller, so we can not call it from other threads
+				// event_bus::send<Error>("Failed to load asset", __FILE__, __LINE__);
 				return std::vector<uint8_t>(0);
 			}
 
@@ -42,14 +43,9 @@ namespace FLAME_NAMESPACE {
 	}
 
 	bool AssetData::is_loaded() {
-		// @todo Zero size file give an error, do not know if that is the correct thing
 		if (!_loaded && _future.valid() && _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			_data = _future.get();
-			if (_data.size() == 0) {
-				throw std::runtime_error("Failed to load data");
-			} else {
-				_loaded = true;
-			}
+			_loaded = true;
 		}
 		return _loaded;
 	}
@@ -65,7 +61,6 @@ namespace FLAME_NAMESPACE {
 	}
 
 	uint8_t& AssetData::operator[](uint32_t idx) {
-		// @todo Do we need to check this even in release mode
 		if (idx >= get_size()) {
 			throw std::out_of_range("Array out of bounds");
 		}

@@ -39,6 +39,18 @@ namespace BLAZE_NAMESPACE {
 			std::vector<std::pair<std::string, uint16_t>> _missing;
 	};
 
+	class Error : public Event {
+		public:
+			Error(std::string error, std::string file, size_t line);
+
+			const std::string& get_error() const;
+			const std::string& get_context() const;
+
+		private:
+			std::string _error;
+			std::string _context;
+	};
+
 	class event_bus {
 		public:
 			template <typename T>
@@ -50,18 +62,21 @@ namespace BLAZE_NAMESPACE {
 			}
 
 			template <typename T>
+			static void subscribe(std::function<void(std::shared_ptr<T>)> handler) {
+				static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
+
+				_subscribers[get_uid<T>()].push_back([handler](std::shared_ptr<Event> event){
+					handler(std::dynamic_pointer_cast<T>(event));
+				});
+			}
+
+			template <typename T>
 			class Subscription {
 				public:
-					// @todo Make a subscribe function that return this class
 					Subscription(std::function<void(std::shared_ptr<T>)> handler) {
-						static_assert(std::is_base_of<Event, ChatMessage>(), "Event type is not derived from base Event class");
-						uint32_t uid = get_uid<T>();
+						subscribe(handler);
 
-						_subscribers[uid].push_back([handler](std::shared_ptr<Event> event){
-							handler(std::dynamic_pointer_cast<T>(event));
-						});
-
-						_it = _subscribers[uid].end();
+						_it = _subscribers[get_uid<T>()].end();
 						_it--;
 					}
 
@@ -87,7 +102,6 @@ namespace BLAZE_NAMESPACE {
 			};
 
 		private:
-			// @todo Make sure this does not create multiple id's for one type
 			template <typename T>
 			static uint32_t get_uid() {
 				static uint32_t uid = _id_counter;

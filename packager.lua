@@ -32,6 +32,22 @@ builder.build({
 		dependencies = {
 			{name = "base", version = 1}
 		}
+	},
+	{
+		name = "mod",
+		path = "archives/mod.flm",
+		compression = flame.Compression.zlib,
+		author = "ModAuthor",
+		description = "My first mod!",
+		version = 1,
+		key = "keys/unofficial.priv",
+		assets = {
+			{ name = "mod/Script", path = "assets/script/Mod.lua", version = 1, tasks = { } },
+			-- Language packs
+		},
+		dependencies = {
+			{name = "base", version = 1}
+		}
 	}
 })
 

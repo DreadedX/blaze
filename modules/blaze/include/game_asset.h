@@ -10,25 +10,19 @@
 
 namespace BLAZE_NAMESPACE {
 
-	class GameAsset;
-	// @todo This should be part of asset_manager, but than friendship does not work properly
-	bool finish_load(std::shared_ptr<GameAsset> asset);
-	#define MAKE_GAME_ASSET friend bool finish_load(std::shared_ptr<GameAsset> asset);
-
 	class GameAsset {
 		public:
 			GameAsset(std::string asset_name);
 			virtual ~GameAsset() {}
 
 			bool is_loaded();
+			static bool finish_if_loaded(std::shared_ptr<GameAsset> asset);
 
 		protected:
 			flame::AssetData _data;
 			
 		private:
 			virtual void post_load() = 0;
-
-		MAKE_GAME_ASSET
 	};
 
 
@@ -44,8 +38,6 @@ namespace BLAZE_NAMESPACE {
 
 			sol::environment environment;
 			bool _loaded = false;
-
-		MAKE_GAME_ASSET
 	};
 
 	typedef std::variant<std::string, int> SupportedTypes;
@@ -68,7 +60,6 @@ namespace BLAZE_NAMESPACE {
 				std::string text = it->second;
 				auto i = 0;
 				for (const auto& arg : args) {
-					// @todo Add more formatting options
 					std::string substring = "{" + std::to_string(i) + "}";
 					auto found = text.find(substring, 0);
 					if (found != std::string::npos) {
@@ -89,7 +80,5 @@ namespace BLAZE_NAMESPACE {
 			void post_load();
 
 			std::unordered_map<std::string, std::string> _strings;
-
-		MAKE_GAME_ASSET
 	};
 }

@@ -10,11 +10,20 @@ std::vector<std::shared_ptr<blaze::Script>> scripts;
 
 namespace BLAZE_NAMESPACE {
 
-	// @todo Make this public eventually (e.g. for a mod loader)
+	void initialize(std::initializer_list<std::string> archives) {
+		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+		flame::lua::bind(lua_state);
+		blaze::lua::bind(lua_state);
+
+		for (auto& archive_name : archives) {
+			load_archive(archive_name);
+		}
+	}
+
 	void load_archive(std::string archive_name) {
-		// @note If we fail to open an archive we will tell the user but continue running as it might not be fatal
+		std::string filename = "archives/" + archive_name + ".flm";
 		try {
-			flame::Archive archive(archive_name);
+			flame::Archive archive(filename);
 
 			flame::asset_list::add(archive);
 
@@ -24,22 +33,10 @@ namespace BLAZE_NAMESPACE {
 			} catch (std::exception& e) {
 				std::cout << "Archive '" << archive.get_name() << "' does not have a script.\n";
 			}
-
 		} catch (flame::MissingDependencies& e) {
 			event_bus::send(std::make_shared<MissingDependencies>(archive_name, e.get_missing()));
 		} catch (std::exception& e) {
-			std::cerr << __FILE__ << ':' << __LINE__ << " =>\n\t" << "Failed to open '" << archive_name << "': " << e.what() << '\n';
-			// @todo Post a event in a central message bus
-		}
-	}
-
-	void initialize(std::initializer_list<std::string> archives) {
-		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
-		flame::lua::bind(lua_state);
-		blaze::lua::bind(lua_state);
-
-		for (auto& archive_name : archives) {
-			load_archive(archive_name);
+			event_bus::send(std::make_shared<Error>("Failed to load archive '" + archive_name + "': " + e.what(), __FILE__, __LINE__));
 		}
 	}
 

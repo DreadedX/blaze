@@ -129,6 +129,24 @@ namespace FLAME_NAMESPACE {
 			_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
 		}
 
+		auto workflow = create_workflow();
+
+		unsigned long next_meta_asset = fs.tellg();
+		while (next_meta_asset < size) {
+			fs.seekg(next_meta_asset);
+			std::string name;
+			binary::read(fs, name);
+			uint16_t version;
+			binary::read(fs, version);
+			uint32_t size;
+			binary::read(fs, size);
+			uint32_t offset = fs.tellg();
+
+			next_meta_asset = offset + size;
+
+			_meta_assets.push_back(MetaAsset(name, _fh, version, offset, size, workflow));
+		}
+
 		_fh->unlock();
 	}
 
@@ -172,43 +190,7 @@ namespace FLAME_NAMESPACE {
 		return workflow;
 	}
 
-	// @todo Should we precompute this, or just compute it as we need it
 	std::vector<MetaAsset> Archive::get_meta_assets() {
-		std::vector<MetaAsset> meta_assets;
-
-		// Use the file stream to load all individual assets into Assets and add them to the list
-		auto& fs = _fh->lock();
-
-		fs.seekg(0, std::ios::end);
-		unsigned long archive_size = fs.tellg();
-
-		unsigned long next_meta_asset = PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC) + sizeof(Compression) + _name.length()+1 + _author.length()+1 +_description.length()+1 + sizeof(uint16_t) /* version */;
-
-		for (auto& dependency : _dependencies) {
-			next_meta_asset += dependency.first.length()+1 + sizeof(uint16_t);
-		}
-		// null terminator at the end of the dependency list
-		next_meta_asset += 1;
-
-		auto workflow = create_workflow();
-
-		while (next_meta_asset < archive_size) {
-			fs.seekg(next_meta_asset);
-			std::string name;
-			binary::read(fs, name);
-			uint16_t version;
-			binary::read(fs, version);
-			uint32_t size;
-			binary::read(fs, size);
-			uint32_t offset = fs.tellg();
-
-			next_meta_asset = offset + size;
-
-			meta_assets.push_back(MetaAsset(name, _fh, version, offset, size, workflow));
-		}
-
-		_fh->unlock();
-
-		return meta_assets;
+		return _meta_assets;
 	}
 }

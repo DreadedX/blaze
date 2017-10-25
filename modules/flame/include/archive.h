@@ -47,10 +47,12 @@ namespace FLAME_NAMESPACE {
 			std::string _author;
 			std::string _description;
 			uint16_t _version;
+			Compression _compression;
 			std::vector<std::pair<std::string, uint16_t>> _dependencies;
+
+			std::vector<MetaAsset> _meta_assets;
 
 			uint8_t _key[PUBLIC_KEY_SIZE];
 
-			Compression _compression;
 	};
 };

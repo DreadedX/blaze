@@ -4,6 +4,10 @@ function init()
 	subscription = blaze.ChatSubscription.new(chat_handler)
 
 	durability = 12
+
+	-- In a real game this would be called by some kind of mod loader
+	blaze.load_archive("mod")
+	blaze.load_archive("modeer")
 end
 
 -- Called every frame

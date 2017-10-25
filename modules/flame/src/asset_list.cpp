@@ -17,7 +17,6 @@ namespace FLAME_NAMESPACE {
 	void asset_list::add(Archive& archive) {
 		auto missing = missing_dependecies(archive);
 		if (!missing.empty()) {
-			/// @todo Maybe make a special exception that returns the list of all missing dependecies
 			throw MissingDependencies(missing);
 		}
 
@@ -27,6 +26,7 @@ namespace FLAME_NAMESPACE {
 		}
 	}
 
+	// @todo We need to somehow capture the output of this to send it to the game engine
 	void asset_list::add(MetaAsset& meta_asset) {
 		// Check if we have already 
 		auto existing = _meta_assets.find(meta_asset.get_name());
@@ -37,7 +37,7 @@ namespace FLAME_NAMESPACE {
 				std::cout << "Already loaded newer asset: " << meta_asset.get_name() << '\n';
 				return;
 			} else {
-				// @todo Make this a new type of exception so we can specifically catch this one
+				// @todo This thing will stop all further assets from the archive from being added
 				throw std::runtime_error("Conflicting asset with same version");
 			}
 		}

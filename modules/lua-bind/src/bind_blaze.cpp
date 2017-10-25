@@ -2,6 +2,7 @@
 
 #include "events.h"
 #include "game_asset.h"
+#include "engine.h"
 
 namespace BLAZE_NAMESPACE::lua {
 	template <typename T>
@@ -28,6 +29,7 @@ namespace BLAZE_NAMESPACE::lua {
 			sol::base_classes, sol::bases<GameAsset>(),
 			"get", &Language::get<sol::variadic_args>
 		);
-	}
 
+		blaze.set_function("load_archive", &load_archive);
+	}
 }

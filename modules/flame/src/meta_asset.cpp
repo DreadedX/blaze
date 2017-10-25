@@ -11,7 +11,14 @@ namespace FLAME_NAMESPACE {
 
 		auto& fs = _fh->lock();
 		fs.seekg(0, std::ios::end);
-		_size = fs.tellg();
+		size_t size = fs.tellg();
+
+		if (size > std::numeric_limits<uint32_t>::max()) {
+			_fh->unlock();
+			throw std::runtime_error("File is bigger than max allowed file size");
+		}
+
+		_size = size;
 		_fh->unlock();
 	}
 
@@ -28,14 +35,9 @@ namespace FLAME_NAMESPACE {
 	AssetData MetaAsset::get_data(std::vector<Task> workflow) {
 
 		// Construct a new workflow based on the base workflow and given workflow
-		// @todo Improve this
 		std::vector<Task> final_workflow;
-		for (auto t :_base_workflow) {
-			final_workflow.push_back(t);
-		}
-		for (auto t : workflow) {
-			final_workflow.push_back(t);
-		}
+		final_workflow.insert(std::end(final_workflow), std::begin(_base_workflow), std::end(_base_workflow));
+		final_workflow.insert(std::end(final_workflow), std::begin(workflow), std::end(workflow));
 
 		return AssetData(_fh, _size, _offset, final_workflow);
 	}
