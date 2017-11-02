@@ -8,6 +8,9 @@
 #include "rsa.h"
 #include "osrng.h"
 
+// @todo We need this because of name conflict with CryptoPP, until we implement RSA ourselves aswell
+#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/sha3.h"
+
 #define CHUNK_SIZE 1024
 
 namespace FLAME_NAMESPACE {
@@ -23,19 +26,20 @@ namespace FLAME_NAMESPACE {
 		fs.seekg(SIGNATURE_SIZE + PUBLIC_KEY_SIZE + sizeof(MAGIC));
 
 		uint32_t remaining = size;
-		HASH_ALOGRITHM hash;
+		crypto::SHA3_256 hash;
 		while (remaining > 0) {
 			uint32_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
 
 			std::vector<uint8_t> data(chunk);
 			fs.read(reinterpret_cast<char*>(data.data()), chunk);
-			hash.Update(data.data(), chunk);
+			hash.update(data);
 
 			remaining -= chunk;
 		}
 
-		std::vector<uint8_t> digest(HASH_SIZE);
-		hash.Final(digest.data());
+		std::vector<uint8_t> digest = hash.finalize();
+
+		assert(digest.size() == hash.digest_size());
 
 		fh->unlock();
 
@@ -86,16 +90,16 @@ namespace FLAME_NAMESPACE {
 
 		_fh->unlock();
 
-		size_t length = stored_digest_integer.MinEncodedSize();
-		if (length != HASH_SIZE) {
-			throw std::runtime_error("File is corrupted");
-		}
-		uint8_t stored_digest[HASH_SIZE];
-		stored_digest_integer.Encode(stored_digest, HASH_SIZE);
-
 		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
-		if (!binary::compare(digest.data(), stored_digest, HASH_SIZE)) {
+		size_t length = stored_digest_integer.MinEncodedSize();
+		if (length != digest.size()) {
+			throw std::runtime_error("File is corrupted");
+		}
+		uint8_t stored_digest[length];
+		stored_digest_integer.Encode(stored_digest, length);
+
+		if (!binary::compare(digest.data(), stored_digest, length)) {
 			throw std::runtime_error("File is corrupted");
 		}
 

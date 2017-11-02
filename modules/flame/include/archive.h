@@ -14,8 +14,6 @@ namespace FLAME_NAMESPACE {
 	};
 
 	constexpr uint8_t MAGIC[] = {'F','L','M','b'};
-	typedef CryptoPP::SHA3_256 HASH_ALOGRITHM;
-	const int HASH_SIZE = HASH_ALOGRITHM::DIGESTSIZE;
 	const int PRIVATE_KEY_BIT_SIZE = 2048;
 	const int SIGNATURE_SIZE = PRIVATE_KEY_BIT_SIZE/8;
 	const int PUBLIC_KEY_SIZE = PRIVATE_KEY_BIT_SIZE/8 + 36;

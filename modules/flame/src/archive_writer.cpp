@@ -72,7 +72,7 @@ namespace FLAME_NAMESPACE {
 		}
 
 		// Sign with private key
-		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.data(), HASH_SIZE));
+		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.data(), digest.size()));
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");

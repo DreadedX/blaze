@@ -57,6 +57,11 @@ project "generated"
 
 	dependson "keygen"
 
+project "crypto"
+	kind "StaticLib"
+	files "modules/crypto/src/**"
+	includeCrypto()
+
 project "flame"
 	kind "StaticLib"
 	files "modules/flame/src/**"

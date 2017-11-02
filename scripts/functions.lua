@@ -42,12 +42,19 @@ function includeGenerated()
 		links "generated"
 	filter {}
 end
+function includeCrypto()
+	includedirs "modules/crypto/include"
+	filter "kind:not StaticLib"
+		links "crypto"
+	filter {}
+end
 function includeFlame()
 	includedirs "modules/flame/include"
 	filter "kind:not StaticLib"
 		links "flame"
 	filter {}
 	includeCryptoPP()
+	includeCrypto()
 	includeZlib()
 	includeThreads()
 end
