@@ -8,26 +8,6 @@
 
 // @todo Clean everything up and optimize
 
-void print_data(std::vector<bool> data) {
-	for (size_t i = 0; i < data.size(); ++i) {
-		std::cout << data[i];
-		if ((i+1) % 8 == 0) {
-			std::cout << ' ';
-		}
-		if ((i+1) % 32 == 0) {
-			std::cout << '\n';
-		}
-	}
-	std::cout << '\n';
-}
-
-void print_data(std::vector<uint8_t> data) {
-	for (auto d : data) {
-		std::cout << std::hex << (uint32_t)d << ' ';
-	}
-	std::cout << '\n';
-}
-
 class State {
 	public:
 		State(size_t w) : _w(w), _state(25*w) {}
@@ -268,13 +248,8 @@ namespace CRYPTO_NAMESPACE {
 	void SHA3::process() {
 		size_t n = _P.size() / _r;
 		for (size_t i = 0; i < n; ++i) {
-			std::vector<bool> P_i(_P.begin() + _r*i , _P.begin() + _r*(i+1));
-
-			std::vector<bool> filling(_c);
-			P_i.insert(P_i.end(), filling.begin(), filling.end());
-
-			for (size_t j = 0; j < _b; ++j) {
-				_S[j] = _S[j] ^ P_i[j];
+			for (size_t j = 0; j < _r; ++j) {
+				_S[j] = _S[j] ^ _P[j + _r*i];
 			}
 
 			_S = keccakp(_S, 24);

@@ -1,3 +1,4 @@
 let &makeprg="premake5 && make -C build -j6 && ./build/bin/Linux/Debug/packager"
 map <silent> <F9> :Make<cr>
 map <silent> <F10> :Start ./build/bin/Linux/Debug/game && read<cr>
+map <silent> <S-F10> :Start ./build/bin/Linux/Debug/tests -r compact && read<cr>

@@ -105,3 +105,9 @@ project "game"
 	includedirs "game/include"
 	includeBlaze()
 	includePlatform()
+
+project "tests"
+	kind "ConsoleApp"
+	files "test/**"
+	includedirs "third_party/Catch/single_include"
+	includeCrypto();
