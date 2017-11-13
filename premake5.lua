@@ -46,6 +46,12 @@ project "cryptopp"
 	removefiles { "third_party/cryptopp/test.cpp", "third_party/cryptopp/bench1.cpp", "third_party/cryptopp/bench2.cpp", "third_party/cryptopp/validat1.cpp", "third_party/cryptopp/validat2.cpp", "third_party/cryptopp/validat3.cpp", "third_party/cryptopp/adhoc.cpp", "third_party/cryptopp/datatest.cpp", "third_party/cryptopp/regtest.cpp", "third_party/cryptopp/fipsalgt.cpp", "third_party/cryptopp/dlltest.cpp", "third_party/cryptopp/fipstest.cpp", "third_party/cryptopp/pch.cpp", "third_party/cryptopp/simple.cpp", "third_party/cryptopp/winpipes.cpp", "third_party/cryptopp/cryptlib_bds.cpp" }
 	includeCryptoPP()
 
+project "bigint"
+	kind "StaticLib"
+	files "third_party/bigint/**"
+	removefiles { "sample.cc", "testsuite.cc" }
+	includeBigInt()
+
 project "lua"
 	kind "StaticLib"
 	files "third_party/lua/**"

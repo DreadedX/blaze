@@ -4,6 +4,7 @@
 #include "data.h"
 
 #include "/home/tim/Projects/cpp/blaze/modules/crypto/include/sha3.h"
+#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/rsa.h"
 #include <sstream>
 
 // @note We are assuming that these functions are correct
@@ -70,4 +71,8 @@ TEST_CASE( "sha3 hashes are calculated", "[sha3]" ) {
 	SECTION( "sha3-256 lorem chunk" ) {
 		REQUIRE(calculate_hash_multi(lorem) == lorem_hash_256);
 	}
+}
+
+TEST_CASE( "RSA stuff" ) {
+	rsa_test();
 }

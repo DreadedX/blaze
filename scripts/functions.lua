@@ -25,6 +25,12 @@ function includeCryptoPP()
 		links "cryptopp"
 	filter {}
 end
+function includeBigInt()
+	includedirs "third_party/bigint"
+	filter "kind:not StaticLib"
+		links "bigint"
+	filter {}
+end
 -- @todo We should only build when lua is not available on system
 function includeLua()
 	includedirs "third_party/lua"
@@ -47,6 +53,7 @@ function includeCrypto()
 	filter "kind:not StaticLib"
 		links "crypto"
 	filter {}
+	includeBigInt()
 end
 function includeFlame()
 	includedirs "modules/flame/include"
