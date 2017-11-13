@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rsa.h"
+
 #include <cstdint>
 
-uint8_t* get_trusted_key();
+crypto::RSA get_trusted_key();

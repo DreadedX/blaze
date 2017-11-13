@@ -50,7 +50,6 @@ BigUnsigned generate_random_between(const BigUnsigned& lower, const BigUnsigned&
 	BigUnsigned x = get_random(b);
 	while (x < lower || x > upper) {
 		x = get_random(b);
-		std::cout << "Iter\n";
 	}
 
 	return x;
@@ -129,7 +128,6 @@ BigUnsigned generate_random_prime(size_t b) {
 	size_t i = 0;
 	while (true) {
 		if (prime_test(p)) {
-			std::cout << "It took " << i <<  " iterations\n";
 			return p;
 		} else if (((i+1) % (2*b)) == 0) {
 			p = generate_random_t(b);
@@ -155,13 +153,10 @@ BigUnsigned data_to_big_unsigned(std::vector<uint8_t> data) {
 		x.setBlock(i, block);
 	}
 
-	std::cout << "to bu: " << x << '\n';
-
 	return x;
 }
 
 std::vector<uint8_t> big_unsigned_to_data(const BigUnsigned& x) {
-	std::cout << "from bu: " << x << '\n';
 	size_t size = x.getLength();
 	std::vector<uint8_t> data(size*8);
 
@@ -178,12 +173,19 @@ std::vector<uint8_t> big_unsigned_to_data(const BigUnsigned& x) {
 
 namespace CRYPTO_NAMESPACE {
 
+	std::vector<uint8_t> default_e() {
+		std::vector<uint8_t> e = {0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00};
+		return e;
+	}
+
 	RSA::RSA(std::vector<uint8_t> n, std::vector<uint8_t> d) : _n(n), _d(d) {}
 
 	std::vector<uint8_t> RSA::encrypt(std::vector<uint8_t> message) {
 		BigUnsigned n = data_to_big_unsigned(_n);
 		BigUnsigned d = data_to_big_unsigned(_d);
 		BigUnsigned m = data_to_big_unsigned(message);
+
+		// assert(m < (n-1));
 
 		auto encrypted = big_unsigned_to_data(power(m, d, n));
 
@@ -202,10 +204,6 @@ namespace CRYPTO_NAMESPACE {
 
 		BigUnsigned e = 65537;
 		BigUnsigned d = modinv(e, phi);
-
-		BigUnsigned m = 16;
-
-		std::cout << power(m, e, n) << '\n';
 
 		auto nv = big_unsigned_to_data(n);
 		auto ev = big_unsigned_to_data(e);
@@ -266,7 +264,7 @@ void rsa_test() {
 		auto keys = crypto::generate_rsa_keys(1024);
 
 		crypto::store("test.priv", keys.first);
-		// crypto::store("test.pub", keys.second);
+		crypto::store("test.pub", keys.second);
 	}
 
 	{
@@ -287,6 +285,8 @@ void rsa_test() {
 		for (auto&& byte : encrypted) {
 			std::cout << std::hex << (uint32_t)byte << ' ';
 		}
+		std::cout << '\n';
+		std::cout << "Size: " << std::hex << encrypted.size() << '\n';
 		std::cout << "Decrypted: ";
 		for (auto&& byte : decrypted) {
 			std::cout << std::hex << (uint32_t)byte << ' ';

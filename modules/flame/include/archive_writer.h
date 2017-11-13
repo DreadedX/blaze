@@ -8,10 +8,15 @@ namespace FLAME_NAMESPACE {
 		public:
 			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, flame::Compression compression, std::vector<std::pair<std::string, uint16_t>> dependencies);
 
-			void sign(std::array<uint8_t, 1217>& priv_key);
+			void sign(crypto::RSA& priv_key);
 
 			void add(MetaAsset& meta_asset);
 			void add_dependency(std::string name, uint16_t version);
+
+			void close() {
+				_fh->close();
+				_fh = nullptr;
+			}
 
 		private:
 			std::vector<MetaAsset::Task> create_workflow();

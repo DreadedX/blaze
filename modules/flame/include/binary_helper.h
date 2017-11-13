@@ -7,11 +7,10 @@
 #include <ostream>
 #include <istream>
 #include <cassert>
-
-#include "queue.h"
-#include "integer.h"
+#include <array>
 
 namespace FLAME_NAMESPACE::binary {
+	// @todo Implement write/read for vectors
 	bool compare(const uint8_t array1[], const uint8_t array2[], const uint32_t size);
 
 	template <std::size_t S>
@@ -29,11 +28,6 @@ namespace FLAME_NAMESPACE::binary {
 	std::istream& read(std::istream& is, std::string& value);
 
 	std::ostream& write(std::ostream& os, const bool& value);
-
-	std::ostream& write(std::ostream& os, const CryptoPP::Integer& value);
-
-	std::ostream& write(std::ostream& os, const CryptoPP::ByteQueue& value);
-	std::istream& read(std::istream& is, CryptoPP::ByteQueue& value, size_t length);
 
 	std::ostream& write(std::ostream& os, const uint8_t value[], size_t length);
 	std::istream& read(std::istream& is, uint8_t value[], size_t length);

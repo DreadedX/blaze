@@ -2,7 +2,8 @@
 function readAll(file)
     local f = io.open(file, "rb")
 	if f then
-		local content = f:read("*all")
+		local length = f:read(2)
+		local content = f:read(128)
 		f:close()
 		return content
 	end
@@ -16,14 +17,15 @@ end
 -- Write trusted key
 do
 	-- @todo This will fail if we are building from scratch
-	local key = readAll("../keys/test.pub")
+	local key = readAll("../keys/test.priv")
 
 	if key then
 		local content = ""
-		content = content .. "#include \"trusted_key.h\"\n\n"
-		content = content .. "uint8_t trusted_key[] = {" .. key:tohex() .. "};\n\n"
-		content = content .. "uint8_t* get_trusted_key() {\n"
-		content = content .. "\treturn trusted_key;\n"
+		content = content .. "#include \"trusted_key.h\"\n"
+		content = content .. "#include <vector>\n\n"
+		content = content .. "std::vector<uint8_t> n = {" .. key:tohex() .. "};\n\n"
+		content = content .. "crypto::RSA get_trusted_key() {\n"
+		content = content .. "\treturn crypto::RSA(n, crypto::default_e());\n"
 		content = content .. "}"
 
 		local file = io.open("../modules/generated/src/trusted_key.cpp", "rb")

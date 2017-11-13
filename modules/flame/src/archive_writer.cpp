@@ -4,11 +4,6 @@
 #include "binary_helper.h"
 #include "tasks.h"
 
-#include "rsa.h"
-#include "osrng.h"
-
-#include <array>
-
 namespace FLAME_NAMESPACE {
 
 	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, flame::Compression compression, std::vector<std::pair<std::string, uint16_t>> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc)), _name(name), _author(author), _description(description), _version(version), _compression(compression), _dependencies(dependencies) {
@@ -21,7 +16,10 @@ namespace FLAME_NAMESPACE {
 		binary::write(fs, MAGIC, sizeof(MAGIC));
 
 		// Reserve space for Signature and Key
-		for (size_t i = 0; i < SIGNATURE_SIZE + PUBLIC_KEY_SIZE; ++i) {
+		// if keysize is 1024
+		// sizeof(n) = 1024
+		// sizeof(signature) = 1024
+		for (size_t i = 0; i < 2*KEY_SIZE; ++i) {
 			binary::write(fs, (uint8_t) 0x00);
 		}
 
@@ -40,7 +38,11 @@ namespace FLAME_NAMESPACE {
 		_fh->unlock();
 	}
 
-	void ArchiveWriter::sign(std::array<uint8_t, 1217>& priv_key) {
+	void ArchiveWriter::sign(crypto::RSA& priv_key) {
+
+		// @todo Should probably be an assertion
+		assert(priv_key.get_n().size() == KEY_SIZE);
+
 		if (_signed) {
 			throw std::logic_error("Archive is already finalized");
 		}
@@ -57,22 +59,10 @@ namespace FLAME_NAMESPACE {
 
 		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
-		// Load keys
-		CryptoPP::AutoSeededRandomPool rnd;
-		CryptoPP::ByteQueue pubqueue;
-		CryptoPP::RSA::PrivateKey rsa_private;
-
-		{
-			CryptoPP::ByteQueue privqueue;
-			privqueue.Put2(priv_key.data(), priv_key.size(), 0, true);
-			rsa_private.Load(privqueue);
-
-			CryptoPP::RSA::PublicKey rsa_public(rsa_private);
-			rsa_public.Save(pubqueue);
-		}
-
 		// Sign with private key
-		CryptoPP::Integer signature = rsa_private.CalculateInverse(rnd, CryptoPP::Integer(digest.data(), digest.size()));
+		assert(priv_key.get_d().size() == KEY_SIZE);
+		std::vector<uint8_t> signature = priv_key.encrypt(digest);
+		assert(signature.size() == KEY_SIZE);
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
@@ -80,13 +70,10 @@ namespace FLAME_NAMESPACE {
 		_fh->lock();
 
 		fs.seekp(sizeof(MAGIC));
-		binary::write(fs, pubqueue);
-		binary::write(fs, signature);
+		binary::write(fs, priv_key.get_n().data(), priv_key.get_n().size());
+		binary::write(fs, signature.data(), signature.size());
 
 		_fh->unlock();
-
-		// Store the public key
-		assert(pubqueue.CurrentSize() == PUBLIC_KEY_SIZE);
 
 		_signed = true;
 	}

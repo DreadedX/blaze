@@ -4,7 +4,7 @@
 // Just to make everything compile
 int main() {
 	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::io, sol::lib::string);
+	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::io, sol::lib::string, sol::lib::os);
 
 	FLAME_NAMESPACE::lua::bind(lua);
 	bind(lua);

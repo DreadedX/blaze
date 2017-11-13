@@ -25,30 +25,6 @@ namespace FLAME_NAMESPACE::binary {
 		return os;
 	}
 
-	std::ostream& write(std::ostream& os, const CryptoPP::Integer& value) {
-		size_t length = value.MinEncodedSize();
-		uint8_t bytes[length];
-		value.Encode(bytes, length);
-		os.write(reinterpret_cast<const char*>(bytes), length);
-		return os;
-	}
-
-	std::ostream& write(std::ostream& os, const CryptoPP::ByteQueue& value) {
-		for (size_t i = 0; i < value.CurrentSize(); ++i) {
-			uint8_t byte = value[i];
-			os.write(reinterpret_cast<const char*>(&byte), 1);
-		}
-		return os;
-	}
-	std::istream& read(std::istream& is, CryptoPP::ByteQueue& value, size_t length) {
-		for (size_t i = 0; i < length; ++i) {
-			uint8_t byte;
-			is.read(reinterpret_cast<char*>(&byte), 1);
-			value.Put(byte);
-		}
-		return is;
-	}
-
 	std::ostream& write(std::ostream& os, const uint8_t value[], size_t length) {
 		os.write(reinterpret_cast<const char*>(value), length);
 		return os;

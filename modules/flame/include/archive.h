@@ -4,7 +4,7 @@
 #include "file_handler.h"
 #include "meta_asset.h"
 
-#include "sha3.h"
+#include "rsa.h"
 
 namespace FLAME_NAMESPACE {
 
@@ -14,9 +14,8 @@ namespace FLAME_NAMESPACE {
 	};
 
 	constexpr uint8_t MAGIC[] = {'F','L','M','b'};
-	const int PRIVATE_KEY_BIT_SIZE = 2048;
-	const int SIGNATURE_SIZE = PRIVATE_KEY_BIT_SIZE/8;
-	const int PUBLIC_KEY_SIZE = PRIVATE_KEY_BIT_SIZE/8 + 36;
+	// 1024 bit key
+	const int KEY_SIZE = 1024/8;
 
 	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size);
 
@@ -33,9 +32,15 @@ namespace FLAME_NAMESPACE {
 			const std::string& get_author() const;
 			const std::string& get_description() const;
 			const uint16_t& get_version() const;
-			bool is_trusted(uint8_t trusted_key[]);
+			bool is_trusted(crypto::RSA& trusted_key);
 			const std::vector<std::pair<std::string, uint16_t>>& get_dependencies() const;
 			std::vector<MetaAsset> get_meta_assets();
+
+			// @note File stream automatically closes if the program ends, only if you explicitly need to close the archive
+			void close() {
+				_fh->close();
+				_fh = nullptr;
+			}
 
 		private:
 			std::vector<MetaAsset::Task> create_workflow();
@@ -50,7 +55,7 @@ namespace FLAME_NAMESPACE {
 
 			std::vector<MetaAsset> _meta_assets;
 
-			uint8_t _key[PUBLIC_KEY_SIZE];
+			crypto::RSA _key;
 
 	};
 };

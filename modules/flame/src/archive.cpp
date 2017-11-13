@@ -5,11 +5,7 @@
 #include "tasks.h"
 #include "binary_helper.h"
 
-#include "rsa.h"
-#include "osrng.h"
-
-// @todo We need this because of name conflict with CryptoPP, until we implement RSA ourselves aswell
-#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/sha3.h"
+#include "sha3.h"
 
 #define CHUNK_SIZE 1024
 
@@ -22,8 +18,8 @@ namespace FLAME_NAMESPACE {
 
 		auto& fs = fh->lock();
 
-		size -= SIGNATURE_SIZE + PUBLIC_KEY_SIZE + sizeof(MAGIC); 
-		fs.seekg(SIGNATURE_SIZE + PUBLIC_KEY_SIZE + sizeof(MAGIC));
+		size -= 2*KEY_SIZE + sizeof(MAGIC); 
+		fs.seekg(2*KEY_SIZE + sizeof(MAGIC));
 
 		uint32_t remaining = size;
 		crypto::SHA3_256 hash;
@@ -46,7 +42,8 @@ namespace FLAME_NAMESPACE {
 		return digest;
 	}
 
-	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in)) {
+	// @todo We need to make sure that each time we read we are staying withing file boundaries
+	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in)), _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -56,7 +53,8 @@ namespace FLAME_NAMESPACE {
 		unsigned long size = fs.tellg();
 		fs.seekg(0);
 		// If the file is smaller than this it is definetly not valid
-		if (size < SIGNATURE_SIZE + PUBLIC_KEY_SIZE + sizeof(MAGIC)) {
+		// @todo Re-evaluate this
+		if (size < 2*KEY_SIZE + sizeof(MAGIC)) {
 			_fh->unlock();
 			throw std::runtime_error("File too small");
 		}
@@ -68,38 +66,48 @@ namespace FLAME_NAMESPACE {
 			throw std::runtime_error("File is not a FLMb file");
 		}
 
-		binary::read(fs, _key, PUBLIC_KEY_SIZE);
-		CryptoPP::RSA::PublicKey rsa_public;
+		// @todo There should be a function in crypto that provides this
+		std::vector<uint8_t> n(KEY_SIZE);
+		binary::read(fs, n.data(), KEY_SIZE);
+
+		// @todo For some very weird reason this blocks if the key is corrupt and we have a lock (???)
+		_fh->unlock();
 		{
-			CryptoPP::ByteQueue pubqueue;
-			pubqueue.Put2(_key, PUBLIC_KEY_SIZE, 1, true);
+			// Make sure the key is not empty
+			auto check = [n] {
+				for (auto&& byte : n) {
+					if (byte != 0x00) {
+						return true;
+					}
+				}
+				return false;
+			};
 
-			// @todo For some very weird reason this blocks if the key is corrupt and we have a lock (???)
-			_fh->unlock();
-			rsa_public.Load(pubqueue);
+			if (!check()) {
+				throw std::runtime_error("File is corrupted");
+			}
 		}
-
+		_key = crypto::RSA(n, crypto::default_e());
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
 		_fh->lock();
 
-		std::vector<uint8_t> signature(SIGNATURE_SIZE);
-		binary::read(fs, signature.data(), SIGNATURE_SIZE);
-		CryptoPP::Integer stored_digest_integer = rsa_public.ApplyFunction(CryptoPP::Integer(signature.data(), SIGNATURE_SIZE));
+		std::vector<uint8_t> signature(KEY_SIZE);
+		binary::read(fs, signature.data(), KEY_SIZE);
+		// @todo Encrypt is the wrong term here
+		std::vector<uint8_t> stored_digest = _key.encrypt(signature);
 
 		_fh->unlock();
 
 		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
-		size_t length = stored_digest_integer.MinEncodedSize();
+		size_t length = stored_digest.size();
 		if (length != digest.size()) {
 			throw std::runtime_error("File is corrupted");
 		}
-		uint8_t stored_digest[length];
-		stored_digest_integer.Encode(stored_digest, length);
 
-		if (!binary::compare(digest.data(), stored_digest, length)) {
+		if (!binary::compare(digest.data(), stored_digest.data(), length)) {
 			throw std::runtime_error("File is corrupted");
 		}
 
@@ -108,7 +116,7 @@ namespace FLAME_NAMESPACE {
 		}
 		_fh->lock();
 
-		fs.seekg(PUBLIC_KEY_SIZE + SIGNATURE_SIZE + sizeof(MAGIC));
+		fs.seekg(2*KEY_SIZE + sizeof(MAGIC));
 		uint8_t x;
 		binary::read(fs, x);
 		_compression = static_cast<Compression>(x);
@@ -165,8 +173,16 @@ namespace FLAME_NAMESPACE {
 		return _description;
 	}
 
-	bool Archive::is_trusted(uint8_t trusted_key[]) {
-		return binary::compare(_key, trusted_key, PUBLIC_KEY_SIZE);
+	bool Archive::is_trusted(crypto::RSA& trusted_key) {
+		// @todo Make vector compare, which checks if size if correct
+		if (_key.get_d().size() != trusted_key.get_d().size()) {
+			return false;
+		}
+		if (_key.get_n().size() != trusted_key.get_n().size()) {
+			return false;
+		}
+		
+		return binary::compare(_key.get_d().data(), trusted_key.get_d().data(), _key.get_d().size()) && binary::compare(_key.get_n().data(), trusted_key.get_n().data(), _key.get_n().size());
 	}
 
 	const uint16_t& Archive::get_version() const {

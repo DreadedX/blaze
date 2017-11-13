@@ -11,6 +11,8 @@ void rsa_test();
 
 namespace CRYPTO_NAMESPACE {
 
+	std::vector<uint8_t> default_e();
+
 	class RSA {
 		public:
 			RSA(std::vector<uint8_t> n, std::vector<uint8_t> d);
@@ -30,6 +32,7 @@ namespace CRYPTO_NAMESPACE {
 
 	};
 
+	// @todo Make e configurable
 	std::pair<RSA, RSA> generate_rsa_keys(size_t b);
 	void store(std::string filename, RSA key);
 	RSA load(std::string filename);

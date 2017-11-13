@@ -39,13 +39,6 @@ workspace "blaze"
 		system "linux"
 		architecture "x86_64"
 
-project "cryptopp"
-	kind "StaticLib"
-	cppdialect "C++14"
-	files "third_party/cryptopp/*.cpp"
-	removefiles { "third_party/cryptopp/test.cpp", "third_party/cryptopp/bench1.cpp", "third_party/cryptopp/bench2.cpp", "third_party/cryptopp/validat1.cpp", "third_party/cryptopp/validat2.cpp", "third_party/cryptopp/validat3.cpp", "third_party/cryptopp/adhoc.cpp", "third_party/cryptopp/datatest.cpp", "third_party/cryptopp/regtest.cpp", "third_party/cryptopp/fipsalgt.cpp", "third_party/cryptopp/dlltest.cpp", "third_party/cryptopp/fipstest.cpp", "third_party/cryptopp/pch.cpp", "third_party/cryptopp/simple.cpp", "third_party/cryptopp/winpipes.cpp", "third_party/cryptopp/cryptlib_bds.cpp" }
-	includeCryptoPP()
-
 project "bigint"
 	kind "StaticLib"
 	files "third_party/bigint/**"
@@ -93,7 +86,7 @@ project "keygen"
 	includeFlame()
 
 	-- @todo Run this if the keys does not yet exist even after keygen has been build
-	postbuildcommands {"%{cfg.buildtarget.abspath}", "../scripts/generate.lua"}
+	-- postbuildcommands {"%{cfg.buildtarget.abspath}", "../scripts/generate.lua"}
 
 project "packager"
 	kind "ConsoleApp"

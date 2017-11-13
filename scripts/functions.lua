@@ -19,12 +19,6 @@ end
 function includeZlib()
 	links "z"
 end
-function includeCryptoPP()
-	includedirs "third_party/cryptopp"
-	filter "kind:not StaticLib"
-		links "cryptopp"
-	filter {}
-end
 function includeBigInt()
 	includedirs "third_party/bigint"
 	filter "kind:not StaticLib"
@@ -60,7 +54,6 @@ function includeFlame()
 	filter "kind:not StaticLib"
 		links "flame"
 	filter {}
-	includeCryptoPP()
 	includeCrypto()
 	includeZlib()
 	includeThreads()

@@ -40,6 +40,7 @@ function builder.build (archives)
 			end
 
 			archive_writer:sign(helper.load_private_key(archive.key))
+			archive_writer:close()
 		end
 	-- else
 	-- 	print("ERROR")

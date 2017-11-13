@@ -3,8 +3,8 @@
 
 #include "data.h"
 
-#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/sha3.h"
-#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/rsa.h"
+#include "sha3.h"
+#include "rsa.h"
 #include <sstream>
 
 // @note We are assuming that these functions are correct
@@ -73,6 +73,7 @@ TEST_CASE( "sha3 hashes are calculated", "[sha3]" ) {
 	}
 }
 
+// @todo Implement test case
 TEST_CASE( "RSA stuff" ) {
 	rsa_test();
 }

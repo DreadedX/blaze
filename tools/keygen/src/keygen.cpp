@@ -4,7 +4,7 @@
 #include "archive.h"
 
 // @todo We need this because of name conflict with CryptoPP, until we implement RSA ourselves aswell
-#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/rsa.h"
+#include "rsa.h"
 
 int main() {
 	// CryptoPP::AutoSeededRandomPool rnd;
@@ -31,8 +31,16 @@ int main() {
 	// FLAME_NAMESPACE::binary::write(privfile, privqueue);
 
 	// @todo Command line arguments for picking the size and name
-	auto keys = crypto::generate_rsa_keys(1024);
-	// @note We do not have to store the public key as we always use e=65537
-	crypto::store("../keys/test_2.priv", keys.first);
+	// @todo Give the user feedback
+	{
+		auto keys = crypto::generate_rsa_keys(1024);
+		// @note We do not have to store the public key as we always use e=65537
+		crypto::store("../keys/test.priv", keys.first);
+	}
+
+	{
+		auto keys = crypto::generate_rsa_keys(1024);
+		crypto::store("../keys/unofficial.priv", keys.first);
+	}
 
 }

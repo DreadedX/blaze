@@ -40,7 +40,8 @@ namespace FLAME_NAMESPACE::lua {
 			"description", sol::property(&Archive::get_description),
 			"version", sol::property(&Archive::get_version),
 			"dependencies", sol::property(&Archive::get_dependencies),
-			"meta_assets", sol::property(&Archive::get_meta_assets)
+			"meta_assets", sol::property(&Archive::get_meta_assets),
+			"close", &Archive::close
 		);
 
 		// @todo This should not be available in the game
@@ -49,7 +50,8 @@ namespace FLAME_NAMESPACE::lua {
 				ArchiveWriter(std::string, std::string, std::string, std::string, uint16_t, Compression, std::vector<std::pair<std::string, uint16_t>>)
 			>(),
 			"sign", &ArchiveWriter::sign,
-			"add", &ArchiveWriter::add
+			"add", &ArchiveWriter::add,
+			"close", &ArchiveWriter::close
 		);
 
 		flame.set_function(

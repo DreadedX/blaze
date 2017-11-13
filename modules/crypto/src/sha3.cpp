@@ -1,4 +1,4 @@
-#include "/home/tim/Projects/cpp/blaze/modules/crypto/include/sha3.h"
+#include "sha3.h"
 
 #include <bitset>
 #include <cmath>
