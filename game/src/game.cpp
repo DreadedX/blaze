@@ -39,8 +39,8 @@ int main() {
 	// Override LuaTest in archive with version from disk
 	{
 		// @todo This should go into a lua script
-		flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10);
-		blaze::asset_list::add(lua_asset);
+		// flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10);
+		// blaze::asset_list::add(lua_asset);
 	}
 
 	// Initialze engine
@@ -99,6 +99,7 @@ int main() {
 #include <jni.h>
 #include <android/log.h>
 
+// @todo This has problems if we use '\n' instead of std::endl
 class androidbuf : public std::streambuf {
 	public:
 		enum { bufsize = 128 }; // ... or some other suitable buffer size
@@ -122,7 +123,7 @@ class androidbuf : public std::streambuf {
 				memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
 				writebuf[this->pptr() - this->pbase()] = '\0';
 
-				rc = __android_log_write(ANDROID_LOG_INFO, "std", writebuf) > 0;
+				rc = __android_log_write(ANDROID_LOG_INFO, "Native", writebuf) > 0;
 				this->setp(buffer, buffer + bufsize - 1);
 			}
 			return rc;
@@ -134,6 +135,7 @@ class androidbuf : public std::streambuf {
 extern "C" {
 	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject thiz) {
 		std::cout.rdbuf(new androidbuf);
+		std::cerr.rdbuf(new androidbuf);
 		main();
 	}
 }

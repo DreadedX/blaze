@@ -21,7 +21,11 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void load_archive(std::string archive_name) {
+		#ifdef ANDROID
+		std::string filename = "/storage/emulated/0/Android/data/nl.mtgames.blazebootstrap/files/" + archive_name + ".flm";
+		#else
 		std::string filename = "archives/" + archive_name + ".flm";
+		#endif
 		try {
 			flame::Archive archive(filename);
 

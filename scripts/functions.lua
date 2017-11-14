@@ -41,6 +41,7 @@ function includeGenerated()
 	filter "kind:not StaticLib"
 		links "generated"
 	filter {}
+	includeCrypto()
 end
 function includeCrypto()
 	includedirs "modules/crypto/include"
