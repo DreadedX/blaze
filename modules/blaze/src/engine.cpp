@@ -10,11 +10,26 @@ std::vector<std::shared_ptr<blaze::Script>> scripts;
 
 namespace BLAZE_NAMESPACE {
 
-	void initialize(std::initializer_list<std::string> archives) {
-		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
-		flame::lua::bind(lua_state);
-		blaze::lua::bind(lua_state);
+	// @todo Check if this is correct type
+	sol::object loader(std::string module_name) {
+		// @todo This will block, but there is not really a way around it, unless we maybe make an indirect layer
+		try {
+			auto data = asset_list::find_asset(module_name);
+			return get_lua_state().load(reinterpret_cast<const char*>(data.data()));
+		} catch (std::exception &e) {
+			return sol::make_object(get_lua_state(), "\n\tno asset '" + module_name + '\'');
+		}
+	}
 
+	void initialize(std::initializer_list<std::string> archives) {
+		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table);
+		flame::lua::bind(lua_state);
+		lua::bind(lua_state);
+
+		// Add custom loader that allows loading from archives
+		sol::table searchers = lua_state["package"]["searchers"];
+		searchers.add(&loader);
+		
 		for (auto& archive_name : archives) {
 			load_archive(archive_name);
 		}
@@ -29,10 +44,10 @@ namespace BLAZE_NAMESPACE {
 		try {
 			flame::Archive archive(filename);
 
-			blaze::asset_list::add(archive);
+			asset_list::add(archive);
 
 			try {
-				auto script = blaze::asset_manager::new_asset<blaze::Script>(archive.get_name() + "/Script");
+				auto script = asset_manager::new_asset<Script>(archive.get_name() + "/Script");
 				scripts.push_back(std::move(script));
 			} catch (std::exception& e) {
 				// @todo We should have a custom exception for this as we now assume an exception means not found

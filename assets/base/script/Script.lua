@@ -1,13 +1,11 @@
 -- Called when script is loaded
 function init()
-	print("This is the init script of the test archive")
 	subscription = blaze.ChatSubscription.new(chat_handler)
 
 	durability = 12
 
 	-- In a real game this would be called by some kind of mod loader
-	blaze.load_archive("mod")
-	blaze.load_archive("modeer")
+	blaze.load_archive("my_first_mod")
 end
 
 -- Called every frame

@@ -12,37 +12,25 @@ builder.build({
 		description = "This archive contains all the required assets for the game engine to function",
 		version = 1,
 		key = priv_key,
-		assets = {},
-		dependencies = {}
-	},
-	{
-		name = "test",
-		path = "archives/test.flm",
-		compression = flame.Compression.zlib,
-		author = "Dreaded_X",
-		description = "This is the first archive being made using the new scripting stuff",
-		version = 1,
-		key = priv_key,
 		assets = {
-			{ name = "test/Script", path = "assets/script/Test.lua", version = 1, tasks = { } },
+			{ name = "base/Script", path = "assets/base/script/Script.lua", version = 1, tasks = { } },
 			-- Language packs
-			{ name = "Dutch", path = "assets/language/Dutch.lang", version = 1, tasks = { langpack } },
-			{ name = "English", path = "assets/language/English.lang", version = 1, tasks = { langpack } },
+			{ name = "base/language/Dutch", path = "assets/base/language/Dutch.lang", version = 1, tasks = { langpack } },
+			{ name = "base/language/English", path = "assets/base/language/English.lang", version = 1, tasks = { langpack } },
 		},
-		dependencies = {
-			{name = "base", version = 1}
-		}
+		dependencies = { }
 	},
 	{
-		name = "mod",
-		path = "archives/mod.flm",
+		name = "my_first_mod",
+		path = "archives/my_first_mod.flm",
 		compression = flame.Compression.zlib,
 		author = "ModAuthor",
 		description = "My first mod!",
 		version = 1,
 		key = "keys/unofficial.priv",
 		assets = {
-			{ name = "mod/Script", path = "assets/script/Mod.lua", version = 1, tasks = { } },
+			{ name = "my_first_mod/Script", path = "assets/my_first_mod/script/Script.lua", version = 1, tasks = { } },
+			{ name = "my_first_mod/script/Hello", path = "assets/my_first_mod/script/Hello.lua", version = 1, tasks = { } },
 			-- Language packs
 		},
 		dependencies = {
@@ -80,8 +68,7 @@ function print_archive_info(archive)
 end
 
 print_archive_info(flame.Archive.new("archives/base.flm"));
-print_archive_info(flame.Archive.new("archives/test.flm"));
-print_archive_info(flame.Archive.new("archives/mod.flm"));
+print_archive_info(flame.Archive.new("archives/my_first_mod.flm"));
 
 --------------------------------------------------------------------------------------------------------
 

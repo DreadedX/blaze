@@ -39,29 +39,22 @@ int main() {
 	// Override LuaTest in archive with version from disk
 	{
 		// @todo This should go into a lua script
-		// flame::MetaAsset lua_asset("test/Script", "assets/script/Test.lua", 10);
+		// flame::MetaAsset lua_asset("base/Script", "assets/base/script/Script.lua", 10);
 		// blaze::asset_list::add(lua_asset);
 	}
 
 	// Initialze engine
 	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
-	blaze::initialize({"base", "test"});
-
-	// Flame tests
-	{
-		std::cout << "====ASSETS====\n";
-		blaze::asset_list::debug_list_meta_assets();
-		std::cout << "==============\n";
-	}
+	blaze::initialize({"base"});
 
 	// asset_manager
 	// auto script = asset_manager::new_asset<Script>("Test");
-	auto en = asset_manager::new_asset<Language>("English");
+	auto en = asset_manager::new_asset<Language>("base/language/English");
 	get_lua_state().set_function("get_lang", [en]{
 		return en;
 	});
 	{
-		auto nl = asset_manager::new_asset<Language>("Dutch");
+		auto nl = asset_manager::new_asset<Language>("base/language/Dutch");
 
 		// Wait for all gameassets to be loaded and show progress
 		auto total_count = asset_manager::loading_count();
@@ -84,6 +77,15 @@ int main() {
 		lang_test(en);
 		lang_test(nl);
 	}
+
+	// Flame tests
+	{
+		std::cout << "====ASSETS====\n";
+		blaze::asset_list::debug_list_meta_assets();
+		std::cout << "==============\n";
+	}
+
+
 
 	// Event bus test
 	{

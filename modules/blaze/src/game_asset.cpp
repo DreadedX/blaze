@@ -1,7 +1,7 @@
 #include "game_asset.h"
 
 namespace BLAZE_NAMESPACE {
-	GameAsset::GameAsset(std::string asset_name) : _data(blaze::asset_list::find_asset(asset_name)) {}
+	GameAsset::GameAsset(std::string asset_name) : _data(asset_list::find_asset(asset_name)) {}
 
 	bool GameAsset::is_loaded() {
 		return _data.is_loaded();
@@ -35,7 +35,9 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void Script::post_load() {
-		get_lua_state().safe_script(reinterpret_cast<const char*>(_data.data()), environment);
+		// @todo Provide casting function
+		// @todo Do we need safe_script
+		get_lua_state().script(reinterpret_cast<const char*>(_data.data()), environment);
 		_loaded = true;
 
 		environment["init"]();
