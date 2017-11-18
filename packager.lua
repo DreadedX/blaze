@@ -7,14 +7,13 @@ builder.build({
 	{
 		name = "base",
 		path = "archives/base.flm",
-		compression = flame.Compression.zlib,
+		compression = flame.Compression.none,
 		author = "Dreaded_X",
 		description = "This archive contains all the required assets for the game engine to function",
 		version = 1,
 		key = priv_key,
 		assets = {
 			{ name = "base/Script", path = "assets/base/script/Script.lua", version = 1, tasks = { } },
-			-- Language packs
 			{ name = "base/language/Dutch", path = "assets/base/language/Dutch.lang", version = 1, tasks = { langpack } },
 			{ name = "base/language/English", path = "assets/base/language/English.lang", version = 1, tasks = { langpack } },
 		},
@@ -23,7 +22,7 @@ builder.build({
 	{
 		name = "my_first_mod",
 		path = "archives/my_first_mod.flm",
-		compression = flame.Compression.zlib,
+		compression = flame.Compression.none,
 		author = "ModAuthor",
 		description = "My first mod!",
 		version = 1,
@@ -31,7 +30,6 @@ builder.build({
 		assets = {
 			{ name = "my_first_mod/Script", path = "assets/my_first_mod/script/Script.lua", version = 1, tasks = { } },
 			{ name = "my_first_mod/script/Hello", path = "assets/my_first_mod/script/Hello.lua", version = 1, tasks = { } },
-			-- Language packs
 		},
 		dependencies = {
 			{name = "base", version = 1}

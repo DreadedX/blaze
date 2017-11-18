@@ -18,9 +18,10 @@ namespace FLAME_NAMESPACE {
 
 			bool is_loaded();
 			uint32_t get_size();
-			// @note Never store the result of this function, as AssetData going out of scope deletes it
-			uint8_t* data();
+			template <typename T>
+			T as();
 			uint8_t& operator[](uint32_t idx);
+
 
 		private:
 			void _wait_until_loaded();

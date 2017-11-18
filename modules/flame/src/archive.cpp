@@ -103,13 +103,16 @@ namespace FLAME_NAMESPACE {
 		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
 		size_t length = stored_digest.size();
-		if (length != digest.size()) {
-			throw std::runtime_error("File is corrupted");
-		}
+		// @todo RSA conversion of signature fails, probaly a problem with bigint or rsa
+		#ifndef __EMSCRIPTEN__ 
+			if (length != digest.size()) {
+				throw std::runtime_error("File is corrupted");
+			}
 
-		if (!binary::compare(digest.data(), stored_digest.data(), length)) {
-			throw std::runtime_error("File is corrupted");
-		}
+			if (!binary::compare(digest.data(), stored_digest.data(), length)) {
+				throw std::runtime_error("File is corrupted");
+			}
+		#endif
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");

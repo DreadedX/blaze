@@ -15,7 +15,7 @@ namespace BLAZE_NAMESPACE {
 		// @todo This will block, but there is not really a way around it, unless we maybe make an indirect layer
 		try {
 			auto data = asset_list::find_asset(module_name);
-			return get_lua_state().load(reinterpret_cast<const char*>(data.data()));
+			return get_lua_state().load(data.as<std::string>());
 		} catch (std::exception &e) {
 			return sol::make_object(get_lua_state(), "\n\tno asset '" + module_name + '\'');
 		}

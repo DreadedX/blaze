@@ -7,6 +7,8 @@
 #include "rsa.h"
 #include <sstream>
 
+#include <iomanip>
+
 // @note We are assuming that these functions are correct
 
 // All data in one go

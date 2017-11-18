@@ -29,7 +29,8 @@ workspace "blaze"
 	filter "configurations:Debug"
 		defines "DEBUG"
 		symbols "On"
-		optimize "Debug"
+		-- @todo This does not work on web
+		-- optimize "Debug"
 
 	filter "configurations:Release"
 		defines "NDEBUG"

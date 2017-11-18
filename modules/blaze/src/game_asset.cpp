@@ -35,9 +35,8 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void Script::post_load() {
-		// @todo Provide casting function
 		// @todo Do we need safe_script
-		get_lua_state().script(reinterpret_cast<const char*>(_data.data()), environment);
+		get_lua_state().script(_data.as<std::string>());
 		_loaded = true;
 
 		environment["init"]();

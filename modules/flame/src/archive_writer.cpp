@@ -113,7 +113,7 @@ namespace FLAME_NAMESPACE {
 		// @note This blocks until the stream is finished loading
 
 		binary::write(fs, data.get_size());
-		binary::write(fs, data.data(), data.get_size());
+		binary::write(fs, data.as<uint8_t*>(), data.get_size());
 
 		_fh->unlock();
 	}
