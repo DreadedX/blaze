@@ -11,6 +11,15 @@
 
 // @note We are assuming that these functions are correct
 
+std::string bytes_to_string(std::vector<uint8_t> data) {
+	std::stringstream ss;
+	for (auto&& d : data) {
+		ss << std::setfill('0') << std::setw(2) << std::hex << (uint32_t)d;
+	}
+
+	return ss.str();
+}
+
 // All data in one go
 std::string calculate_hash(std::vector<uint8_t> data) {
 	crypto::SHA3_256 hash;
@@ -22,7 +31,7 @@ std::string calculate_hash(std::vector<uint8_t> data) {
 		ss << std::setfill('0') << std::setw(2) << std::hex << (uint32_t)d;
 	}
 
-	return ss.str();
+	return bytes_to_string(digest);
 }
 
 // Data in chunks of 211 bytes
@@ -75,7 +84,20 @@ TEST_CASE( "sha3 hashes are calculated", "[sha3]" ) {
 	}
 }
 
-// @todo Implement test case
-TEST_CASE( "RSA stuff" ) {
-	rsa_test();
+TEST_CASE( "rsa encryption and decryption" ) {
+	SECTION( "rsa key generation" ) {
+		// @note This test take a long time and we can't really verify anything
+		// auto keys = crypto::generate_rsa_keys(1024);
+        //
+		// crypto::store("test/key-temp.priv", keys.first);
+		// crypto::store("test/key-temp.pub", keys.second);
+		// @todo Test if files exists and remove them again
+	}
+
+	SECTION( "rsa decrypt short") {
+		auto priv = crypto::load("test/key.priv");
+		auto encrypted = priv.encrypt(rsa_short);
+
+		REQUIRE(bytes_to_string(encrypted) == rsa_short_encrypted);
+	}
 }

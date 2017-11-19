@@ -139,15 +139,16 @@ BigUnsigned generate_random_prime(size_t b) {
 	}
 }
 
+// @todo Sizeof(BigUnsigned::Blk) depends on platform, that is why we really need our own
 BigUnsigned data_to_big_unsigned(std::vector<uint8_t> data) {
 	assert(data.size() % 8 == 0);
 	BigUnsigned x;
 
-	for (size_t i = 0; i < data.size()/8; ++i) {
+	for (size_t i = 0; i < data.size()/sizeof(BigUnsigned::Blk); ++i) {
 		BigUnsigned::Blk block = 0;
 
-		for (size_t j = 0; j < 8; ++j) {
-			block |= ((uint64_t)data[i*8+j]) << (j*8);
+		for (size_t j = 0; j < sizeof(BigUnsigned::Blk); ++j) {
+			block |= ((BigUnsigned::Blk)data[i*sizeof(BigUnsigned::Blk)+j]) << (j*8);
 		}
 
 		x.setBlock(i, block);
@@ -158,13 +159,13 @@ BigUnsigned data_to_big_unsigned(std::vector<uint8_t> data) {
 
 std::vector<uint8_t> big_unsigned_to_data(const BigUnsigned& x) {
 	size_t size = x.getLength();
-	std::vector<uint8_t> data(size*8);
+	std::vector<uint8_t> data(size*sizeof(BigUnsigned::Blk));
 
 	for (size_t i = 0; i < size; ++i) {
 		auto block = x.getBlock(i);
 
-		for (size_t j = 0; j < 8; ++j) {
-			data[i*8+j] = block >> (j*8);
+		for (size_t j = 0; j < sizeof(BigUnsigned::Blk); ++j) {
+			data[i*sizeof(BigUnsigned::Blk)+j] = block >> (j*8);
 		}
 	}
 
@@ -186,7 +187,6 @@ namespace CRYPTO_NAMESPACE {
 		BigUnsigned m = data_to_big_unsigned(message);
 
 		// assert(m < (n-1));
-
 		auto encrypted = big_unsigned_to_data(power(m, d, n));
 
 		return encrypted;
@@ -216,6 +216,10 @@ namespace CRYPTO_NAMESPACE {
 	void store(std::string filename, RSA key) {
 		std::fstream file(filename, std::ios::out | std::ios::trunc);
 
+		if (!file.is_open()) {
+			throw std::runtime_error("Failed to open file");
+		}
+
 		auto n = key.get_n();
 		auto d = key.get_d();
 
@@ -235,6 +239,10 @@ namespace CRYPTO_NAMESPACE {
 
 	RSA load(std::string filename) {
 		std::fstream file(filename, std::ios::in);
+
+		if (!file.is_open()) {
+			throw std::runtime_error("Failed to open file");
+		}
 
 		// @todo Verify the file somehow
 		uint16_t size = 0;

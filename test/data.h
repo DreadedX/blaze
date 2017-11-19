@@ -10,6 +10,9 @@ std::vector<uint8_t> string_to_data(std::string string) {
 	return data;
 }
 
+std::vector<uint8_t> rsa_short = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+std::string rsa_short_encrypted = "db61888489cc232bdd88f4888507197d4154565df49f5e3cca3660e74c9b5fdfa8bd523a90abd2f5b7001c6fe1f9a38eea56a6920e57e73b6cb3ef1f1904e5b757ff86d08386ab924c5742a5dd18356bb476318a003649d39c6f10683f29cc33f902eb12b1f07281a6c2e0b2a80befaaa5dafe495ee20024664a96dd3bfc8c4d";
+
 std::vector<uint8_t> empty;
 std::string empty_hash_256 = "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a";
 
