@@ -10,7 +10,6 @@ std::vector<std::shared_ptr<blaze::Script>> scripts;
 
 namespace BLAZE_NAMESPACE {
 
-	// @todo Check if this is correct type
 	sol::object loader(std::string module_name) {
 		// @todo This will block, but there is not really a way around it, unless we maybe make an indirect layer
 		try {

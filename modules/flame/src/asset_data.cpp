@@ -7,13 +7,6 @@
 
 #define CHUNK_SIZE 16384
 
-// @todo Set this from the build script
-#ifdef __EMSCRIPTEN__
-#define _ASYNC false
-#else
-#define _ASYNC true
-#endif
-
 namespace FLAME_NAMESPACE {
 	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
 		std::vector<uint8_t> data(size);
@@ -46,21 +39,18 @@ namespace FLAME_NAMESPACE {
 	}
 
 	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
-		// The web does not have async
-		// @todo Now that we force _future.wait() in browsers, do we still need to launch deferred or is that always happening
-		#if _ASYNC
-			_future = std::async(std::launch::async, async_load, fh, size, offset, workflow);
-		#else
-			_future = std::async(std::launch::deferred, async_load, fh, size, offset, workflow);
-		#endif
+		std::launch policy;
+		if constexpr (enviroment::async) {
+			policy = std::launch::async;
+		} else {
+			policy = std::launch::deferred;
+		}
+
+		_future = std::async(policy, async_load, fh, size, offset, workflow);
 	}
 
 	bool AssetData::is_loaded() {
-		// @todo Make this a little less hacky
-		#if !_ASYNC
-			_future.wait();
-		#endif
-		if (!_loaded && _future.valid() && _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		if (!_loaded && _future.valid() && ( (_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) || !enviroment::async)) {
 			_data = _future.get();
 			_loaded = true;
 		}
