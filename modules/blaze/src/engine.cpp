@@ -1,12 +1,17 @@
 #include "engine.h"
 #include "asset_manager.h"
 #include "events.h"
+#include "platform/platform.h"
 
 #include "bind_flame.h"
 #include "bind_blaze.h"
 
+#include "enviroment.h"
+
 sol::state lua_state;
 std::vector<std::shared_ptr<blaze::Script>> scripts;
+
+std::shared_ptr<blaze::Platform> blaze::platform;
 
 namespace BLAZE_NAMESPACE {
 
@@ -20,7 +25,7 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
-	void initialize(std::initializer_list<std::string> archives) {
+	void initialize() {
 		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table);
 		flame::lua::bind(lua_state);
 		lua::bind(lua_state);
@@ -29,17 +34,11 @@ namespace BLAZE_NAMESPACE {
 		sol::table searchers = lua_state["package"]["searchers"];
 		searchers.add(&loader);
 		
-		for (auto& archive_name : archives) {
-			load_archive(archive_name);
-		}
 	}
 
 	void load_archive(std::string archive_name) {
-		#ifdef ANDROID
-		std::string filename = "/storage/emulated/0/Android/data/nl.mtgames.blazebootstrap/files/" + archive_name + ".flm";
-		#else
-		std::string filename = "archives/" + archive_name + ".flm";
-		#endif
+		std::string filename = platform->get_base_path() + "/archives/" + archive_name + ".flm";
+
 		try {
 			flame::Archive archive(filename);
 
@@ -65,5 +64,9 @@ namespace BLAZE_NAMESPACE {
 
 	sol::state& get_lua_state() {
 		return lua_state;
+	}
+
+	std::shared_ptr<Platform> get_platform() {
+		return platform;
 	}
 }

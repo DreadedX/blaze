@@ -4,6 +4,7 @@
 
 #include "asset_list.h"
 #include "events.h"
+#include "platform/platform.h"
 
 #include "binary_helper.h"
 
@@ -19,8 +20,17 @@
 #include <variant>
 
 namespace BLAZE_NAMESPACE {
-	void initialize(std::initializer_list<std::string> archives);
+
+	extern std::shared_ptr<Platform> platform;
+
+	template<typename T>
+	void set_platform() {
+		platform = std::make_shared<T>();
+	}
+
+	void initialize();
 	void load_archive(std::string archive_name);
 	void update();
 	sol::state& get_lua_state();
+	std::shared_ptr<Platform> get_platform();
 }

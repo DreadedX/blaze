@@ -32,13 +32,13 @@ namespace FLAME_NAMESPACE {
 		return _version;
 	}
 
-	AssetData MetaAsset::get_data(std::vector<Task> workflow) {
+	AssetData MetaAsset::get_data(bool async, std::vector<Task> workflow) {
 
 		// Construct a new workflow based on the base workflow and given workflow
 		std::vector<Task> final_workflow;
 		final_workflow.insert(std::end(final_workflow), std::begin(_base_workflow), std::end(_base_workflow));
 		final_workflow.insert(std::end(final_workflow), std::begin(workflow), std::end(workflow));
 
-		return AssetData(_fh, _size, _offset, final_workflow);
+		return AssetData(_fh, _size, _offset, final_workflow, async);
 	}
 }

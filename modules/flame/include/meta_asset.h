@@ -26,7 +26,7 @@ namespace FLAME_NAMESPACE {
 			const std::string& get_name() const;
 			uint16_t get_version() const;
 
-			AssetData get_data(std::vector<Task> workflow = std::vector<Task>());
+			AssetData get_data(bool async = true, std::vector<Task> workflow = std::vector<Task>());
 
 		private:
 			std::string _name;

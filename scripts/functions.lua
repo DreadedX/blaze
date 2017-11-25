@@ -36,6 +36,9 @@ function includeSol2()
 	includedirs "third_party/sol2"
 	includeLua()
 end
+function includeEnviroment()
+	includedirs "modules/enviroment/include"
+end
 function includeGenerated()
 	includedirs "modules/generated/include"
 	filter "kind:not StaticLib"
@@ -58,6 +61,7 @@ function includeFlame()
 	includeCrypto()
 	includeZlib()
 	includeThreads()
+	includeEnviroment()
 end
 function includeBlaze()
 	includedirs "modules/blaze/include"

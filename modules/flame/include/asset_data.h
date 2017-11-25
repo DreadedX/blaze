@@ -14,7 +14,7 @@ namespace FLAME_NAMESPACE {
 
 	class AssetData {
 		public:
-			AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow);
+			AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow, bool async = true);
 
 			bool is_loaded();
 			uint32_t get_size();
@@ -26,6 +26,7 @@ namespace FLAME_NAMESPACE {
 		private:
 			void _wait_until_loaded();
 
+			bool _async = true;
 			bool _loaded = false;
 			std::vector<uint8_t> _data;
 			std::future<std::vector<uint8_t>> _future;

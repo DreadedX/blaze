@@ -100,7 +100,7 @@ namespace FLAME_NAMESPACE {
 		}
 
 		// Start loading
-		auto data = meta_asset.get_data(create_workflow());
+		auto data = meta_asset.get_data(true, create_workflow());
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");

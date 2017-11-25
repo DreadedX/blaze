@@ -2,7 +2,7 @@
 #include "engine.h"
 #include "asset_manager.h"
 
-#include "version.h"
+#include "enviroment.h"
 
 using namespace blaze;
 
@@ -29,30 +29,26 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 
 }
 
-int main() {
+void game() {
+	// Setup event handlers
 	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
 	event_bus::subscribe<Error>(std::ref(handle_error));
 
-	std::cout << "Version number: " << get_version_number() <<'\n';
-	std::cout << "Version string: " << get_version_string() <<'\n';
-
-	// Override LuaTest in archive with version from disk
-	{
+	// Override assets so we don't have to repackage everytime
+	if constexpr (enviroment::os == enviroment::OS::Linux) {
 		// @todo This should go into a lua script
-		// flame::MetaAsset lua_asset("base/Script", "assets/base/script/Script.lua", 10);
-		// blaze::asset_list::add(lua_asset);
+		flame::MetaAsset lua_asset("base/Script", "assets/base/script/Script.lua", 10);
+		blaze::asset_list::add(lua_asset);
 	}
 
-	// Initialze engine
-	// @todo Make it so we do not have to keep a reference around if we just want to register and forget
-	blaze::initialize({"base"});
+	// Load base archive
+	blaze::load_archive("base");
 
-	// asset_manager
-	// auto script = asset_manager::new_asset<Script>("Test");
 	auto en = asset_manager::new_asset<Language>("base/language/English");
 	get_lua_state().set_function("get_lang", [en]{
 		return en;
 	});
+
 	{
 		auto nl = asset_manager::new_asset<Language>("base/language/Dutch");
 
@@ -60,13 +56,13 @@ int main() {
 		auto total_count = asset_manager::loading_count();
 		auto not_loaded_count = total_count;
 		while (not_loaded_count  > 0) {
-			std::cout << "Loaded assets: " << total_count-not_loaded_count << '/' << total_count << '\n';
+			// std::cout << "Loaded assets: " << total_count-not_loaded_count << '/' << total_count << '\n';
 			asset_manager::load_assets();
 
 			// Example of a loading screen
 			not_loaded_count = asset_manager::loading_count();
 		}
-		std::cout << "Loaded assets: " << total_count-not_loaded_count << '/' << total_count << '\n';
+		// std::cout << "Loaded assets: " << total_count-not_loaded_count << '/' << total_count << '\n';
 
 		// Simulate the core game loop
 		for (int i = 0; i < 3; ++i) {
@@ -85,8 +81,6 @@ int main() {
 		std::cout << "==============\n";
 	}
 
-
-
 	// Event bus test
 	{
 		// Lua also registers a handler
@@ -96,49 +90,3 @@ int main() {
 		event_bus::send(std::make_shared<ChatMessage>("This is a test"));
 	}
 }
-
-#ifdef ANDROID
-#include <jni.h>
-#include <android/log.h>
-
-// @todo This has problems if we use '\n' instead of std::endl
-class androidbuf : public std::streambuf {
-	public:
-		enum { bufsize = 128 }; // ... or some other suitable buffer size
-		androidbuf() { this->setp(buffer, buffer + bufsize - 1); }
-
-	private:
-		int overflow(int c)
-		{
-			if (c == traits_type::eof()) {
-				*this->pptr() = traits_type::to_char_type(c);
-				this->sbumpc();
-			}
-			return this->sync()? traits_type::eof(): traits_type::not_eof(c);
-		}
-
-		int sync()
-		{
-			int rc = 0;
-			if (this->pbase() != this->pptr()) {
-				char writebuf[bufsize+1];
-				memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
-				writebuf[this->pptr() - this->pbase()] = '\0';
-
-				rc = __android_log_write(ANDROID_LOG_INFO, "Native", writebuf) > 0;
-				this->setp(buffer, buffer + bufsize - 1);
-			}
-			return rc;
-		}
-
-		char buffer[bufsize];
-};
-
-extern "C" {
-	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject thiz) {
-		std::cout.rdbuf(new androidbuf);
-		std::cerr.rdbuf(new androidbuf);
-		main();
-	}
-}
-#endif

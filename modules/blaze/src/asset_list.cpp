@@ -1,6 +1,7 @@
 #include "asset_list.h"
 
 #include "events.h"
+#include "engine.h"
 
 #include <iostream>
 
@@ -11,7 +12,7 @@ namespace BLAZE_NAMESPACE {
 	flame::AssetData asset_list::find_asset(std::string name) {
 		auto meta_asset = _meta_assets.find(name);
 		if (meta_asset != _meta_assets.end()) {
-			return meta_asset->second.get_data();
+			return meta_asset->second.get_data(get_platform()->has_async_support());
 		}
 		throw std::runtime_error("Can not find asset: '" + name + '\'');
 	}

@@ -2,6 +2,8 @@
 
 #include "binary_helper.h"
 
+#include "enviroment.h"
+
 #include <iostream>
 #include <cstring>
 
@@ -9,6 +11,9 @@
 
 namespace FLAME_NAMESPACE {
 	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
+		std::cout << "Start\n";
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		std::cout << "End\n";
 		std::vector<uint8_t> data(size);
 
 		uint32_t remaining = size;
@@ -38,9 +43,10 @@ namespace FLAME_NAMESPACE {
 		return data;
 	}
 
-	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
+	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow, bool async) : _async(async) {
 		std::launch policy;
-		if constexpr (enviroment::async) {
+		// @todo Maybe pass this in as an argument so we can constrol it froom the main engine
+		if (_async) {
 			policy = std::launch::async;
 		} else {
 			policy = std::launch::deferred;
@@ -50,7 +56,7 @@ namespace FLAME_NAMESPACE {
 	}
 
 	bool AssetData::is_loaded() {
-		if (!_loaded && _future.valid() && ( (_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) || !enviroment::async)) {
+		if (!_loaded && _future.valid() && ( (_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) || !_async )) {
 			_data = _future.get();
 			_loaded = true;
 		}

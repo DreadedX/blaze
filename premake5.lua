@@ -40,6 +40,8 @@ workspace "blaze"
 		system "linux"
 		architecture "x86_64"
 
+-- @todo Figure out which cpp files we really need to compile for each library
+
 project "bigint"
 	kind "StaticLib"
 	files "third_party/bigint/**"
@@ -49,6 +51,7 @@ project "bigint"
 project "lua"
 	kind "StaticLib"
 	files "third_party/lua/**"
+	removefiles { "lua.c" }
 
 project "generated"
 	kind "StaticLib"
