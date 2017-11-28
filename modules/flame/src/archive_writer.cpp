@@ -100,7 +100,8 @@ namespace FLAME_NAMESPACE {
 		}
 
 		// Start loading
-		auto data = meta_asset.get_data(true, create_workflow());
+		// @note We run in deferred mode because there is no point here in running async
+		auto data = meta_asset.get_data(false, create_workflow());
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");

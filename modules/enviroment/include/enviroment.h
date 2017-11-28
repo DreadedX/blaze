@@ -1,5 +1,6 @@
 #pragma once
 
+// @todo This can be moved into launch
 namespace enviroment {
 
 	enum class OS {
