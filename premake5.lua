@@ -11,6 +11,7 @@ workspace "blaze"
 	configurations { "Debug", "Release" }
 	platforms { "Linux" }
 	if _ACTION == "androidmk" then
+		-- @todo We need to make sure we do not optimize out the jni functions LOCAL_WHOLE_STATIC_LIBRARIES
 		location "android/jni"
 	else
 		location "build"

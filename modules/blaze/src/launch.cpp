@@ -13,18 +13,6 @@
 // @note The user has to implement this
 void game();
 
-// @note We need this because Android uses a different entrypoint
-// @todo Move this to platform
-#if ANDROID
-	#include <jni.h>
-
-	extern "C" {
-		JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject thiz) {
-			main();
-		}
-	}
-#endif
-
 // This is the entry point of the game engine
 int main() {
 	if constexpr (enviroment::os == enviroment::OS::Linux) {
@@ -41,4 +29,19 @@ int main() {
 
 	game();
 }
+
+// @note We need this because Android uses a different entrypoint
+// @todo Move this to platform
+// @todo We can propably put this in a seperate module
+#if ANDROID
+	#include <jni.h>
+	#include <android/log.h>
+
+	extern "C" {
+
+		JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jclass clazz) {
+			main();
+		}
+	}
+#endif
 

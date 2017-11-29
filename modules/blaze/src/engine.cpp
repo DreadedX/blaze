@@ -37,7 +37,7 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void load_archive(std::string archive_name) {
-		std::string filename = platform->get_base_path() + "/archives/" + archive_name + ".flm";
+		std::string filename = platform->get_base_path() + archive_name + ".flm";
 
 		try {
 			flame::Archive archive(filename);

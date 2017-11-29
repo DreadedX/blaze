@@ -4,7 +4,12 @@
 
 #include <string>
 
-// @todo Move each of these things into their own file
+#if __ANDROID__
+	#include <android/log.h>
+#endif
+
+// @todo Move each of these things into their own module and make the build system link the proper modules
+// @todo Print function that calls native implemtation or something along thoses lines
 namespace BLAZE_NAMESPACE {
 
 	class Platform {
@@ -17,7 +22,7 @@ namespace BLAZE_NAMESPACE {
 	class Linux : public Platform {
 		public:
 			const std::string get_base_path() const override {
-				return ".";
+				return "archives/";
 			}
 
 			bool has_async_support() const override {
@@ -29,7 +34,6 @@ namespace BLAZE_NAMESPACE {
 #endif
 
 #if __ANDROID__
-	#include <android/log.h>
 
 	// @todo This has problems if we use '\n' instead of std::endl
 	class androidbuf : public std::streambuf {
@@ -72,7 +76,7 @@ namespace BLAZE_NAMESPACE {
 			}
 
 			const std::string get_base_path() const override {
-				return "/storage/emulated/0/Android/data/nl.mtgames.blazebootstrap/files";
+				return "/storage/emulated/0/Android/data/nl.mtgames.blazebootstrap/files/";
 			}
 
 			bool has_async_support() const override{
@@ -87,7 +91,7 @@ namespace BLAZE_NAMESPACE {
 	class Web : public Platform {
 		public:
 			const std::string get_base_path() const override {
-				return ".";
+				return "archives/";
 			}
 
 			bool has_async_support() const override{
