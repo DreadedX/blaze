@@ -35,9 +35,9 @@ void game() {
 	event_bus::subscribe<Error>(std::ref(handle_error));
 
 	// Override assets so we don't have to repackage everytime
-	if constexpr (enviroment::os == enviroment::OS::Linux) {
+	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
 		// @todo This should go into a lua script
-		flame::MetaAsset lua_asset("base/Script", "assets/base/script/Script.lua", 10);
+		flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
 		blaze::asset_list::add(lua_asset);
 	}
 

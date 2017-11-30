@@ -1,7 +1,9 @@
 #pragma once
 
+#include "blaze.h"
+
 // @todo This can be moved into launch
-namespace enviroment {
+namespace BLAZE_NAMESPACE::enviroment {
 
 	enum class OS {
 		Linux,

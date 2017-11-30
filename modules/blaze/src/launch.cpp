@@ -3,24 +3,22 @@
 // Platform specific code should go into platform
 
 #include "engine.h"
-#include "platform/platform.h"
+#include "android.h"
 
 #include "version.h"
 #include "enviroment.h"
 
-#include <iostream>
-
-// @note The user has to implement this
+// @note This is implemtented by the user
 void game();
 
 // This is the entry point of the game engine
 int main() {
-	if constexpr (enviroment::os == enviroment::OS::Linux) {
-		blaze::set_platform<blaze::Linux>();
-	} else if constexpr (enviroment::os == enviroment::OS::Android) {
-		blaze::set_platform<blaze::Android>();
-	} else if constexpr (enviroment::os == enviroment::OS::Web) {
-		blaze::set_platform<blaze::Web>();
+	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
+		blaze::set_platform<blaze::platform::Linux>();
+	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Android) {
+		blaze::set_platform<blaze::platform::Android>();
+	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Web) {
+		blaze::set_platform<blaze::platform::Web>();
 	}
 
 	std::cout << "BLZNGN Version: " << get_version_number() << '-' << get_version_string() <<'\n';
@@ -29,19 +27,3 @@ int main() {
 
 	game();
 }
-
-// @note We need this because Android uses a different entrypoint
-// @todo Move this to platform
-// @todo We can propably put this in a seperate module
-#if ANDROID
-	#include <jni.h>
-	#include <android/log.h>
-
-	extern "C" {
-
-		JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jclass clazz) {
-			main();
-		}
-	}
-#endif
-

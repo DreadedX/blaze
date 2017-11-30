@@ -2,8 +2,6 @@
 
 #include "binary_helper.h"
 
-#include "enviroment.h"
-
 #include <iostream>
 #include <cstring>
 

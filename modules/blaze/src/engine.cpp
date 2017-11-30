@@ -11,7 +11,7 @@
 sol::state lua_state;
 std::vector<std::shared_ptr<blaze::Script>> scripts;
 
-std::shared_ptr<blaze::Platform> blaze::platform;
+std::shared_ptr<blaze::platform::Platform> blaze::current_platform;
 
 namespace BLAZE_NAMESPACE {
 
@@ -37,7 +37,7 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void load_archive(std::string archive_name) {
-		std::string filename = platform->get_base_path() + archive_name + ".flm";
+		std::string filename = current_platform->get_base_path() + archive_name + ".flm";
 
 		try {
 			flame::Archive archive(filename);
@@ -66,7 +66,7 @@ namespace BLAZE_NAMESPACE {
 		return lua_state;
 	}
 
-	std::shared_ptr<Platform> get_platform() {
-		return platform;
+	std::shared_ptr<platform::Platform> get_platform() {
+		return current_platform;
 	}
 }

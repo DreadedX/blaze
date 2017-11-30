@@ -21,9 +21,6 @@ Makefile
 *.make
 build/
 
-### premake-androidmk ###
-android/
-
 ### Vim ###
 # swap
 [._]*.s[a-v][a-z]
@@ -38,6 +35,4 @@ Session.vim
 tags
 
 ### Other stuff ###
-keys/
-archives/
 modules/generated/src/

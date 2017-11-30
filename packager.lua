@@ -1,12 +1,12 @@
 local builder = require "scripts.builder"
 local langpack = require "scripts.langpack"
 
-priv_key = "keys/test.priv"
+priv_key = "build/keys/test.priv"
 
 builder.build({
 	{
 		name = "base",
-		path = "archives/base.flm",
+		path = "build/archives/base.flm",
 		compression = flame.Compression.none,
 		author = "Dreaded_X",
 		description = "This archive contains all the required assets for the game engine to function",
@@ -21,12 +21,12 @@ builder.build({
 	},
 	{
 		name = "my_first_mod",
-		path = "archives/my_first_mod.flm",
+		path = "build/archives/my_first_mod.flm",
 		compression = flame.Compression.none,
 		author = "ModAuthor",
 		description = "My first mod!",
 		version = 1,
-		key = "keys/unofficial.priv",
+		key = "build/keys/unofficial.priv",
 		assets = {
 			{ name = "my_first_mod/Script", path = "assets/my_first_mod/script/Script.lua", version = 1, tasks = { } },
 			{ name = "my_first_mod/script/Hello", path = "assets/my_first_mod/script/Hello.lua", version = 1, tasks = { } },

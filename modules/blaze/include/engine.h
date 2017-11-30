@@ -17,20 +17,19 @@
 
 #include <initializer_list>
 #include <string>
-#include <variant>
 
 namespace BLAZE_NAMESPACE {
 
-	extern std::shared_ptr<Platform> platform;
+	extern std::shared_ptr<platform::Platform> current_platform;
 
 	template<typename T>
 	void set_platform() {
-		platform = std::make_shared<T>();
+		current_platform = std::make_shared<T>();
 	}
 
 	void initialize();
 	void load_archive(std::string archive_name);
 	void update();
 	sol::state& get_lua_state();
-	std::shared_ptr<Platform> get_platform();
+	std::shared_ptr<platform::Platform> get_platform();
 }
