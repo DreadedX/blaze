@@ -33,9 +33,10 @@ end
 -- 	end
 -- }
 
+language "C++"
+cppdialect "C++17"
+
 workspace "blaze"
-	language "C++"
-	cppdialect "C++17"
 
 	ndkabi "arm64-v8a"
 	ndkplatform "android-23"
@@ -54,7 +55,8 @@ workspace "blaze"
 	warnings "Extra"
 	rtti "On"
 	exceptionhandling "On"
-	pic "On"
+	-- @todo Do we need this
+	-- pic "On"
 
 	filter "configurations:Debug"
 		defines "DEBUG"
@@ -68,18 +70,17 @@ workspace "blaze"
 
 	filter {}
 
--- @todo For some reason android ignores removefiles
 -- @todo Figure out which cpp files we really need to compile for each library
 project "bigint"
 	kind "StaticLib"
 	files "third_party/bigint/**"
-	removefiles { "sample.cc", "testsuite.cc" }
+	removefiles { "third_party/bigint/sample.cc", "third_party/bigint/testsuite.cc" }
 	includeBigInt()
 
 project "lua"
 	kind "StaticLib"
 	files "third_party/lua/**"
-	removefiles { "lua.c" }
+	removefiles { "third_party/lua/lua.c" }
 
 project "generated"
 	kind "StaticLib"
@@ -104,15 +105,14 @@ project "blaze"
 	includeBlaze()
 	includedirs "modules/blaze/platform/android/include"
 
--- @todo Kinda weird to have to use utility to prevent a project from building
-project "android"
-	kind "Utility"
-	filter "options:platform=android"
+if _OPTIONS["platform"] == "android" then
+	project "android"
 		kind "StaticLib"
-	filter{}
-	files "modules/blaze/platform/android/src/**"
-	includedirs "modules/blaze/platform/android/include"
-	includeBlaze()
+		filter{}
+		files "modules/blaze/platform/android/src/**"
+		includedirs "modules/blaze/platform/android/include"
+		includeBlaze()
+end
 
 project "lua-bind"
 	kind "StaticLib"
@@ -130,35 +130,37 @@ project "game"
 	includedirs "game/include"
 	includeBlaze()
 
-project "keygen"
-	kind "ConsoleApp"
-	filter "options:platform=android"
-		kind "SharedLib"
-	filter {}
-	files "tools/keygen/src/**"
-	includedirs "tools/keygen/include"
-	includeFlame()
-	-- @todo Run this if the keys does not yet exist even after keygen has been build
-	-- postbuildcommands {"%{cfg.buildtarget.abspath}", "../scripts/generate.lua"}
+-- @note Only build this on desktop platforms
+if _OPTIONS["platform"] == "linux" then
+	project "keygen"
+		kind "ConsoleApp"
+		filter "options:platform=android"
+			kind "SharedLib"
+		filter {}
+		files "tools/keygen/src/**"
+		includedirs "tools/keygen/include"
+		includeFlame()
+		-- @todo Run this if the keys does not yet exist even after keygen has been build
+		-- postbuildcommands {"%{cfg.buildtarget.abspath}", "../scripts/generate.lua"}
 
-project "packager"
-	kind "ConsoleApp"
-	filter "options:platform=android"
-		kind "SharedLib"
-	filter {}
-	files "tools/packager/src/**"
-	includedirs "tools/packager/include"
-	includeGenerated()
-	includeLuaBind()
-	includeFlame()
-	-- @todo This depends on the platform
-	links "dl"
+	project "packager"
+		kind "ConsoleApp"
+		filter "options:platform=android"
+			kind "SharedLib"
+		filter {}
+		files "tools/packager/src/**"
+		includedirs "tools/packager/include"
+		includeGenerated()
+		includeLuaBind()
+		includeFlame()
+		links "dl"
 
-project "tests"
-	kind "ConsoleApp"
-	filter "options:platform=android"
-		kind "SharedLib"
-	filter {}
-	files "test/**"
-	includedirs "third_party/Catch/single_include"
-	includeCrypto();
+	project "tests"
+		kind "ConsoleApp"
+		filter "options:platform=android"
+			kind "SharedLib"
+		filter {}
+		files "test/**"
+		includedirs "third_party/Catch/single_include"
+		includeCrypto();
+end

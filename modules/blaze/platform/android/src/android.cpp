@@ -8,7 +8,16 @@
 int main();
 
 extern "C" {
-	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jclass clazz) {
+	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject obj) {
+
+		// @todo This needs to be a seperate function
+		{
+			jclass clazz = env->GetObjectClass(obj);
+			jmethodID appendToLog = env->GetMethodID(clazz, "appendToLog", "(Ljava/lang/String;)V");
+			env->CallVoidMethod(obj, appendToLog, env->NewStringUTF("Hello from c++\n"));
+			env->CallVoidMethod(obj, appendToLog, env->NewStringUTF("This is a test\n"));
+		}
+
 		main();
 	}
 }
