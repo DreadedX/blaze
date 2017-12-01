@@ -65,8 +65,8 @@ function print_archive_info(archive)
 	-- end
 end
 
-print_archive_info(flame.Archive.new("archives/base.flm"));
-print_archive_info(flame.Archive.new("archives/my_first_mod.flm"));
+print_archive_info(flame.Archive.new("build/archives/base.flm"));
+print_archive_info(flame.Archive.new("build/archives/my_first_mod.flm"));
 
 --------------------------------------------------------------------------------------------------------
 
