@@ -11,7 +11,7 @@
 sol::state lua_state;
 std::vector<std::shared_ptr<blaze::Script>> scripts;
 
-std::shared_ptr<blaze::platform::Platform> blaze::current_platform;
+std::unique_ptr<blaze::platform::Platform> blaze::current_platform;
 
 namespace BLAZE_NAMESPACE {
 
@@ -66,7 +66,7 @@ namespace BLAZE_NAMESPACE {
 		return lua_state;
 	}
 
-	std::shared_ptr<platform::Platform> get_platform() {
+	std::unique_ptr<platform::Platform>& get_platform() {
 		return current_platform;
 	}
 }

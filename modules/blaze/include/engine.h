@@ -20,16 +20,16 @@
 
 namespace BLAZE_NAMESPACE {
 
-	extern std::shared_ptr<platform::Platform> current_platform;
+	extern std::unique_ptr<platform::Platform> current_platform;
 
 	template<typename T>
 	void set_platform() {
-		current_platform = std::make_shared<T>();
+		current_platform = std::make_unique<T>();
 	}
 
 	void initialize();
 	void load_archive(std::string archive_name);
 	void update();
 	sol::state& get_lua_state();
-	std::shared_ptr<platform::Platform> get_platform();
+	std::unique_ptr<platform::Platform>& get_platform();
 }
