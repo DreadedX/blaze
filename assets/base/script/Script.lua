@@ -1,5 +1,8 @@
+local objects = require "base/Objects"
+
 -- Called when script is loaded
 function init()
+	objects.register()
 	subscription = blaze.ChatSubscription.new(chat_handler)
 
 	durability = 12
