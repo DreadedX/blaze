@@ -1,3 +1,5 @@
+#include "logger.h"
+
 #include "engine.h"
 #include "asset_manager.h"
 #include "events.h"
@@ -30,6 +32,11 @@ namespace BLAZE_NAMESPACE {
 		flame::lua::bind(lua_state);
 		lua::bind(lua_state);
 
+		// We need to eventually also override print
+		lua_state.set_function("log", [](std::string text) {
+			log(Level::debug, text + '\n');
+		});
+
 		// Add custom loader that allows loading from archives
 		sol::table searchers = lua_state["package"]["searchers"];
 		searchers.add(&loader);
@@ -49,7 +56,7 @@ namespace BLAZE_NAMESPACE {
 				scripts.push_back(std::move(script));
 			} catch (std::exception& e) {
 				// @todo We should have a custom exception for this as we now assume an exception means not found
-				std::cout << "Archive '" << archive.get_name() << "' does not have a script.\n";
+				log(Level::debug, "Archive '{}' does not gave a script.\n", archive.get_name());
 			}
 		} catch (std::exception& e) {
 			event_bus::send(std::make_shared<Error>("Failed to load archive '" + archive_name + "': " + e.what(), __FILE__, __LINE__));

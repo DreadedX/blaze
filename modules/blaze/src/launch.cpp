@@ -2,6 +2,8 @@
 // Everywhere else we should use constexpr
 // Platform specific code should go into platform
 
+#include "logger.h"
+
 #include "engine.h"
 #include "android.h"
 
@@ -21,7 +23,7 @@ int main() {
 		blaze::set_platform<blaze::platform::Web>();
 	}
 
-	std::cout << "BLZNGN Version: " << get_version_number() << '-' << get_version_string() <<'\n';
+	log(Level::debug, "BLZNGN Version: {}-{}\n", get_version_number(), get_version_string().c_str());
 
 	blaze::initialize();
 

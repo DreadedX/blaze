@@ -1,7 +1,7 @@
 local hello = require "my_first_mod/script/Hello"
 
 function init() 
-	print "==== Hello world! This is my first mod! ===="
+	log "==== Hello world! This is my first mod! ===="
 
 	hello.say("You")
 	hello.say("World")

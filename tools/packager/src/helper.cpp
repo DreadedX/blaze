@@ -1,3 +1,5 @@
+#include "logger.h"
+
 #include "helper.h"
 #include "binary_helper.h"
 
@@ -30,13 +32,13 @@ void bind(sol::state& lua) {
 
 	helper.set_function("get_external_task", &get_external_task);
 
-	helper.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data){
-		std::cout << "Size: " << data.get_size() << '\n';
-		std::cout << "Content: " << '\n';
+	helper.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data) {
+		log(Level::debug, "Size: {}\n", data.get_size());
+		log(Level::debug, "Content: \n", data.get_size());
 		for (uint32_t i = 0; i < data.get_size(); ++i) {
 			auto dat = data[i];
-			std::cout << dat;
+			log(Level::debug, "{}", dat);
 		}
-		std::cout << '\n';
+		log(Level::debug, "\n");
 	});
 }

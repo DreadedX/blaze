@@ -1,3 +1,5 @@
+#include "logger.h"
+
 #include <fstream>
 #include <cstring>
 #include <any>
@@ -158,13 +160,15 @@ class Parser {
 
 		// @todo Make this prettier
 		void print_help() {
-			std::cout << "Usage: " << _executable << " [options]";
+			log(Level::debug, "Usage: {} [options]", _executable);
 			for (auto&& required : _required) {
-				std::cout << ' ' << required.first;
+				log(Level::debug, " {}", required.first);
 			}
-			std::cout << "\nOptions:\n";
+			log(Level::debug, "\nOptions:\n");
 			for (auto&& option : _options) {
-				std::cout << "  " << std::setw(4) << std::left << option.second.get_short() << std::setw(10) << option.second.get_long() << "  " << _descriptions[option.first] << '\n';
+				// std::cout << "  " << std::setw(4) << std::left << option.second.get_short() << std::setw(10) << option.second.get_long() << "  " << _descriptions[option.first] << '\n';
+				// @todo Fix layout
+				log(Level::debug, " {} \t{} \t{}\n", option.second.get_short(), option.second.get_long(), _descriptions[option.first]);
 			}
 		}
 
@@ -193,14 +197,14 @@ int main(int argc, char* argv[]) {
 		std::string filename = parser.get_required<std::string>("filename");
 
 		// @todo Give the user feedback
-		std::cout << "Generating " << size << " bit key...\n";
+		log(Level::debug, "Generating {} bit key...\n", size);
 		auto keys = crypto::generate_rsa_keys(size);
-		std::cout << "Key generated!\n";
+		log(Level::debug, "Key generated!\n");
 		// @note We do not have to store the public key as we always use e=65537
 		crypto::store(filename, keys.first);
-		std::cout << "Key stored in '" << filename << "'\n";
+		log(Level::debug, "Key stored in '{}'\n", filename);
 	} catch(std::exception& e) {
-		std::cout << e.what() << '\n';
+		log(Level::error, "{}\n", e.what());
 		parser.print_help();
 	}
 }

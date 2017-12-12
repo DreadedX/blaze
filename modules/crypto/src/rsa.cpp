@@ -1,5 +1,7 @@
 #include "rsa.h"
 
+#include "logger.h"
+
 #include <cstdint>
 #include <vector>
 #include <random>
@@ -284,21 +286,21 @@ void rsa_test() {
 		auto encrypted = priv.encrypt(message);
 		auto decrypted = pub.encrypt(encrypted);
 
-		std::cout << "Message: ";
+		log(Level::debug, "Message: ");
 		for (auto&& byte : message) {
-			std::cout << std::hex << (uint32_t)byte << ' ';
+			log(Level::debug, "{:X} ", byte);
 		}
-		std::cout << '\n';
-		std::cout << "Encrypted: ";
+		log(Level::debug, "\n");
+		log(Level::debug, "Encrypted: ");
 		for (auto&& byte : encrypted) {
-			std::cout << std::hex << (uint32_t)byte << ' ';
+			log(Level::debug, "{:X} ", byte);
 		}
-		std::cout << '\n';
-		std::cout << "Size: " << std::hex << encrypted.size() << '\n';
-		std::cout << "Decrypted: ";
+		log(Level::debug, "\n");
+		log(Level::debug, "Size: {}\n", encrypted.size());
+		log(Level::debug, "Decrypted: ");
 		for (auto&& byte : decrypted) {
-			std::cout << std::hex << (uint32_t)byte << ' ';
+			log(Level::debug, "{:X} ", byte);
 		}
-		std::cout << '\n';
+		log(Level::debug, "\n");
 	}
 }

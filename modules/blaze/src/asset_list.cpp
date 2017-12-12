@@ -1,3 +1,5 @@
+#include "logger.h"
+
 #include "asset_list.h"
 
 #include "events.h"
@@ -36,9 +38,9 @@ namespace BLAZE_NAMESPACE {
 		if (existing != _meta_assets.end()) {
 			if (existing->second.get_version() < meta_asset.get_version()) {
 				// @todo Move this to the event bus
-				std::cout << "Replacing asset with newer version: " << meta_asset.get_name() << '\n';
+				log(Level::debug, "Replacing asset with newer version: {}\n", meta_asset.get_name());
 			} else if(existing->second.get_version() > meta_asset.get_version()) {
-				std::cout << "Already loaded newer asset: " << meta_asset.get_name() << '\n';
+				log(Level::debug, "Already loaded newer asset: {}\n", meta_asset.get_name());
 				return;
 			} else {
 				event_bus::send(std::make_shared<Error>("Conflicting asset with same version: '" + meta_asset.get_name() + "' (" + std::to_string(meta_asset.get_version()) + ')', __FILE__, __LINE__));
@@ -75,7 +77,7 @@ namespace BLAZE_NAMESPACE {
 
 	void asset_list::debug_list_meta_assets() {
 		for (auto& meta_asset : _meta_assets) {
-			std::cout << meta_asset.first << '\n';
+			log(Level::debug, "{}\n", meta_asset.first);
 		}
 	}
 }

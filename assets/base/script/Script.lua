@@ -13,18 +13,18 @@ end
 
 -- Called every frame
 function update()
-	print(get_lang():get("pickaxe.name"))
-	print(get_lang():get("pickaxe.description", durability, 100))
+	log(get_lang():get("pickaxe.name"))
+	log(get_lang():get("pickaxe.description", durability, 100))
 
 	durability = durability - 1
 end
 
 -- Called on desctructor
 function done()
-	print("Cleanup for test archive")
+	log("Cleanup for test archive")
 	-- subscription:unsubscribe();
 end
 
 function chat_handler(event)
-	print(string.format("<USERNAME> %s", event.text))
+	log(string.format("<USERNAME> %s", event.text))
 end

@@ -8,7 +8,7 @@
 
 namespace FLAME_NAMESPACE {
 
-	enum class Compression: uint8_t {
+	enum class Compression : uint8_t {
 		none,
 		zlib
 	};

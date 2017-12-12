@@ -151,8 +151,6 @@ bool rc(size_t t) {
 		R.resize(8);
 	}
 
-	// std::cout << R[0] << ' ' << t << '\n';
-
 	return R[0];
 }
 
@@ -166,7 +164,6 @@ State iotta(State A, size_t i_r) {
 
 	for (size_t j = 0; j < l+1; ++j) {
 		size_t index = pow(2, j) - 1;
-		// std::cout << index << ' ' << j << '\n';
 		RC[index] = rc(j + 7*i_r);
 	}
 
@@ -277,7 +274,6 @@ namespace CRYPTO_NAMESPACE {
 
 		while (true) {
 			Z.insert(Z.end(), _S.begin(), _S.begin() + _r);
-			// std::cout << Z.size() << '\n';
 			if (Z.size() > _d) {
 				std::vector<bool> Z_final(Z.begin(), Z.begin()+_d);
 				assert(Z_final.size() == _d);

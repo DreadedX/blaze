@@ -1,3 +1,5 @@
+#include "logger.h"
+
 #include "asset_list.h"
 #include "engine.h"
 #include "asset_manager.h"
@@ -7,25 +9,25 @@
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
-	std::cout << "<Dreaded_X> " << event->get_text() << '\n';
+	log(Level::debug, "<Dreaded_X> {}\n", event->get_text());
 }
 
 void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
-	std::cerr << "Archive '" << event->get_name() << "' is missing the following dependencies:\n";
+	log(Level::error, "Archive '{}', is missing the following dependencies:\n");
 	for (auto dependency : event->get_missing()) {
-		std::cerr << dependency.first << ':' << dependency.second << '\n';
+		log(Level::error, "{}:{}\n", dependency.first, dependency.second);
 	}
 }
 
 void handle_error(std::shared_ptr<Error> event) {
-	std::cerr << event->get_context() << "\n=>\t " << event->get_error() << '\n';
+	log(Level::error, "{}\n=>\t{}\n", event->get_context(), event->get_error());
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
-		std::cout << lang->get("tutorial.part1") << '\n';
+		log(Level::debug, "{}\n", lang->get("tutorial.part1"));
 
-		std::cout << lang->get("pickaxe.name") << '\n';
-		std::cout << lang->get("pickaxe.description", {47, 100}) << '\n';
+		log(Level::debug, "{}\n", lang->get("pickaxe.name"));
+		log(Level::debug, "{}\n", lang->get("pickaxe.description", {47, 100}));
 
 }
 
@@ -56,13 +58,11 @@ void game() {
 		auto total_count = asset_manager::loading_count();
 		auto not_loaded_count = total_count;
 		while (not_loaded_count  > 0) {
-			// std::cout << "Loaded assets: " << total_count-not_loaded_count << '/' << total_count << '\n';
 			asset_manager::load_assets();
 
 			// Example of a loading screen
 			not_loaded_count = asset_manager::loading_count();
 		}
-		// std::cout << "Loaded assets: " << total_count-not_loaded_count << '/' << total_count << '\n';
 
 		// Simulate the core game loop
 		for (int i = 0; i < 3; ++i) {
@@ -76,9 +76,9 @@ void game() {
 
 	// Flame tests
 	{
-		std::cout << "====ASSETS====\n";
+		log(Level::debug, "{}\n", "====ASSETS====");
 		blaze::asset_list::debug_list_meta_assets();
-		std::cout << "==============\n";
+		log(Level::debug, "{}\n", "==============");
 	}
 
 	// Event bus test

@@ -4,7 +4,7 @@ local function objectlist(objects)
 		script = script .. "function objects.register()\n"
 
 		for _, object_name in ipairs(objects) do
-			script = script .. "print(\"Registering: " .. object_name .. "\")\n"
+			script = script .. "log(\"Registering: " .. object_name .. "\")\n"
 		end
 
 		script = script .. "end\n"

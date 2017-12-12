@@ -2,6 +2,8 @@ function includePlatform()
 	filter "options:platform=android"
 		links "android"
 		links "log"
+		includedirs "modules/blaze/platform/android/include"
+		includedirs "modules/blaze/include"
 	filter "options:platform=linux"
 		links "pthread"
 	filter {}
@@ -23,6 +25,12 @@ function includeLua()
 		links "lua"
 	filter {}
 end
+function includeFmt()
+	includedirs "third_party/fmt"
+	filter "kind:not StaticLib"
+		links "fmt"
+	filter {}
+end
 function includeSol2()
 	includedirs "third_party/sol2"
 	includeLua()
@@ -40,6 +48,15 @@ function includeCrypto()
 		links "crypto"
 	filter {}
 	includeBigInt()
+	includeLogger()
+end
+function includeLogger()
+	includedirs "modules/logger/include"
+	filter "kind:not StaticLib"
+		links "logger"
+	filter {}
+	includeFmt()
+	includePlatform()
 end
 function includeFlame()
 	includedirs "modules/flame/include"

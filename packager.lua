@@ -20,7 +20,7 @@ archive "base"
 		tasks { langpack }
 
 	asset "base/language/English"
-		path "assets/base/language/Dutch.lang"
+		path "assets/base/language/English.lang"
 		tasks { langpack }
 
 	asset "base/Objects"

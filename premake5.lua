@@ -82,6 +82,11 @@ project "lua"
 	files "third_party/lua/**"
 	removefiles { "third_party/lua/lua.c" }
 
+project "fmt"
+	kind "StaticLib"
+	files "third_party/fmt/fmt/**.cc"
+	includeFmt()
+
 project "generated"
 	kind "StaticLib"
 	files "modules/generated/src/**"
@@ -93,6 +98,11 @@ project "crypto"
 	kind "StaticLib"
 	files "modules/crypto/src/**"
 	includeCrypto()
+
+project "logger"
+	kind "StaticLib"
+	files "modules/logger/src/**"
+	includeLogger()
 
 project "flame"
 	kind "StaticLib"
@@ -134,9 +144,6 @@ project "game"
 if _OPTIONS["platform"] == "linux" then
 	project "keygen"
 		kind "ConsoleApp"
-		filter "options:platform=android"
-			kind "SharedLib"
-		filter {}
 		files "tools/keygen/src/**"
 		includedirs "tools/keygen/include"
 		includeFlame()
@@ -145,9 +152,6 @@ if _OPTIONS["platform"] == "linux" then
 
 	project "packager"
 		kind "ConsoleApp"
-		filter "options:platform=android"
-			kind "SharedLib"
-		filter {}
 		files "tools/packager/src/**"
 		includedirs "tools/packager/include"
 		includeGenerated()
@@ -157,10 +161,17 @@ if _OPTIONS["platform"] == "linux" then
 
 	project "tests"
 		kind "ConsoleApp"
-		filter "options:platform=android"
-			kind "SharedLib"
-		filter {}
 		files "test/**"
 		includedirs "third_party/Catch/single_include"
 		includeCrypto();
+
+	project "content-server"
+		kind "ConsoleApp"
+		files "tools/content-server/src/**"
+		includedirs "tools/content-server/include"
+
+	project "testclient"
+		kind "ConsoleApp"
+		files "tools/testclient/src/**"
+		includedirs "tools/testclient/include"
 end
