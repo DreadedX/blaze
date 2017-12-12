@@ -23,7 +23,7 @@ int main() {
 		blaze::set_platform<blaze::platform::Web>();
 	}
 
-	log(Level::debug, "BLZNGN Version: {}-{}\n", get_version_number(), get_version_string().c_str());
+	log(Level::debug, "BLZNGN Version: {}\n", get_version_string().c_str());
 
 	blaze::initialize();
 

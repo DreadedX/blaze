@@ -51,6 +51,16 @@ do
 	local handle = io.popen("git rev-list --count HEAD")
 	local version_number = handle:read("a*")
 	handle:close()
+	version_number = string.gsub(version_number, "\n", "")
+
+	local handle = io.popen("git status --porcelain --ignore-submodules=dirty")
+	local dirty = handle:read("a*")
+	handle:close()
+	if dirty == "" then
+		dirty = ""
+	else
+		dirty = "-dirty"
+	end
 
 	-- Version string is based on current git branch
 	local handle = io.popen("git describe HEAD --always")
@@ -63,7 +73,7 @@ do
 	content = content .. "\treturn " .. version_number .. ";\n"
 	content = content .. "}\n\n"
 	content = content .. "std::string get_version_string() {\n"
-	content = content .. "\treturn \"" .. version_string .. "\";\n"
+	content = content .. "\treturn \"" .. version_number .. "-" .. version_string .. dirty .. "\";\n"
 	content = content .. "}"
 
 	local file = io.open("../modules/generated/src/version.cpp", "rb")
