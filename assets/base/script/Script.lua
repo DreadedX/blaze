@@ -8,23 +8,24 @@ function init()
 	durability = 12
 
 	-- In a real game this would be called by some kind of mod loader
-	blaze.load_archive("my_first_mod")
+	-- @todo Somehow this stops everything in this script from running
+	-- blaze.load_archive("my_first_mod")
 end
 
 -- Called every frame
 function update()
-	log(get_lang():get("pickaxe.name"))
-	log(get_lang():get("pickaxe.description", durability, 100))
+	print(get_lang():get("pickaxe.name"))
+	print(get_lang():get("pickaxe.description", durability, 100))
 
 	durability = durability - 1
 end
 
 -- Called on desctructor
 function done()
-	log("Cleanup for test archive")
+	print "Cleanup for test archive"
 	-- subscription:unsubscribe();
 end
 
 function chat_handler(event)
-	log(string.format("<USERNAME> %s", event.text))
+	print("<USERNAME> " ..  event.text)
 end

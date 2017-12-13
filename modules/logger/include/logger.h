@@ -10,6 +10,7 @@
 
 enum class Level {
 	debug,
+	message,
 	error
 };
 
@@ -26,9 +27,17 @@ void log(Level level, std::string string, Args... args) {
 			std::cout << text;
 			return;
 		#endif
+		
+		case Level::message:
+			std::cout << text;
+			break;
+
 		case Level::error:
 			std::cerr << text;
 			return;
+
+		default:
+			break;
 	}
 #endif
 }

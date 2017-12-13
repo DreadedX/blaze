@@ -27,7 +27,7 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 		log(Level::debug, "{}\n", lang->get("tutorial.part1"));
 
 		log(Level::debug, "{}\n", lang->get("pickaxe.name"));
-		log(Level::debug, "{}\n", lang->get("pickaxe.description", {47, 100}));
+		log(Level::debug, "{}\n", lang->get("pickaxe.description", 47, 100));
 
 }
 
@@ -62,11 +62,13 @@ void game() {
 
 			// Example of a loading screen
 			not_loaded_count = asset_manager::loading_count();
+			log(Level::debug, "Loaded {}/{}\n", total_count-not_loaded_count, total_count);
 		}
 
 		// Simulate the core game loop
 		for (int i = 0; i < 3; ++i) {
 			update();
+
 			// script->update();
 		}
 			

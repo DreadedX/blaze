@@ -39,6 +39,7 @@ flags = [
     '-DDEBUG',
     '-Igame/include',
     '-Imodules/blaze/include',
+    '-Imodules/logger/include',
     '-Imodules/crypto/include',
     '-Imodules/flame/include',
     '-Imodules/generated/include',

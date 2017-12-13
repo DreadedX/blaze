@@ -1,12 +1,12 @@
 #pragma once
 
+#include "logger.h"
+
 #include "blaze.h"
 
 #include "asset_data.h"
 #include "asset_list.h"
 #include "engine.h"
-
-#include <variant>
 
 namespace BLAZE_NAMESPACE {
 
@@ -40,42 +40,19 @@ namespace BLAZE_NAMESPACE {
 			bool _loaded = false;
 	};
 
-	typedef std::variant<std::string, int> SupportedTypes;
-	std::string to_string(const sol::stack_proxy& value);
-	std::string to_string(const SupportedTypes& value);
-
 	class Language : public GameAsset {
 		public:
 			Language(std::string asset_name);
 
-			template <typename T>
-			std::string get(std::string name, T args) {
-				// Find string
+			template <typename... Args>
+			std::string get(std::string name, Args... args) {
 				auto it = _strings.find(name);
 				if (it == _strings.end()) {
 					return "(undefined)";
 				}
 
-				// Substitution
-				std::string text = it->second;
-				auto i = 0;
-				for (const auto& arg : args) {
-					std::string substring = "{" + std::to_string(i) + "}";
-					auto found = text.find(substring, 0);
-					if (found != std::string::npos) {
-						text.replace(found, substring.length(), to_string(arg));
-					} else {
-						throw std::runtime_error("Too many substitution arguments");
-					}
-					i++;
-				}
-
-				return text;
+				return fmt::format(it->second, args...);
 			}
-			std::string get(std::string name);
-			std::string get(std::string name, std::initializer_list<SupportedTypes> args);
-
-
 		private:
 			void post_load();
 

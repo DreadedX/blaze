@@ -17,30 +17,10 @@ std::unique_ptr<blaze::platform::Platform> blaze::current_platform;
 
 namespace BLAZE_NAMESPACE {
 
-	sol::object loader(std::string module_name) {
-		// @todo This will block, but there is not really a way around it, unless we maybe make an indirect layer
-		try {
-			auto data = asset_list::find_asset(module_name);
-			return get_lua_state().load(data.as<std::string>());
-		} catch (std::exception &e) {
-			return sol::make_object(get_lua_state(), "\n\tno asset '" + module_name + '\'');
-		}
-	}
-
 	void initialize() {
 		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table);
 		flame::lua::bind(lua_state);
 		lua::bind(lua_state);
-
-		// We need to eventually also override print
-		lua_state.set_function("log", [](std::string text) {
-			log(Level::debug, text + '\n');
-		});
-
-		// Add custom loader that allows loading from archives
-		sol::table searchers = lua_state["package"]["searchers"];
-		searchers.add(&loader);
-		
 	}
 
 	void load_archive(std::string archive_name) {

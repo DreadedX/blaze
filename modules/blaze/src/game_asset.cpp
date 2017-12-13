@@ -45,13 +45,6 @@ namespace BLAZE_NAMESPACE {
 
 	Language::Language(std::string asset_name) : GameAsset(asset_name) {}
 
-	std::string Language::get(std::string name) {
-		return get(name, {});
-	}
-	std::string Language::get(std::string name, std::initializer_list<SupportedTypes> args) {
-		return get<decltype(args)>(name, args);
-	}
-
 	void Language::post_load() {
 		auto size = _data.get_size();
 		uint32_t current = 0;
@@ -78,25 +71,5 @@ namespace BLAZE_NAMESPACE {
 
 			_strings[name] = value;
 		}
-	}
-
-	std::string to_string(const sol::stack_proxy& value) {
-		return value;
-	}
-
-	template <typename T>
-	struct always_false : std::false_type {};
-
-	std::string to_string(const SupportedTypes& value) {
-	return std::visit([](auto&& arg) -> std::string {
-			using T = std::decay_t<decltype(arg)>;
-			if constexpr (std::is_same_v<T, std::string>) {
-				return arg;
-			} else if constexpr (std::is_same_v<T, int>) {
-				return std::to_string(arg);
-			} else {
-				static_assert(always_false<T>::value, "Non-exhaustive visitor!");
-			}
-		}, value);
 	}
 }

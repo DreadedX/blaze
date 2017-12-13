@@ -15,6 +15,8 @@
 
 #include "game_asset.h"
 
+#include "fmt/format.h"
+
 #include <initializer_list>
 #include <string>
 

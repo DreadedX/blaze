@@ -1,7 +1,7 @@
 local hello = {}
 
 function hello.say(name)
-	log("Hello, " .. name .. "!")
+	print("Hello, " .. name .. "!")
 end
 
 return hello
