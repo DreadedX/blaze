@@ -16,7 +16,6 @@ namespace BLAZE_NAMESPACE {
 		return loaded;
 	}
 
-
 	Script::Script(std::string asset_name) : GameAsset(asset_name), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
 
 	Script::~Script() {
@@ -36,7 +35,7 @@ namespace BLAZE_NAMESPACE {
 
 	void Script::post_load() {
 		// @todo Do we need safe_script
-		get_lua_state().script(_data.as<std::string>());
+		get_lua_state().script(_data.as<std::string>(), environment);
 		_loaded = true;
 
 		environment["init"]();

@@ -8,8 +8,7 @@ function init()
 	durability = 12
 
 	-- In a real game this would be called by some kind of mod loader
-	-- @todo Somehow this stops everything in this script from running
-	-- blaze.load_archive("my_first_mod")
+	blaze.load_archive("my_first_mod")
 end
 
 -- Called every frame

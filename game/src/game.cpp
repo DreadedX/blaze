@@ -55,21 +55,13 @@ void game() {
 		auto nl = asset_manager::new_asset<Language>("base/language/Dutch");
 
 		// Wait for all gameassets to be loaded and show progress
-		auto total_count = asset_manager::loading_count();
-		auto not_loaded_count = total_count;
-		while (not_loaded_count  > 0) {
+		while (asset_manager::loading_count()  > 0) {
 			asset_manager::load_assets();
-
-			// Example of a loading screen
-			not_loaded_count = asset_manager::loading_count();
-			log(Level::debug, "Loaded {}/{}\n", total_count-not_loaded_count, total_count);
 		}
 
 		// Simulate the core game loop
 		for (int i = 0; i < 3; ++i) {
 			update();
-
-			// script->update();
 		}
 			
 		lang_test(en);
