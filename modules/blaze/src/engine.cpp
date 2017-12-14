@@ -17,7 +17,7 @@ std::unique_ptr<blaze::platform::Platform> blaze::current_platform;
 
 namespace BLAZE_NAMESPACE {
 
-	void initialize() {
+	void init() {
 		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table);
 		flame::lua::bind(lua_state);
 		lua::bind(lua_state);
@@ -47,6 +47,11 @@ namespace BLAZE_NAMESPACE {
 		for (auto& script : scripts) {
 			script->update();
 		}
+	}
+
+	void done() {
+		scripts.clear();
+		// @todo Make sure we clean everything up properly
 	}
 
 	sol::state& get_lua_state() {

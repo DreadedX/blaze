@@ -29,9 +29,11 @@ namespace BLAZE_NAMESPACE {
 		current_platform = std::make_unique<T>();
 	}
 
-	void initialize();
+	void init();
 	void load_archive(std::string archive_name);
 	void update();
+	void done();
+
 	sol::state& get_lua_state();
 	std::unique_ptr<platform::Platform>& get_platform();
 }

@@ -9,7 +9,7 @@
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
-	log(Level::debug, "<Dreaded_X> {}\n", event->get_text());
+	log(Level::message, "<Dreaded_X> {}\n", event->get_text());
 }
 
 void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
@@ -24,10 +24,10 @@ void handle_error(std::shared_ptr<Error> event) {
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
-		log(Level::debug, "{}\n", lang->get("tutorial.part1"));
+		log(Level::message, "{}\n", lang->get("tutorial.part1"));
 
-		log(Level::debug, "{}\n", lang->get("pickaxe.name"));
-		log(Level::debug, "{}\n", lang->get("pickaxe.description", 47, 100));
+		log(Level::message, "{}\n", lang->get("pickaxe.name"));
+		log(Level::message, "{}\n", lang->get("pickaxe.description", 47, 100));
 
 }
 
@@ -37,8 +37,8 @@ void game() {
 	event_bus::subscribe<Error>(std::ref(handle_error));
 
 	// Override assets so we don't have to repackage everytime
-	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
-		// @todo This should go into a lua script
+	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux && blaze::enviroment::debug) {
+		// @todo We can propably reuse the packager script if we override some of the functions that are used to create archives
 		flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
 		blaze::asset_list::add(lua_asset);
 	}

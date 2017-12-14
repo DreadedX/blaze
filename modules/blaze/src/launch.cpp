@@ -13,6 +13,11 @@
 // @note This is implemtented by the user
 void game();
 
+std::ofstream log_file;
+void file_logger(Level, std::string text) {
+	log_file << text;
+}
+
 // This is the entry point of the game engine
 int main() {
 	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
@@ -23,9 +28,22 @@ int main() {
 		blaze::set_platform<blaze::platform::Web>();
 	}
 
+	logger::add(blaze::get_platform()->logger());
+
+	// @todo This works on web somehow???
+	log_file.open("game.log", std::ios::out | std::ios::trunc);
+	if (!log_file.is_open()) {
+		throw std::runtime_error("Failed to create log file");
+	}
+	logger::add(std::ref(file_logger));
+
 	log(Level::debug, "BLZNGN Version: {}\n", get_version_string().c_str());
 
-	blaze::initialize();
+	blaze::init();
 
 	game();
+
+	blaze::done();
+
+	log_file.close();
 }

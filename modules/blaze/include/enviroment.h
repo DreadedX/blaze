@@ -24,4 +24,12 @@ namespace BLAZE_NAMESPACE::enviroment {
 	#else
 		#error "Target platform is not supported"
 	#endif
+
+	#if DEBUG
+		constexpr bool debug = true;
+	#elif NDEBUG
+		constexpr bool debug = false;
+	#else
+		#error "No debug setting given"
+	#endif
 }

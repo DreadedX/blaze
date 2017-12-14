@@ -8,7 +8,7 @@ namespace BLAZE_NAMESPACE::platform {
 	class Android : public Platform {
 		public:
 			const std::string get_base_path() const override;
-
 			bool has_async_support() const override;
+			std::function<void(Level, std::string)> logger() override;
 	};
 }

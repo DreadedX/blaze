@@ -11,12 +11,6 @@ int main();
 JNIEnv* _env;
 jobject _obj;
 
-void java_print(std::string text) {
-	jclass clazz = _env->GetObjectClass(_obj);
-	jmethodID appendToLog = _env->GetMethodID(clazz, "appendToLog", "(Ljava/lang/String;)V");
-	_env->CallVoidMethod(_obj, appendToLog, _env->NewStringUTF(text.c_str()));
-}
-
 extern "C" {
 
 	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject obj) {
@@ -38,6 +32,14 @@ namespace BLAZE_NAMESPACE::platform {
 
 	bool Android::has_async_support() const {
 		return true;
+	}
+
+	std::function<void(Level, std::string)> logger() {
+		return [](Level, std::string text){
+			jclass clazz = _env->GetObjectClass(_obj);
+			jmethodID appendToLog = _env->GetMethodID(clazz, "appendToLog", "(Ljava/lang/String;)V");
+			_env->CallVoidMethod(_obj, appendToLog, _env->NewStringUTF(text.c_str()));
+		}
 	}
 }
 
