@@ -4,6 +4,7 @@ function includePlatform()
 		links "log"
 		includedirs "modules/blaze/platform/android/include"
 		includedirs "modules/blaze/include"
+	-- filter("kind:not StaticLib", "options:platform=linux")
 	filter "options:platform=linux"
 		links "pthread"
 	filter {}

@@ -32,7 +32,7 @@ int main() {
 	logger::add(blaze::get_platform()->logger());
 
 	// @todo This works on web somehow???
-	log_file.open("game.log", std::ios::out | std::ios::trunc);
+	log_file.open(blaze::get_platform()->get_base_path() + "game.log", std::ios::out | std::ios::trunc);
 	if (!log_file.is_open()) {
 		throw std::runtime_error("Failed to create log file");
 	}

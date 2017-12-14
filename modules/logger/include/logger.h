@@ -6,10 +6,6 @@
 #include <functional>
 #include <list>
 
-#if __ANDROID__
-#include "android.h"
-#endif
-
 enum class Level {
 	debug,
 	message,

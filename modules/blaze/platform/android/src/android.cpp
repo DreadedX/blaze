@@ -18,8 +18,6 @@ extern "C" {
 		_env = env;
 		_obj = obj;
 
-		java_print("Hello from C++\n");
-
 		main();
 	}
 }
@@ -34,12 +32,12 @@ namespace BLAZE_NAMESPACE::platform {
 		return true;
 	}
 
-	std::function<void(Level, std::string)> logger() {
+	std::function<void(Level, std::string)> Android::logger() {
 		return [](Level, std::string text){
 			jclass clazz = _env->GetObjectClass(_obj);
 			jmethodID appendToLog = _env->GetMethodID(clazz, "appendToLog", "(Ljava/lang/String;)V");
 			_env->CallVoidMethod(_obj, appendToLog, _env->NewStringUTF(text.c_str()));
-		}
+		};
 	}
 }
 
