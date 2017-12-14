@@ -30,7 +30,7 @@ function path(path)
 end
 
 function compression(compression)
-	current.compression = compression
+	last.compression = compression
 end
 
 function key(key)
@@ -51,7 +51,7 @@ function dependency(dependency_name)
 end
 
 function asset(asset_name)
-	local asset = {name = asset_name, path = nil, version = current.version, tasks = {}}
+	local asset = {name = asset_name, path = nil, version = current.version, tasks = {}, compression = current.compression}
 	table.insert(current.assets, asset)
 	
 	last = asset
@@ -73,7 +73,7 @@ function build()
 			dependencies:add(dependency.name, dependency.version)
 		end
 
-		local archive_writer = flame.ArchiveWriter.new(archive.name, archive.path, archive.author, archive.description, archive.version, archive.compression, dependencies)
+		local archive_writer = flame.ArchiveWriter.new(archive.name, archive.path, archive.author, archive.description, archive.version, dependencies)
 
 		for _,asset in ipairs(archive.assets) do
 			workflow = flame.new_workflow()
@@ -85,7 +85,7 @@ function build()
 			end
 
 			local meta_asset = flame.MetaAsset.new(asset.name, asset.path, asset.version, workflow)
-			archive_writer:add(meta_asset)
+			archive_writer:add(meta_asset, asset.compression)
 		end
 
 		archive_writer:sign(helper.load_private_key(archive.key))

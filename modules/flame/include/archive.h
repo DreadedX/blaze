@@ -43,14 +43,13 @@ namespace FLAME_NAMESPACE {
 			}
 
 		private:
-			std::vector<MetaAsset::Task> create_workflow();
+			std::vector<MetaAsset::Task> create_workflow(Compression compression);
 
 			std::shared_ptr<FileHandler> _fh;
 			std::string _name;
 			std::string _author;
 			std::string _description;
 			uint16_t _version;
-			Compression _compression;
 			std::vector<std::pair<std::string, uint16_t>> _dependencies;
 
 			std::vector<MetaAsset> _meta_assets;

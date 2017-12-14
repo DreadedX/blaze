@@ -117,9 +117,6 @@ namespace FLAME_NAMESPACE {
 		_fh->lock();
 
 		fs.seekg(2*KEY_SIZE + sizeof(MAGIC));
-		uint8_t x;
-		binary::read(fs, x);
-		_compression = static_cast<Compression>(x);
 		binary::read(fs, _name);
 		binary::read(fs, _author);
 		binary::read(fs, _description);
@@ -140,7 +137,6 @@ namespace FLAME_NAMESPACE {
 			_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
 		}
 
-		auto workflow = create_workflow();
 
 		unsigned long next_meta_asset = fs.tellg();
 		while (next_meta_asset < size) {
@@ -149,9 +145,14 @@ namespace FLAME_NAMESPACE {
 			binary::read(fs, name);
 			uint16_t version;
 			binary::read(fs, version);
+			uint8_t x;
+			binary::read(fs, x);
+			Compression compression = static_cast<Compression>(x);
 			uint32_t size;
 			binary::read(fs, size);
 			uint32_t offset = fs.tellg();
+
+			auto workflow = create_workflow(compression);
 
 			next_meta_asset = offset + size;
 
@@ -193,10 +194,10 @@ namespace FLAME_NAMESPACE {
 		return _dependencies;
 	}
 
-	std::vector<MetaAsset::Task> Archive::create_workflow() {
+	std::vector<MetaAsset::Task> Archive::create_workflow(Compression compression) {
 		std::vector<MetaAsset::Task> workflow;
 
-		switch (_compression) {
+		switch (compression) {
 			case Compression::none:
 				break;
 			case Compression::zlib:

@@ -41,6 +41,8 @@ void game() {
 		// @todo We can propably reuse the packager script if we override some of the functions that are used to create archives
 		flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
 		blaze::asset_list::add(lua_asset);
+
+		sol::state lua;
 	}
 
 	// Load base archive
