@@ -26,41 +26,18 @@ class logger {
 				handler(level, text);
 			}
 		}
+
+		static void std_logger(Level level, std::string text);
 	
 	private:
 		static std::list<std::function<void(Level, std::string)>> _handlers;
 };
 
-template <typename... Args>
-void log(Level level, std::string format, Args... args) {
-	logger::log(level, format, args...);
-}
+#define LOG_D(...) logger::log(Level::debug, __VA_ARGS__)
+#define LOG_M(...) logger::log(Level::message, __VA_ARGS__)
+#define LOG_E(...) logger::log(Level::error, __VA_ARGS__)
 
-// @todo We need to move the enviroment thing back to a seperate top level module
 // template <typename... Args>
-// void log(Level level, std::string string, Args... args) {
-// 	std::string text = fmt::format(string, args...);
-// #if __ANDROID__
-// 	java_print(text);
-// #else
-// 	switch (level) {
-// 		#ifdef DEBUG
-// 		case Level::debug:
-// 			std::cout << text;
-// 			break;
-// 		#endif
-// 		
-// 		case Level::message:
-// 			std::cout << text;
-// 			break;
-//
-// 		case Level::error:
-// 			std::cerr << text;
-// 			return;
-//
-// 		default:
-// 			break;
-// 	}
-// #endif
+// void log(Level level, std::string format, Args... args) {
+// 	logger::log(level, format, args...);
 // }
-//

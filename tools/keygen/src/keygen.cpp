@@ -160,15 +160,15 @@ class Parser {
 
 		// @todo Make this prettier
 		void print_help() {
-			log(Level::debug, "Usage: {} [options]", _executable);
+			LOG_M("Usage: {} [options]", _executable);
 			for (auto&& required : _required) {
-				log(Level::debug, " {}", required.first);
+				LOG_M(" {}", required.first);
 			}
-			log(Level::debug, "\nOptions:\n");
+			LOG_M("\nOptions:\n");
 			for (auto&& option : _options) {
 				// std::cout << "  " << std::setw(4) << std::left << option.second.get_short() << std::setw(10) << option.second.get_long() << "  " << _descriptions[option.first] << '\n';
 				// @todo Fix layout
-				log(Level::debug, " {} \t{} \t{}\n", option.second.get_short(), option.second.get_long(), _descriptions[option.first]);
+				LOG_M(" {} \t{} \t{}\n", option.second.get_short(), option.second.get_long(), _descriptions[option.first]);
 			}
 		}
 
@@ -181,6 +181,8 @@ class Parser {
 };
 
 int main(int argc, char* argv[]) {
+
+	logger::add(logger::std_logger);
 
 	// @note This is propably going to be the API, and currently it kinda works
 	Parser parser(argv[0]);
@@ -197,14 +199,14 @@ int main(int argc, char* argv[]) {
 		std::string filename = parser.get_required<std::string>("filename");
 
 		// @todo Give the user feedback
-		log(Level::debug, "Generating {} bit key...\n", size);
+		LOG_M("Generating {} bit key...\n", size);
 		auto keys = crypto::generate_rsa_keys(size);
-		log(Level::debug, "Key generated!\n");
+		LOG_M("Key generated!\n");
 		// @note We do not have to store the public key as we always use e=65537
 		crypto::store(filename, keys.first);
-		log(Level::debug, "Key stored in '{}'\n", filename);
+		LOG_M("Key stored in '{}'\n", filename);
 	} catch(std::exception& e) {
-		log(Level::error, "{}\n", e.what());
+		LOG_E("{}\n", e.what());
 		parser.print_help();
 	}
 }

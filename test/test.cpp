@@ -7,6 +7,8 @@
 #include "rsa.h"
 #include <sstream>
 
+#include "logger.h"
+
 #include <iomanip>
 
 // @note We are assuming that these functions are correct
@@ -54,6 +56,10 @@ std::string calculate_hash_multi(std::vector<uint8_t> data) {
 	}
 
 	return ss.str();
+}
+
+TEST_CASE( "install logger" ) {
+	logger::add(logger::std_logger);
 }
 
 TEST_CASE( "sha3 hashes are calculated", "[sha3]" ) {

@@ -36,7 +36,7 @@ namespace BLAZE_NAMESPACE {
 				scripts.push_back(std::move(script));
 			} catch (std::exception& e) {
 				// @todo We should have a custom exception for this as we now assume an exception means not found
-				log(Level::debug, "Archive '{}' does not gave a script.\n", archive.get_name());
+				LOG_D("Archive '{}' does not gave a script.\n", archive.get_name());
 			}
 		} catch (std::exception& e) {
 			event_bus::send(std::make_shared<Error>("Failed to load archive '" + archive_name + "': " + e.what(), __FILE__, __LINE__));

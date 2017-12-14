@@ -38,9 +38,9 @@ namespace BLAZE_NAMESPACE {
 		if (existing != _meta_assets.end()) {
 			if (existing->second.get_version() < meta_asset.get_version()) {
 				// @todo Move this to the event bus
-				log(Level::debug, "Replacing asset with newer version: {}\n", meta_asset.get_name());
+				LOG_D("Replacing asset with newer version: {}\n", meta_asset.get_name());
 			} else if(existing->second.get_version() > meta_asset.get_version()) {
-				log(Level::debug, "Already loaded newer asset: {}\n", meta_asset.get_name());
+				LOG_D("Already loaded newer asset: {}\n", meta_asset.get_name());
 				return;
 			} else {
 				event_bus::send(std::make_shared<Error>("Conflicting asset with same version: '" + meta_asset.get_name() + "' (" + std::to_string(meta_asset.get_version()) + ')', __FILE__, __LINE__));
@@ -77,7 +77,7 @@ namespace BLAZE_NAMESPACE {
 
 	void asset_list::debug_list_meta_assets() {
 		for (auto& meta_asset : _meta_assets) {
-			log(Level::debug, "{}\n", meta_asset.first);
+			LOG_D("{}\n", meta_asset.first);
 		}
 	}
 }

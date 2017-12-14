@@ -9,25 +9,25 @@
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
-	log(Level::message, "<Dreaded_X> {}\n", event->get_text());
+	LOG_M("<Dreaded_X> {}\n", event->get_text());
 }
 
 void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
-	log(Level::error, "Archive '{}', is missing the following dependencies:\n");
+	LOG_E("Archive '{}', is missing the following dependencies:\n");
 	for (auto dependency : event->get_missing()) {
-		log(Level::error, "{}:{}\n", dependency.first, dependency.second);
+		LOG_E("{}:{}\n", dependency.first, dependency.second);
 	}
 }
 
 void handle_error(std::shared_ptr<Error> event) {
-	log(Level::error, "{}\n=>\t{}\n", event->get_context(), event->get_error());
+	LOG_E("{}\n=>\t{}\n", event->get_context(), event->get_error());
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
-		log(Level::message, "{}\n", lang->get("tutorial.part1"));
+		LOG_M("{}\n", lang->get("tutorial.part1"));
 
-		log(Level::message, "{}\n", lang->get("pickaxe.name"));
-		log(Level::message, "{}\n", lang->get("pickaxe.description", 47, 100));
+		LOG_M("{}\n", lang->get("pickaxe.name"));
+		LOG_M("{}\n", lang->get("pickaxe.description", 47, 100));
 
 }
 
@@ -70,9 +70,9 @@ void game() {
 
 	// Flame tests
 	{
-		log(Level::debug, "{}\n", "====ASSETS====");
+		LOG_D("{}\n", "====ASSETS====");
 		blaze::asset_list::debug_list_meta_assets();
-		log(Level::debug, "{}\n", "==============");
+		LOG_D("{}\n", "==============");
 	}
 
 	// Event bus test

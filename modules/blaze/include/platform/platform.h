@@ -35,26 +35,7 @@ namespace BLAZE_NAMESPACE::platform {
 			}
 
 			std::function<void(Level, std::string)> logger() override {
-				return [](Level level, std::string text) {
-					switch (level) {
-						#ifdef DEBUG
-							case Level::debug:
-								std::cout << text;
-								break;
-						#endif
-
-						case Level::message:
-							std::cout << text;
-							break;
-
-						case Level::error:
-							std::cerr << text;
-							return;
-
-						default:
-							break;
-					}
-				};
+				return logger::std_logger;
 			}
 	};
 #else
@@ -73,26 +54,7 @@ namespace BLAZE_NAMESPACE::platform {
 			}
 
 			std::function<void(Level, std::string)> logger() override {
-				return [](Level level, std::string text) {
-					switch (level) {
-						#ifdef DEBUG
-							case Level::debug:
-								std::cout << text;
-								break;
-						#endif
-
-						case Level::message:
-							std::cout << text;
-							break;
-
-						case Level::error:
-							std::cerr << text;
-							return;
-
-						default:
-							break;
-					}
-				};
+				return logger::std_logger;
 			}
 	};
 #else

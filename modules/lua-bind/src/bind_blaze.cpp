@@ -37,27 +37,27 @@ namespace BLAZE_NAMESPACE::lua {
 			for (auto v : va) {
 				switch (v.get_type()) {
 					case sol::type::nil:
-						log(Level::message, "nil\t");
+						LOG_M("nil\t");
 						break;
 
 					case sol::type::string:
-						log(Level::message, "{}\t", v.get<std::string>());
+						LOG_M( "{}\t", v.get<std::string>());
 						break;
 
 					case sol::type::number:
-						log(Level::message, "{}\t", v.get<double>());
+						LOG_M( "{}\t", v.get<double>());
 						break;
 
 					case sol::type::boolean:
-						log(Level::message, "{}\t", v.get<bool>());
+						LOG_M( "{}\t", v.get<bool>());
 						break;
 
 					default:
-						log(Level::message, "<<NOT IMPLEMENTED>>\t");
+						LOG_M( "<<NOT IMPLEMENTED>>\t");
 						break;
 				}
 			}
-			log(Level::message, "\n");
+			LOG_M( "\n");
 		});
 
 		sol::table blaze = lua.create_table("blaze");

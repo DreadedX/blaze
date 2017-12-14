@@ -14,6 +14,7 @@
 void game();
 
 std::ofstream log_file;
+
 void file_logger(Level, std::string text) {
 	log_file << text;
 }
@@ -35,9 +36,9 @@ int main() {
 	if (!log_file.is_open()) {
 		throw std::runtime_error("Failed to create log file");
 	}
-	logger::add(std::ref(file_logger));
+	logger::add(file_logger);
 
-	log(Level::debug, "BLZNGN Version: {}\n", get_version_string().c_str());
+	LOG_D("BLZNGN Version: {}\n", get_version_string().c_str());
 
 	blaze::init();
 

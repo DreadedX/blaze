@@ -33,12 +33,12 @@ void bind(sol::state& lua) {
 	helper.set_function("get_external_task", &get_external_task);
 
 	helper.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data) {
-		log(Level::debug, "Size: {}\n", data.get_size());
-		log(Level::debug, "Content: \n", data.get_size());
+		LOG_D("Size: {}\n", data.get_size());
+		LOG_D("Content: \n", data.get_size());
 		for (uint32_t i = 0; i < data.get_size(); ++i) {
 			auto dat = data[i];
-			log(Level::debug, "{}", dat);
+			LOG_D("{}", dat);
 		}
-		log(Level::debug, "\n");
+		LOG_D("\n");
 	});
 }

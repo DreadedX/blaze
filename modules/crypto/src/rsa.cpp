@@ -286,21 +286,21 @@ void rsa_test() {
 		auto encrypted = priv.encrypt(message);
 		auto decrypted = pub.encrypt(encrypted);
 
-		log(Level::debug, "Message: ");
+		LOG_D("Message: ");
 		for (auto&& byte : message) {
-			log(Level::debug, "{:X} ", byte);
+			LOG_D("{:X} ", byte);
 		}
-		log(Level::debug, "\n");
-		log(Level::debug, "Encrypted: ");
+		LOG_D("\n");
+		LOG_D("Encrypted: ");
 		for (auto&& byte : encrypted) {
-			log(Level::debug, "{:X} ", byte);
+			LOG_D("{:X} ", byte);
 		}
-		log(Level::debug, "\n");
-		log(Level::debug, "Size: {}\n", encrypted.size());
-		log(Level::debug, "Decrypted: ");
+		LOG_D("\n");
+		LOG_D("Size: {}\n", encrypted.size());
+		LOG_D("Decrypted: ");
 		for (auto&& byte : decrypted) {
-			log(Level::debug, "{:X} ", byte);
+			LOG_D("{:X} ", byte);
 		}
-		log(Level::debug, "\n");
+		LOG_D("\n");
 	}
 }
