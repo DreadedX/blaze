@@ -44,8 +44,8 @@ archive "my_first_mod"
 		path "assets/my_first_mod/script/Hello.lua"
 
 	asset "base/language/Dutch"
-		-- @todo Actually change the lang file
-		path "assets/base/language/Dutch.lang"
+		path "assets/my_first_mod/language/Dutch.lang"
+		tasks { langpack }
 		version(10)
 
 build()

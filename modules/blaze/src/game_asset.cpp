@@ -1,7 +1,7 @@
 #include "game_asset.h"
 
 namespace BLAZE_NAMESPACE {
-	GameAsset::GameAsset(std::string asset_name) : _data(asset_list::find_asset(asset_name)) {}
+	GameAsset::GameAsset(std::string asset_name) : _data(asset_list::find_asset(asset_name)), _name(asset_name) {}
 
 	bool GameAsset::is_loaded() {
 		return _data.is_loaded();
@@ -13,7 +13,12 @@ namespace BLAZE_NAMESPACE {
 			asset->post_load();
 		}
 
+
 		return loaded;
+	}
+
+	const std::string& GameAsset::get_name() const {
+		return _name;
 	}
 
 	Script::Script(std::string asset_name) : GameAsset(asset_name), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
@@ -40,7 +45,6 @@ namespace BLAZE_NAMESPACE {
 
 		environment["init"]();
 	}
-
 
 	Language::Language(std::string asset_name) : GameAsset(asset_name) {}
 

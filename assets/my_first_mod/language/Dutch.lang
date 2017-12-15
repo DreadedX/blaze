@@ -1,0 +1,7 @@
+; Author: Dreaded_X
+[tutorial]
+part1 = Dit is het eerste deel van de tutorial:\t\tDeze tekst is dubbel getabbed!
+
+[pickaxe]
+name        = Pikker
+description = Duurzaamheid {0}/{1}

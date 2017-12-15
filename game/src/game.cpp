@@ -63,6 +63,9 @@ void game() {
 
 	// Load base archive
 	blaze::load_archive("base");
+	while (asset_manager::loading_count()  > 0) {
+		asset_manager::load_assets();
+	}
 
 	auto en = asset_manager::new_asset<Language>("base/language/English");
 	get_lua_state().set_function("get_lang", [en]{

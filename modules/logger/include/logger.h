@@ -29,7 +29,11 @@ class logger {
 		static std::list<std::function<void(Level, std::string)>> _handlers;
 };
 
-#define LOG_D(...) logger::log(Level::debug, __VA_ARGS__)
+#ifdef DEBUG
+	#define LOG_D(...) logger::log(Level::debug, __VA_ARGS__)
+#elif NDEBUG
+	#define LOG_D(...)
+#endif
 #define LOG_M(...) logger::log(Level::message, __VA_ARGS__)
 #define LOG_E(...) logger::log(Level::error, __VA_ARGS__)
 
