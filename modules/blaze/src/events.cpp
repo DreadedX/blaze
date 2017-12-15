@@ -12,9 +12,9 @@ namespace BLAZE_NAMESPACE {
 	}
 
 
-	MissingDependencies::MissingDependencies(std::string name, std::vector<std::tuple<std::string, uint16_t, uint16_t>> missing) : _name(name), _missing(missing) {}
+	MissingDependencies::MissingDependencies(std::string name, std::vector<flame::Dependency> missing) : _name(name), _missing(missing) {}
 
-	const std::vector<std::tuple<std::string, uint16_t, uint16_t>>& MissingDependencies::get_missing() const {
+	const std::vector<flame::Dependency>& MissingDependencies::get_missing() const {
 		return _missing;
 	}
 

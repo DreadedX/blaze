@@ -15,8 +15,8 @@ namespace BLAZE_NAMESPACE {
 			static flame::AssetData find_asset(std::string name);
 			static void add(flame::Archive& archive);
 			static void add(flame::MetaAsset& meta_asset);
-			static bool check_dependency(std::tuple<std::string, uint16_t, uint16_t> dependency);
-			static std::vector<std::tuple<std::string, uint16_t, uint16_t>> missing_dependecies(flame::Archive& archive);
+			static bool check_dependency(flame::Dependency dependency);
+			static std::vector<flame::Dependency> missing_dependecies(flame::Archive& archive);
 			static void debug_list_meta_assets();
 
 		private:

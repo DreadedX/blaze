@@ -53,7 +53,7 @@ namespace BLAZE_NAMESPACE {
 		_meta_assets[meta_asset.get_name()] = meta_asset;
 	}
 
-	bool asset_list::check_dependency(std::tuple<std::string, uint16_t, uint16_t> dependency) {
+	bool asset_list::check_dependency(flame::Dependency dependency) {
 		for (auto &archive : _archives) {
 			// @todo Make this statement better
 			if ( std::get<0>(dependency) == archive.get_name() && std::get<1>(dependency) <= archive.get_version() && ( (std::get<2>(dependency) == 0) || (std::get<2>(dependency) >= archive.get_version()) ) ) {
@@ -63,8 +63,8 @@ namespace BLAZE_NAMESPACE {
 		return false;
 	}
 
-	std::vector<std::tuple<std::string, uint16_t, uint16_t>> asset_list::missing_dependecies(flame::Archive& archive) {
-		std::vector<std::tuple<std::string, uint16_t, uint16_t>> missing;
+	std::vector<flame::Dependency> asset_list::missing_dependecies(flame::Archive& archive) {
+		std::vector<flame::Dependency> missing;
 		// Check if the dependecies are loaded
 		// @todo This needs testing
 		bool found = true;

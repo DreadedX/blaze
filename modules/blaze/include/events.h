@@ -2,6 +2,8 @@
 
 #include "blaze.h"
 
+#include "archive.h"
+
 #include <unordered_map>
 #include <list>
 #include <functional>
@@ -29,14 +31,14 @@ namespace BLAZE_NAMESPACE {
 
 	class MissingDependencies : public Event {
 		public:
-			MissingDependencies(std::string name, std::vector<std::tuple<std::string, uint16_t, uint16_t>> missing);
+			MissingDependencies(std::string name, std::vector<flame::Dependency> missing);
 
-			const std::vector<std::tuple<std::string, uint16_t, uint16_t>>& get_missing() const;
+			const std::vector<flame::Dependency>& get_missing() const;
 			const std::string& get_name() const;
 
 		private:
 			std::string _name;
-			std::vector<std::tuple<std::string, uint16_t, uint16_t>> _missing;
+			std::vector<flame::Dependency> _missing;
 	};
 
 	class Error : public Event {

@@ -13,6 +13,8 @@ namespace FLAME_NAMESPACE {
 		zlib
 	};
 
+	typedef std::tuple<std::string, uint16_t, uint16_t> Dependency;
+
 	constexpr uint8_t MAGIC[] = {'F','L','M','b'};
 	// 1024 bit key
 	const int KEY_SIZE = 1024/8;
@@ -33,7 +35,7 @@ namespace FLAME_NAMESPACE {
 			const std::string& get_description() const;
 			const uint16_t& get_version() const;
 			bool is_trusted(crypto::RSA& trusted_key);
-			const std::vector<std::tuple<std::string, uint16_t, uint16_t>>& get_dependencies() const;
+			const std::vector<Dependency>& get_dependencies() const;
 			std::vector<MetaAsset> get_meta_assets();
 
 			// @note File stream automatically closes if the program ends, only if you explicitly need to close the archive
@@ -50,7 +52,7 @@ namespace FLAME_NAMESPACE {
 			std::string _author;
 			std::string _description;
 			uint16_t _version;
-			std::vector<std::tuple<std::string, uint16_t, uint16_t>> _dependencies;
+			std::vector<Dependency> _dependencies;
 
 			std::vector<MetaAsset> _meta_assets;
 
