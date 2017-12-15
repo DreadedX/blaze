@@ -132,9 +132,11 @@ namespace FLAME_NAMESPACE {
 
 			std::string name;
 			binary::read(fs, name);
-			uint16_t version;
-			binary::read(fs, version);
-			_dependencies.push_back(std::pair<std::string, uint16_t>(name, version));
+			uint16_t version_min;
+			binary::read(fs, version_min);
+			uint16_t version_max = 0;
+			binary::read(fs, version_max);
+			_dependencies.push_back(std::tuple<std::string, uint16_t, uint16_t>(name, version_min, version_max));
 		}
 
 
@@ -190,7 +192,7 @@ namespace FLAME_NAMESPACE {
 		return _version;
 	}
 
-	const std::vector<std::pair<std::string, uint16_t>>& Archive::get_dependencies() const {
+	const std::vector<std::tuple<std::string, uint16_t, uint16_t>>& Archive::get_dependencies() const {
 		return _dependencies;
 	}
 

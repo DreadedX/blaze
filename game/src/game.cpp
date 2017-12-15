@@ -13,9 +13,25 @@ void handle_chat_message(std::shared_ptr<ChatMessage> event) {
 }
 
 void handle_missing_dependencies(std::shared_ptr<MissingDependencies> event) {
-	LOG_E("Archive '{}', is missing the following dependencies:\n");
+	LOG_E("Archive '{}', is missing the following dependencies:\n", event->get_name());
 	for (auto dependency : event->get_missing()) {
-		LOG_E("{}:{}\n", dependency.first, dependency.second);
+		uint16_t version_min = std::get<1>(dependency);
+		uint16_t version_max = std::get<2>(dependency);
+
+		if (version_min != 0 && version_min != version_max) {
+			LOG_E("{} <= ", version_min);
+		}
+
+		LOG_E("{}", std::get<0>(dependency));
+
+		if (version_max != 0) {
+			if (version_min != version_max) {
+				LOG_E(" <= {}", version_max);
+			} else {
+				LOG_E(" = {}", std::get<2>(dependency));
+			}
+		}
+		LOG_E("\n");
 	}
 }
 

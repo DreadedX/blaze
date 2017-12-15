@@ -21,8 +21,19 @@ function description(description)
 	current.description = description
 end
 
+function version_min(version)
+	last.version_min = version
+end
+
+function version_max(version)
+	last.version_max = version
+end
+
 function version(version)
 	last.version = version
+	-- @todo We only have to do this for dependencies
+	version_min(version)
+	version_max(version)
 end
 
 function path(path)
@@ -44,7 +55,7 @@ function script(filename)
 end
 
 function dependency(dependency_name)
-	local dependency = {name = dependency_name, version = 1}
+	local dependency = {name = dependency_name, version_min = 0, version_max = 0}
 	table.insert(current.dependencies, dependency)
 
 	last = dependency
@@ -70,7 +81,7 @@ function build()
 		-- @todo It would be nice if we could just turn archive.dependencies into the correct type
 		dependencies = flame.new_dependency_list();
 		for _,dependency in ipairs(archive.dependencies) do
-			dependencies:add(dependency.name, dependency.version)
+			dependencies:add(dependency.name, dependency.version_min, dependency.version_max)
 		end
 
 		local archive_writer = flame.ArchiveWriter.new(archive.name, archive.path, archive.author, archive.description, archive.version, dependencies)

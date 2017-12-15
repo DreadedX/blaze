@@ -23,7 +23,9 @@ namespace BLAZE_NAMESPACE {
 		auto missing = missing_dependecies(archive);
 		if (!missing.empty()) {
 			event_bus::send(std::make_shared<MissingDependencies>(archive.get_name(), missing));
-			return;
+			// @todo How exactly are we going to handle this
+			throw std::runtime_error("Missing dependencies");
+			// return;
 		}
 
 		_archives.push_back(archive);
@@ -51,17 +53,18 @@ namespace BLAZE_NAMESPACE {
 		_meta_assets[meta_asset.get_name()] = meta_asset;
 	}
 
-	bool asset_list::check_dependency(std::pair<std::string, uint16_t> dependency) {
+	bool asset_list::check_dependency(std::tuple<std::string, uint16_t, uint16_t> dependency) {
 		for (auto &archive : _archives) {
-			if (dependency.first == archive.get_name() && dependency.second == archive.get_version()) {
+			// @todo Make this statement better
+			if ( std::get<0>(dependency) == archive.get_name() && std::get<1>(dependency) <= archive.get_version() && ( (std::get<2>(dependency) == 0) || (std::get<2>(dependency) >= archive.get_version()) ) ) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	std::vector<std::pair<std::string, uint16_t>> asset_list::missing_dependecies(flame::Archive& archive) {
-		std::vector<std::pair<std::string, uint16_t>> missing;
+	std::vector<std::tuple<std::string, uint16_t, uint16_t>> asset_list::missing_dependecies(flame::Archive& archive) {
+		std::vector<std::tuple<std::string, uint16_t, uint16_t>> missing;
 		// Check if the dependecies are loaded
 		// @todo This needs testing
 		bool found = true;

@@ -6,7 +6,7 @@
 
 namespace FLAME_NAMESPACE {
 
-	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<std::pair<std::string, uint16_t>> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies) {
+	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<std::tuple<std::string, uint16_t, uint16_t>> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -30,8 +30,9 @@ namespace FLAME_NAMESPACE {
 		binary::write(fs, _version);
 
 		for (auto& dependency : _dependencies) {
-			binary::write(fs, dependency.first);
-			binary::write(fs, dependency.second);
+			binary::write(fs, std::get<0>(dependency));
+			binary::write(fs, std::get<1>(dependency));
+			binary::write(fs, std::get<2>(dependency));
 		}
 		binary::write(fs, (uint8_t) 0x00);
 

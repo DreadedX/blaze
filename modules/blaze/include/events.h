@@ -29,14 +29,14 @@ namespace BLAZE_NAMESPACE {
 
 	class MissingDependencies : public Event {
 		public:
-			MissingDependencies(std::string name, std::vector<std::pair<std::string, uint16_t>> missing);
+			MissingDependencies(std::string name, std::vector<std::tuple<std::string, uint16_t, uint16_t>> missing);
 
-			const std::vector<std::pair<std::string, uint16_t>>& get_missing() const;
+			const std::vector<std::tuple<std::string, uint16_t, uint16_t>>& get_missing() const;
 			const std::string& get_name() const;
 
 		private:
 			std::string _name;
-			std::vector<std::pair<std::string, uint16_t>> _missing;
+			std::vector<std::tuple<std::string, uint16_t, uint16_t>> _missing;
 	};
 
 	class Error : public Event {

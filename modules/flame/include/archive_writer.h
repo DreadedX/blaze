@@ -6,7 +6,7 @@
 namespace FLAME_NAMESPACE {
 	class ArchiveWriter {
 		public:
-			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<std::pair<std::string, uint16_t>> dependencies);
+			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<std::tuple<std::string, uint16_t, uint16_t>> dependencies);
 
 			void sign(crypto::RSA& priv_key);
 
@@ -26,7 +26,7 @@ namespace FLAME_NAMESPACE {
 			std::string _author;
 			std::string _description;
 			uint16_t _version;
-			std::vector<std::pair<std::string, uint16_t>> _dependencies;
+			std::vector<std::tuple<std::string, uint16_t, uint16_t>> _dependencies;
 
 			bool _signed = false;
 

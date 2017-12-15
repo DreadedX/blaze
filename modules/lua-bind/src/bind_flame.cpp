@@ -47,7 +47,7 @@ namespace FLAME_NAMESPACE::lua {
 		// @todo This should not be available in the game
 		flame.new_usertype<ArchiveWriter> ("ArchiveWriter",
 			sol::constructors<
-				ArchiveWriter(std::string, std::string, std::string, std::string, uint16_t, std::vector<std::pair<std::string, uint16_t>>)
+				ArchiveWriter(std::string, std::string, std::string, std::string, uint16_t, std::vector<std::tuple<std::string, uint16_t, uint16_t>>)
 			>(),
 			"sign", &ArchiveWriter::sign,
 			"add", &ArchiveWriter::add,
@@ -56,7 +56,7 @@ namespace FLAME_NAMESPACE::lua {
 
 		flame.set_function(
 			"new_dependency_list", []{
-				return std::vector<std::pair<std::string, uint16_t>>();
+				return std::vector<std::tuple<std::string, uint16_t, uint16_t>>();
 			}
 		);
 
