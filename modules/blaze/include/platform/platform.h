@@ -23,12 +23,11 @@ namespace BLAZE_NAMESPACE::platform {
 			virtual std::function<void(Level, std::string)> logger() =0;
 	};
 
-	// @todo Base path should propably not point to archives as a directory
 #if __linux__
 	class Linux : public Platform {
 		public:
 			const std::string get_base_path() const override {
-				return "archives/";
+				return "./";
 			}
 
 			bool has_async_support() const override {
@@ -47,7 +46,7 @@ namespace BLAZE_NAMESPACE::platform {
 	class Windows : public Platform {
 		public:
 			const std::string get_base_path() const override {
-				return "archives\\";
+				return "./";
 			}
 
 			bool has_async_support() const override {
@@ -66,7 +65,7 @@ namespace BLAZE_NAMESPACE::platform {
 	class Web : public Platform {
 		public:
 			const std::string get_base_path() const override {
-				return "build/archives/";
+				return "build/";
 			}
 
 			bool has_async_support() const override{

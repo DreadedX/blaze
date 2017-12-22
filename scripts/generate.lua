@@ -20,33 +20,37 @@ do
 	local key = readAll("../build/keys/test.priv")
 
 	if key then
-		local content = ""
-		content = content .. "#include \"trusted_key.h\"\n"
-		content = content .. "#include <vector>\n\n"
-		content = content .. "std::vector<uint8_t> n = {" .. key:tohex() .. "};\n\n"
-		content = content .. "crypto::RSA get_trusted_key() {\n"
-		content = content .. "\treturn crypto::RSA(n, crypto::default_e());\n"
-		content = content .. "}"
+		-- @note We will set this as the 'default' key if no key exists yet
+		key = "0x0"
+	end
 
-		local file = io.open("../modules/generated/src/trusted_key.cpp", "rb")
-		local current = ""
-		if file then
-			current = file:read("*all")
-			file:close()
-		end
+	local content = ""
+	content = content .. "#include \"trusted_key.h\"\n"
+	content = content .. "#include <vector>\n\n"
+	content = content .. "std::vector<uint8_t> n = {" .. key:tohex() .. "};\n\n"
+	content = content .. "crypto::RSA get_trusted_key() {\n"
+	content = content .. "\treturn crypto::RSA(n, crypto::default_e());\n"
+	content = content .. "}"
 
-		if current ~= content then
-			local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
-			io.output(file)
-			io.write(content)
-			print "Regenerating trusted_key.cpp"
-			file:close()
-		end
+	local file = io.open("../modules/generated/src/trusted_key.cpp", "rb")
+	local current = ""
+	if file then
+		current = file:read("*all")
+		file:close()
+	end
+
+	if current ~= content then
+		local file = io.open("../modules/generated/src/trusted_key.cpp", "w+")
+		io.output(file)
+		io.write(content)
+		print "Regenerating trusted_key.cpp"
+		file:close()
 	end
 end
 
 -- Write version
 do
+	-- @todo We need to make sure that we output some kind of default version number/string if git is not found for some reason
 	-- Version number is based on commit count
 	local handle = io.popen("git rev-list --count HEAD")
 	local version_number = handle:read("a*")
