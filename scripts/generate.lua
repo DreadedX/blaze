@@ -17,7 +17,7 @@ end
 -- Write trusted key
 do
 	-- @todo This will fail if we are building from scratch
-	local key = readAll("../keys/test.priv")
+	local key = readAll("../build/keys/test.priv")
 
 	if key then
 		local content = ""

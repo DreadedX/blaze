@@ -1,8 +1,6 @@
 #include "tasks.h"
 
-// @todo We need to get rid of CryptoPP and just implement it ourselves
-// CryptoPP has a header with the same name
-#include </usr/include/zlib.h>
+#include <zlib.h>
 
 #include <iostream>
 #include <cassert>

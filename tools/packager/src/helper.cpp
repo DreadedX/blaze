@@ -3,8 +3,6 @@
 #include "helper.h"
 #include "binary_helper.h"
 
-#include "external_task.h"
-
 // Test
 #include "trusted_key.h"
 
@@ -15,11 +13,11 @@ crypto::RSA load_private_key(std::string path) {
 }
 
 std::shared_ptr<FLAME_NAMESPACE::FileHandler> open_file(std::string path) {
-	return std::make_shared<FLAME_NAMESPACE::FileHandler>(path, std::ios::in);
+	return std::make_shared<FLAME_NAMESPACE::FileHandler>(path, std::ios::in | std::ios::binary);
 }
 
 std::shared_ptr<FLAME_NAMESPACE::FileHandler> open_new_file(std::string path) {
-	return std::make_shared<FLAME_NAMESPACE::FileHandler>(path, std::ios::in | std::ios::out | std::ios::trunc);
+	return std::make_shared<FLAME_NAMESPACE::FileHandler>(path, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
 }
 
 void bind(sol::state& lua) {
@@ -29,8 +27,6 @@ void bind(sol::state& lua) {
 	});
 	helper.set_function("load_private_key", &load_private_key);
 	helper.set_function("get_trusted_key", &get_trusted_key);
-
-	helper.set_function("get_external_task", &get_external_task);
 
 	helper.set_function("debug_content", [](FLAME_NAMESPACE::AssetData& data) {
 		LOG_D("Size: {}\n", data.get_size());

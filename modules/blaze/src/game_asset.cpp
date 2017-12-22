@@ -39,7 +39,7 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void Script::post_load() {
-		// @todo Do we need safe_script
+		// @todo Do we need safe_script?
 		get_lua_state().script(_data.as<std::string>(), environment);
 		_loaded = true;
 

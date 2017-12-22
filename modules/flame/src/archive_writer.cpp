@@ -6,7 +6,7 @@
 
 namespace FLAME_NAMESPACE {
 
-	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies) {
+	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -41,7 +41,6 @@ namespace FLAME_NAMESPACE {
 
 	void ArchiveWriter::sign(crypto::RSA& priv_key) {
 
-		// @todo Should probably be an assertion
 		assert(priv_key.get_n().size() == KEY_SIZE);
 
 		if (_signed) {

@@ -23,6 +23,8 @@ void file_logger(Level, std::string text) {
 int main() {
 	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
 		blaze::set_platform<blaze::platform::Linux>();
+	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Windows) {
+		blaze::set_platform<blaze::platform::Windows>();
 	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Android) {
 		blaze::set_platform<blaze::platform::Android>();
 	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Web) {

@@ -43,7 +43,7 @@ namespace FLAME_NAMESPACE {
 	}
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
-	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in)), _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}

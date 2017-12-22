@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace FLAME_NAMESPACE {
-	MetaAsset::MetaAsset(std::string name, std::string filename, uint16_t version, std::vector<Task> workflow) : _name(name), _fh(std::make_shared<FileHandler>(filename, std::ios::in)), _version(version), _offset(0), _base_workflow(workflow) {
+	MetaAsset::MetaAsset(std::string name, std::string filename, uint16_t version, std::vector<Task> workflow) : _name(name), _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _version(version), _offset(0), _base_workflow(workflow) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}

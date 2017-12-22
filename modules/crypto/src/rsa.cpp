@@ -17,14 +17,17 @@
 std::random_device generator;
 
 BigUnsigned get_random(size_t b) {
-	std::uniform_int_distribution<uint8_t> distribution(1, b/8);
+	// @todo uint8_t does not work on Windows for some reason...
+	//std::uniform_int_distribution<uint8_t> distribution(1, b/8);
+	std::uniform_int_distribution<short> distribution(1, b / 8);
 	uint8_t a = distribution(generator);
 
-	distribution = std::uniform_int_distribution<uint8_t>();
+	//distribution = std::uniform_int_distribution<uint8_t>();
+	distribution = std::uniform_int_distribution<short>();
 
 	BigUnsigned x;
 	for (size_t i = 0; i < a; ++i) {
-		x += BigUnsigned(distribution(generator)) << (i*8);
+		x += BigUnsigned((uint8_t)distribution(generator)) << (i*8);
 	}
 
 	return x;
@@ -35,11 +38,12 @@ BigUnsigned generate_random_t(size_t b) {
 		throw std::logic_error("Amount of bits is not dividable in whole bytes");
 	}
 
-	std::uniform_int_distribution<uint8_t> distribution;
+	//std::uniform_int_distribution<uint8_t> distribution;
+	std::uniform_int_distribution<short> distribution;
 
 	BigUnsigned t;
 	for (size_t i = 0; i < b/8; ++i) {
-		t += BigUnsigned(distribution(generator)) << (i*8);
+		t += BigUnsigned((uint8_t)distribution(generator)) << (i*8);
 	}
 
 	t.setBit(0, true);
@@ -216,7 +220,7 @@ namespace CRYPTO_NAMESPACE {
 
 
 	void store(std::string filename, RSA key) {
-		std::fstream file(filename, std::ios::out | std::ios::trunc);
+		std::fstream file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
 
 		if (!file.is_open()) {
 			throw std::runtime_error("Failed to open file");
@@ -240,7 +244,7 @@ namespace CRYPTO_NAMESPACE {
 	}
 
 	RSA load(std::string filename) {
-		std::fstream file(filename, std::ios::in);
+		std::fstream file(filename, std::ios::in | std::ios::binary);
 
 		if (!file.is_open()) {
 			throw std::runtime_error("Failed to open file");
@@ -281,7 +285,7 @@ void rsa_test() {
 		auto priv = crypto::load("test.priv");
 		auto pub = crypto::load("test.pub");
 
-		std::vector<uint8_t> message = {0x10, 0, 0, 0, 0, 0, 0, 0};
+		std::vector<uint8_t> message = {0x10, 0, 0, 0, 0, 0, 0, 0x10};
 
 		auto encrypted = priv.encrypt(message);
 		auto decrypted = pub.encrypt(encrypted);

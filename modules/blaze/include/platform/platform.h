@@ -23,6 +23,7 @@ namespace BLAZE_NAMESPACE::platform {
 			virtual std::function<void(Level, std::string)> logger() =0;
 	};
 
+	// @todo Base path should propably not point to archives as a directory
 #if __linux__
 	class Linux : public Platform {
 		public:
@@ -40,6 +41,25 @@ namespace BLAZE_NAMESPACE::platform {
 	};
 #else
 	class Linux : public Platform {};
+#endif
+
+#if _WIN32
+	class Windows : public Platform {
+		public:
+			const std::string get_base_path() const override {
+				return "archives\\";
+			}
+
+			bool has_async_support() const override {
+				return true;
+			}
+
+			std::function<void(Level, std::string)> logger() override {
+				return logger::std_logger;
+			}
+	};
+#else
+	class Windows : public Platform {};
 #endif
 
 #if __EMSCRIPTEN__

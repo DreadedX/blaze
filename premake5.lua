@@ -8,6 +8,7 @@ newoption {
 	description = "platform to compile for",
 	allowed = {
 		{ "linux", "Linux" },
+		{ "windows", "Windows" },
 		{ "android", "Android" },
 		{ "web", "Web browser" },
 	}
@@ -19,6 +20,8 @@ end
 
 if _OPTIONS["platform"] == "linux" then
 	_ACTION = _ACTION or "gmake"
+elseif _OPTIONS["platform"] == "windows" then
+	_ACTION = _ACTION or "vs2017"
 elseif _OPTIONS["platform"] == "android" then
 	_ACTION = _ACTION or "androidmk"
 elseif _OPTIONS["platform"] == "web" then
@@ -44,6 +47,10 @@ workspace "blaze"
 	ndkstl "c++_shared"
 
 	configurations { "Debug", "Release" }
+
+	if _OPTIONS["platform"] == "windows" then
+		systemversion(os.winSdkVersion() .. ".0")
+	end
 
 	filter "options:platform=android"
 		location("build/android/jni")
@@ -81,6 +88,12 @@ project "lua"
 	kind "StaticLib"
 	files "third_party/lua/**"
 	removefiles { "third_party/lua/lua.c" }
+
+project "zlib"
+	kind "StaticLib"
+	files "third_party/zlib/*.c"
+	-- removefiles { "third_party/lua/lua.c" }
+	includeZlib()
 
 project "fmt"
 	kind "StaticLib"
@@ -132,7 +145,8 @@ project "lua-bind"
 	includeBlaze()
 
 project "game"
-	kind "WindowedApp"
+	-- kind "WindowedApp"
+	kind "ConsoleApp"
 	filter "options:platform=android"
 		kind "SharedLib"
 	filter {}
@@ -141,7 +155,7 @@ project "game"
 	includeBlaze()
 
 -- @note Only build this on desktop platforms
-if _OPTIONS["platform"] == "linux" then
+if _OPTIONS["platform"] == "linux" or _OPTIONS["platform"] == "windows" then
 	project "keygen"
 		kind "ConsoleApp"
 		files "tools/keygen/src/**"
@@ -157,7 +171,6 @@ if _OPTIONS["platform"] == "linux" then
 		includeGenerated()
 		includeLuaBind()
 		includeFlame()
-		links "dl"
 
 	project "tests"
 		kind "ConsoleApp"
@@ -165,13 +178,13 @@ if _OPTIONS["platform"] == "linux" then
 		includedirs "third_party/Catch/single_include"
 		includeCrypto();
 
-	project "content-server"
-		kind "ConsoleApp"
-		files "tools/content-server/src/**"
-		includedirs "tools/content-server/include"
-
-	project "testclient"
-		kind "ConsoleApp"
-		files "tools/testclient/src/**"
-		includedirs "tools/testclient/include"
+	-- project "content-server"
+	-- 	kind "ConsoleApp"
+	-- 	files "tools/content-server/src/**"
+	-- 	includedirs "tools/content-server/include"
+    --
+	-- project "testclient"
+	-- 	kind "ConsoleApp"
+	-- 	files "tools/testclient/src/**"
+	-- 	includedirs "tools/testclient/include"
 end

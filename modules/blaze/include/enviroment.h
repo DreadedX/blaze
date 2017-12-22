@@ -7,7 +7,7 @@ namespace BLAZE_NAMESPACE::enviroment {
 
 	enum class OS {
 		Linux,
-		// Windows,
+		Windows,
 		Android,
 		Web
 	};
@@ -15,12 +15,13 @@ namespace BLAZE_NAMESPACE::enviroment {
 	// @note The order is important
 	#if __EMSCRIPTEN__
 		constexpr OS os = OS::Web;
+	#elif _WIN32
+		// @todo Just to get things started
+		constexpr OS os = OS::Windows;
 	#elif __ANDROID__
 		constexpr OS os = OS::Android;
 	#elif __linux__
 		constexpr OS os = OS::Linux;
-	// #elif __WIN32
-	// 	constexpr OS os = OS::Windows;
 	#else
 		#error "Target platform is not supported"
 	#endif

@@ -1,3 +1,9 @@
+function os.winSdkVersion()
+	local reg_arch = iif( os.is64bit(), "\\Wow6432Node\\", "\\")
+	local sdk_version = os.getWindowsRegistry( "HKLM:SOFTWARE" .. reg_arch .. "Microsoft\\Microsoft SDKs\\Windows\\v10.0\\ProductVersion")
+	if sdk_version ~= nil then return sdk_version end
+end
+
 function includePlatform()
 	filter "options:platform=android"
 		links "android"
@@ -11,7 +17,11 @@ function includePlatform()
 end
 -- @todo We should only build when zlib is not available on system
 function includeZlib()
-	links "z"
+	-- links "z"
+	includedirs "third_party/zlib"
+	filter "kind:not StaticLib"
+		links "zlib"
+	filter {}
 end
 function includeBigInt()
 	includedirs "third_party/bigint"
