@@ -19,7 +19,7 @@ do
 	-- @todo This will fail if we are building from scratch
 	local key = readAll("../build/keys/test.priv")
 
-	if key then
+	if not key then
 		-- @note We will set this as the 'default' key if no key exists yet
 		key = "0x0"
 	end
