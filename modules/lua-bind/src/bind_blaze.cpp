@@ -25,10 +25,20 @@ namespace BLAZE_NAMESPACE::lua {
 		}
 	}
 
+	sol::object test_loader(std::string module_name) {
+		if (module_name.at(0) == '~') {
+			// @todo We need to start using this instead of just binding everything like we are doing right now
+			LOG_D("Load custom internal thing");
+		}
+		return sol::make_object(get_lua_state(), "\n\tno internal '" + module_name + '\'');
+	}
+
 	// @todo It would be nice if we could somehow extract the switch statements
 	void bind(sol::state& lua) {
 		// Add custom loader that allows loading from archives
+		// @todo We should make sure these loaders are earlier
 		sol::table searchers = lua["package"]["searchers"];
+		searchers.add(&test_loader);
 		searchers.add(&loader);
 
 		// Override print function
