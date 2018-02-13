@@ -1,4 +1,5 @@
 -- ARCHIVE BUILDER
+-- @todo This should be auto included from packager
 require "scripts.builder"
 
 -- TASKS
@@ -48,5 +49,21 @@ archive "my_first_mod"
 		tasks { langpack }
 		version(10)
 
+-- @todo This should automatically be called from packager
 build()
 
+-- @todo Eventually we are going create our own build system so we can use one file to build everything
+-- src for .cpp files and include voor .h files
+-- lib "flame"
+-- 	path "modules/flame"
+--
+-- lib "blaze"
+-- 	path "modules/blaze"
+-- 	include "flame"
+--
+-- executable "game"
+-- 	path "game"
+-- 	-- This auto includes everything that blaze includes
+-- 	include "blaze"
+
+	args "test"
