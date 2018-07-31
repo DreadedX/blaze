@@ -7,6 +7,10 @@
 #include "trusted_key.h"
 
 #include <iostream>
+// @todo This will be really janky on other platforms
+#include <experimental/filesystem>
+
+namespace fs = std::experimental::filesystem::v1;
 
 crypto::RSA load_private_key(std::string path) {
 	return crypto::load(path);
@@ -36,5 +40,55 @@ void bind(sol::state& lua) {
 			LOG_D("{}", dat);
 		}
 		LOG_D("\n");
+	});
+
+	helper.set_function("list_files", [&lua](std::string path) {
+		fs::path base(path);
+		sol::table files = lua.create_table();
+
+		for (const auto& entry : fs::directory_iterator(base)) {
+			if (!fs::is_directory(entry)) {
+				if (fs::path(entry).extension() == ".cpp" || fs::path(entry).extension() == ".cc" || fs::path(entry).extension() == ".c") {
+					files.add((fs::current_path() / entry).string());
+				}
+			}
+		}
+
+		return files;
+	});
+
+	helper.set_function("list_files_recursive", [&lua](std::string path) {
+		fs::path base(path);
+		sol::table files = lua.create_table();
+
+		for (const auto& entry : fs::recursive_directory_iterator(base)) {
+			if (!fs::is_directory(entry)) {
+				if (fs::path(entry).extension() == ".cpp" || fs::path(entry).extension() == ".cc" || fs::path(entry).extension() == ".c") {
+					files.add((fs::current_path() / entry).string());
+				}
+			}
+		}
+
+		return files;
+	});
+
+	helper.set_function("native_path", [](std::string path) {
+		return (fs::current_path() / path).string();
+	});
+
+	helper.set_function("change_extension", [](std::string path, std::string extension) {
+		return fs::path(path).stem().string() + extension;
+	});
+
+	helper.set_function("get_extension", [](std::string path) {
+		return fs::path(path).extension().string();
+	});
+
+	helper.set_function("create_directory", [](std::string path) {
+		return fs::create_directory(fs::path(path));
+	});
+
+	helper.set_function("copy", [](std::string source, std::string dest) {
+		return fs::copy(fs::path(source), fs::path(dest), fs::copy_options::overwrite_existing);
 	});
 }

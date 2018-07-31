@@ -172,6 +172,8 @@ if _OPTIONS["platform"] == "linux" or _OPTIONS["platform"] == "windows" then
 		includeLuaBind()
 		includeFlame()
 
+		links("stdc++fs")
+
 	project "tests"
 		kind "ConsoleApp"
 		files "test/**"
