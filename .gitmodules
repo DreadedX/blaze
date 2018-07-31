@@ -16,3 +16,6 @@
 [submodule "third_party/zlib"]
 	path = third_party/zlib
 	url = https://github.com/madler/zlib
+[submodule "third_party/luafilesystem"]
+	path = third_party/luafilesystem
+	url = https://github.com/keplerproject/luafilesystem.git
