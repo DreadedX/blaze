@@ -1,0 +1,32 @@
+#!/bin/bash
+if [[ -v FLINT_LOCAL ]]; then
+	echo "Flint: local"
+	LD_LIBRARY_PATH=$FLINT_LOCAL $FLINT_LOCAL/flint $@
+else
+	VERSION=nightly
+	echo "Flint: $VERSION"
+
+	mkdir -p .flint
+
+	wget https://downloads.mtgames.nl/release/flint/$VERSION/checksum -O .flint/checksum -q
+
+	if [ -f .flint/flint ]; then
+		(cd .flint && sha256sum --check checksum >> /dev/null)
+	else
+		false
+	fi
+
+	# @todo Make sure that if the checksum download fails for whatever reason that we just continue with the current version
+	if [ $? -eq 0 ]; then
+		echo "Flint is up-to-date"
+	else
+		# @todo Display download progress
+		echo "Downloading flint"
+		wget https://downloads.mtgames.nl/release/flint/nightly/flint -O .flint/flint  -q --show-progress
+		wget https://downloads.mtgames.nl/release/flint/nightly/plugin_default.so -O .flint/plugin_default.so -q --show-progress
+		chmod +x .flint/flint
+	fi
+	rm .flint/checksum
+
+	LD_LIBRARY_PATH=.flint .flint/flint $@
+fi
