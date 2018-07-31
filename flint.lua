@@ -17,13 +17,28 @@ lib "lua"
 	src("*third_party/lua", "-third_party/lua/lua.c")
 	include "third_party/lua"
 
-	if platform.name == "linux" then
-		link "dl"
-	end
+	-- Generate a hpp file so that we can easily access the library from c++
+	os.execute("mkdir -p .flint/generated/lua");
+	local header = io.open(".flint/generated/lua/lua.hpp", "w")
+	io.output(header)
+	io.write('#include "lua.h"\n#include "lualib.h"\n#include "lauxlib.h"')
+	io.close()
+	include ".flint/generated/lua"
+
+	-- if platform.name == "linux" then
+	-- 	link "dl"
+	-- end
 
 lib "zlib"
 	src("*third_party/zlib", "-third_party/zlib/{gzlib.c,gzwrite.c,gzread.c}")
 	include "third_party/zlib"
+
+	lang "c11"
+
+lib "sol2"
+	include "third_party/sol2"
+
+	dependency "lua"
 
 lib "logger"
 	path "modules/logger"
@@ -47,9 +62,9 @@ lib "flame"
 
 lib "lua-bind"
 	path "modules/lua-bind"
-	dependency("lua", "flame")
+	dependency("sol2", "flame")
 
-	include("modules/blaze/include", "third_party/sol2")
+	include("modules/blaze/include")
 
 lib "blaze"
 	path "modules/blaze"
@@ -61,8 +76,8 @@ executable "game"
 	path "game"
 	dependency "blaze"
 
-default "game"
+default_target "game"
 
-dist "game"
+-- dist "game"
 
 print(platform.name)
