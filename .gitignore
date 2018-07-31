@@ -38,3 +38,5 @@ tags
 modules/generated/src/
 premake5.exe
 .flint
+
+node_modules/

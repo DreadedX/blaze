@@ -21,7 +21,7 @@ void file_logger(Level, std::string text) {
 
 // This is the entry point of the game engine
 int main() {
-	// try {
+	try {
 	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
 		blaze::set_platform<blaze::platform::Linux>();
 	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Windows) {
@@ -36,7 +36,7 @@ int main() {
 
 	// @todo Is this usefull on all platforms
 	// On the web this is kind of useless probably...
-	log_file.open(blaze::get_platform()->get_base_path() + "game.log", std::ios::out | std::ios::trunc);
+	log_file.open(blaze::get_platform()->get_base_path() + "blaze.log", std::ios::out | std::ios::trunc);
 	if (!log_file.is_open()) {
 		throw std::runtime_error("Failed to create log file");
 	}
@@ -51,7 +51,7 @@ int main() {
 	blaze::done();
 
 	log_file.close();
-	// } catch (std::exception& e) {
-	// 	LOG_E("EXCEPTION: {}\n", e.what());
-	// }
+	} catch (std::exception& e) {
+		LOG_E("EXCEPTION: {}\n", e.what());
+	}
 }

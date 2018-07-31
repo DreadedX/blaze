@@ -11,6 +11,10 @@
 	#include <android/log.h>
 #endif
 
+#if __EMSCRIPTEN__
+	#include <emscripten.h>
+#endif
+
 // @todo Move each of these things into their own module and make the build system link the proper modules
 // @todo Print function that calls native implemtation or something along thoses lines
 
@@ -67,8 +71,10 @@ namespace BLAZE_NAMESPACE::platform {
 #if __EMSCRIPTEN__
 	class Web : public Platform {
 		public:
+			Web();
+
 			const std::string get_base_path() const override {
-				return "./";
+				return "/data/";
 			}
 
 			bool has_async_support() const override{
