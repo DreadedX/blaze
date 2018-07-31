@@ -1,0 +1,63 @@
+<!-- @todo The generation of this file should be automated based on a template, this means we need a new plugin for flint -->
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+	</haed>
+	<body>
+		<textarea id="output" rows="8"></textarea>
+		<script type="text/javascript">
+			var Module = {
+				locateFile: (url) => {
+					return ".flint/build/web/bin/" + url;
+				},
+				print: (() => {
+					var element = document.getElementById('output');
+					if (element) {
+						element.value = '';
+					}
+					return function(text) {
+						if (arguments.length > 1) {
+							text = Array.prototype.slice.call(arguments).join(' ');
+						}
+
+						console.log(text);
+
+						if (element) {
+							element.value += text + "\n";
+							element.scrollTop = element.scrollHeight;
+						}
+					};
+				})(),
+				preInit: [
+					function() {
+						loadArchive('./base.flm', 'build/archives/base.flm');
+						loadArchive('./my_first_mod.flm', 'build/archives/my_first_mod.flm');
+					}
+				]
+			}
+
+			// @todo This could actually finish after the engine has started...
+			// As a solution we could download everything first and display a loading screen
+			// And then in preInit put everything in the correct spot
+			function loadArchive(name, path) {
+				fetch(path, { credentials: 'same-origin' }).then(function(response) {
+					return response.arrayBuffer();
+				}).then(function(response) {
+					console.log('Loaded: ' + name);
+					FS.writeFile(name, new Uint8Array(response));
+				}).catch(function(e) {
+					console.error(e);
+				});
+			}
+
+		</script>
+		<script async type="text/javascript" src=".flint/build/web/bin/game.js"></script>
+		<!-- Quick function to get the game.log -->
+		<script>
+			function getLog() {
+				return new TextDecoder('utf-8').decode(FS.readFile('./game.log'));
+			}
+		</script>
+	</body>
+</html>
