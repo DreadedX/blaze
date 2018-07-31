@@ -7,17 +7,20 @@
 
 int main();
 
-// @todo This is propably incorrect
 JNIEnv* _env;
 jobject _obj;
 
 extern "C" {
 
+	// Entrypoint for android
 	JNIEXPORT void JNICALL Java_nl_mtgames_blazebootstrap_BootstrapActivity_start(JNIEnv* env, jobject obj) {
 
+		// Store pointers to env and obj
+		// @todo Is this allowed?
 		_env = env;
 		_obj = obj;
 
+		// Call the normal entrypoint
 		main();
 	}
 }

@@ -53,13 +53,11 @@ void game() {
 	event_bus::subscribe<Error>(std::ref(handle_error));
 
 	// Override assets so we don't have to repackage everytime
-	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux && blaze::enviroment::debug) {
-		// @todo We can propably reuse the packager script if we override some of the functions that are used to create archives
-		flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
-		blaze::asset_list::add(lua_asset);
-
-		sol::state lua;
-	}
+	// if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux && blaze::enviroment::debug) {
+	// 	// @todo We can propably reuse the packager script if we override some of the functions that are used to create archives
+	// 	flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
+	// 	blaze::asset_list::add(lua_asset);
+	// }
 
 	// Load base archive
 	blaze::load_archive("base");

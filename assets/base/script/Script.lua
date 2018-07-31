@@ -21,3 +21,7 @@ function done()
 	print "Cleanup for test archive"
 	-- subscription:unsubscribe();
 end
+
+function chat_handler(event)
+	print("<USERNAME>" .. event.text);
+end

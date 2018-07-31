@@ -18,6 +18,9 @@ namespace BLAZE_NAMESPACE::platform {
 
 	class Platform {
 		public:
+			Platform() {}
+			virtual ~Platform() {}
+
 			virtual const std::string get_base_path() const = 0;
 			virtual bool has_async_support() const = 0;
 			virtual std::function<void(Level, std::string)> logger() =0;
@@ -65,7 +68,7 @@ namespace BLAZE_NAMESPACE::platform {
 	class Web : public Platform {
 		public:
 			const std::string get_base_path() const override {
-				return "build/";
+				return "./";
 			}
 
 			bool has_async_support() const override{
