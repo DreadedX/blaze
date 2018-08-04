@@ -5,10 +5,6 @@ plugin "plugin_default.so"
 
 run_dir "build/archives"
 
-lib "fmt"
-	src "*third_party/fmt/fmt"
-	include "third_party/fmt"
-
 lib "bigint"
 	src "*third_party/bigint"
 	include "third_party/bigint"
@@ -40,9 +36,7 @@ lib "sol2"
 
 	dependency "lua"
 
-lib "logger"
-	path "modules/logger"
-	dependency "fmt"
+subfile("modules/logger/flint.lua", "logger")
 
 lib "parser"
 	path "modules/parser"
@@ -76,8 +70,4 @@ executable "game"
 	path "game"
 	dependency "blaze"
 
-default_target "game"
-
--- dist "game"
-
-print(platform.name)
+run_target "game"

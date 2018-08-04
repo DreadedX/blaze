@@ -1,32 +1,84 @@
 #!/bin/bash
-if [[ -v FLINT_LOCAL ]]; then
-	echo "Flint: local"
-	LD_LIBRARY_PATH=$FLINT_LOCAL $FLINT_LOCAL/flint $@
+
+# @todo We need to do more checking of the command line args
+
+FLINTLOCK=.flintlock
+
+if [[ ! -f $FLINTLOCK ]]; then
+	printf "stable\n" > $FLINTLOCK
+fi
+
+if [[ $1 == "--config" ]]; then
+	if [[ $2 == "update" ]]; then
+		# Proposed versions
+		# custom:	path to custom build
+		# nightly:	latest nightly build
+		# stable:	latest stable build
+		# VERSION:	VERSION of flint
+		# Running without a given version sets it to the VERSION of latest
+
+		# @todo Make sure this is actually a valid version somehow
+		if [[ ! -z $3 ]]; then
+
+			printf "$3" > $FLINTLOCK
+			if [[ $3 == "custom" ]]; then
+				printf " $4" >> $FLINTLOCK
+			fi
+			printf "\n" >> $FLINTLOCK
+
+			printf "Flint will now use version: $3\n"
+		else
+			printf "Getting current latest version\n"
+		fi
+	else
+		printf "Welcome to config mode!\n"
+		# @todo Show a list of commands
+	fi
 else
-	VERSION=nightly
-	echo "Flint: $VERSION"
+	VERSION=$(awk '{print $1}' $FLINTLOCK)
+	FLINT_PATH=$(awk '{print $2}' $FLINTLOCK)
+	ARGS=$@
 
-	mkdir -p .flint
+	if [[ $1 == "--version" ]]; then
+		VERSION=$2
 
-	wget https://downloads.mtgames.nl/release/flint/$VERSION/checksum -O .flint/checksum -q
-
-	if [ -f .flint/flint ]; then
-		(cd .flint && sha256sum --check checksum >> /dev/null)
-	else
-		false
+		if [[ $VERSION == "custom" ]]; then
+			FLINT_PATH=$3
+			ARGS=${@:4}
+		else
+			ARGS=${@:3}
+		fi
 	fi
 
-	# @todo Make sure that if the checksum download fails for whatever reason that we just continue with the current version
-	if [ $? -eq 0 ]; then
-		echo "Flint is up-to-date"
-	else
-		# @todo Display download progress
-		echo "Downloading flint"
-		wget https://downloads.mtgames.nl/release/flint/nightly/flint -O .flint/flint  -q --show-progress
-		wget https://downloads.mtgames.nl/release/flint/nightly/plugin_default.so -O .flint/plugin_default.so -q --show-progress
-		chmod +x .flint/flint
-	fi
-	rm .flint/checksum
+	printf "Flint: $VERSION\n"
 
-	LD_LIBRARY_PATH=.flint .flint/flint $@
+	if [[ $VERSION == "custom" ]]; then
+		printf "Path: $FLINT_PATH\n"
+		LD_LIBRARY_PATH=$FLINT_PATH $FLINT_PATH/flint $ARGS
+	else
+
+		mkdir -p .flint
+
+		wget https://downloads.mtgames.nl/release/flint/$VERSION/checksum -O .flint/checksum -q
+
+		if [ -f .flint/flint ]; then
+			(cd .flint && sha256sum --check checksum >> /dev/null)
+		else
+			false
+		fi
+
+		# @todo Make sure that if the checksum download fails for whatever reason that we just continue with the current version
+		if [ $? -eq 0 ]; then
+			printf "Flint is up-to-date\n"
+		else
+			# @todo Display download progress
+			printf "Downloading flint\n"
+			wget https://downloads.mtgames.nl/release/flint/$VERSION/flint -O .flint/flint  -q --show-progress
+			wget https://downloads.mtgames.nl/release/flint/$VERSION/plugin_default.so -O .flint/plugin_default.so -q --show-progress
+			chmod +x .flint/flint
+		fi
+		rm .flint/checksum
+
+		LD_LIBRARY_PATH=.flint .flint/flint $ARGS
+	fi
 fi
