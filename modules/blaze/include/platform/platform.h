@@ -27,7 +27,8 @@ namespace BLAZE_NAMESPACE::platform {
 
 			virtual const std::string get_base_path() const = 0;
 			virtual bool has_async_support() const = 0;
-			virtual std::function<void(Level, std::string)> logger() =0;
+			// @todo Give this a better name
+			virtual logger::LogHandler get_logger() =0;
 	};
 
 #if __linux__
@@ -41,7 +42,7 @@ namespace BLAZE_NAMESPACE::platform {
 				return true;
 			}
 
-			std::function<void(Level, std::string)> logger() override {
+			logger::LogHandler get_logger() override {
 				return logger::std_logger;
 			}
 	};
@@ -60,7 +61,7 @@ namespace BLAZE_NAMESPACE::platform {
 				return true;
 			}
 
-			std::function<void(Level, std::string)> logger() override {
+			logger::LogHandler get_logger() override {
 				return logger::std_logger;
 			}
 	};
@@ -81,7 +82,7 @@ namespace BLAZE_NAMESPACE::platform {
 				return false;
 			}
 
-			std::function<void(Level, std::string)> logger() override {
+			logger::LogHandler get_logger() override {
 				return logger::std_logger;
 			}
 	};

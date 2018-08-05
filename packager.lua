@@ -56,89 +56,90 @@ archive "my_first_mod"
 		version(10)
 -- end
 
--- THIS IS FOR OUR BUILD TOOL
--- @todo Maybe warn for duplicate dependecie
--- Third Party
-lib "fmt"
-	src "third_party/fmt/fmt"
-	include "third_party/fmt"
-
-lib "bigint"
-	src "third_party/bigint"
-	include "third_party/bigint"
-
-	exclude "third_party/bigint/sample.cc"
-	exclude "third_party/bigint/testsuite.cc"
-
-lib "lua"
-	-- @todo Make this
-	-- wget "https://www.lua.org/ftp/lua-5.3.4.tar.gz"
-	-- src "third_party/lua/src"
-	-- include "third_party/lua/src"
-	src "third_party/lua"
-	include "third_party/lua"
-
-	exclude "third_party/lua/lua.c"
-
-	links "dl"
-
-lib "zlib"
-	-- @todo Make this
-	-- git "https://github.com/madler/zlib"
-	src("third_party/zlib", false)
-	include "third_party/zlib"
-
--- Modules
-lib "logger"
-	path "modules/logger"
-	dependency "fmt"
-
-lib "parser"
-	path "modules/parser"
-	dependency "logger"
-
-lib "crypto"
-	path "modules/crypto"
-	dependency {"logger", "bigint"}
-
-lib "generated"
-	path "modules/generated"
-	dependency "crypto"
-
-lib "flame"
-	path "modules/flame"
-	dependency {"zlib", "crypto"}
-
--- @todo We need to merge the blaze part this into blaze, because now we have a weird dependency cycle
-lib "lua-bind"
-	path "modules/lua-bind"
-	dependency {"lua", "flame"}
-
-	include "modules/blaze/include"
-	include "third_party/sol2"
-
-lib "blaze"
-	path "modules/blaze"
-	dependency {"lua-bind", "generated"}
-
-	-- Include platform headers
-	include "modules/blaze/platform/android/include"
-
-executable "game"
-	dist()
-	path "game"
-	dependency "blaze"
-
-	--args "test"
-
-executable "packager"
-	path "tools/packager"
-	dependency {"lua-bind", "generated"}
-
-	links "stdc++fs"
-
-executable "keygen"
-	dist()
-	path "tools/keygen"
-	-- @todo We only depend on flame for binary_helper so maybe that should be split off
-	dependency {"logger", "parser", "crypto", "flame"}
+-- THIS IS OLD WE NOW USE FLINT
+-- -- THIS IS FOR OUR BUILD TOOL
+-- -- @todo Maybe warn for duplicate dependecie
+-- -- Third Party
+-- lib "fmt"
+-- 	src "third_party/fmt/fmt"
+-- 	include "third_party/fmt"
+--
+-- lib "bigint"
+-- 	src "third_party/bigint"
+-- 	include "third_party/bigint"
+--
+-- 	exclude "third_party/bigint/sample.cc"
+-- 	exclude "third_party/bigint/testsuite.cc"
+--
+-- lib "lua"
+-- 	-- @todo Make this
+-- 	-- wget "https://www.lua.org/ftp/lua-5.3.4.tar.gz"
+-- 	-- src "third_party/lua/src"
+-- 	-- include "third_party/lua/src"
+-- 	src "third_party/lua"
+-- 	include "third_party/lua"
+--
+-- 	exclude "third_party/lua/lua.c"
+--
+-- 	links "dl"
+--
+-- lib "zlib"
+-- 	-- @todo Make this
+-- 	-- git "https://github.com/madler/zlib"
+-- 	src("third_party/zlib", false)
+-- 	include "third_party/zlib"
+--
+-- -- Modules
+-- lib "logger"
+-- 	path "modules/logger"
+-- 	dependency "fmt"
+--
+-- lib "parser"
+-- 	path "modules/parser"
+-- 	dependency "logger"
+--
+-- lib "crypto"
+-- 	path "modules/crypto"
+-- 	dependency {"logger", "bigint"}
+--
+-- lib "generated"
+-- 	path "modules/generated"
+-- 	dependency "crypto"
+--
+-- lib "flame"
+-- 	path "modules/flame"
+-- 	dependency {"zlib", "crypto"}
+--
+-- -- @todo We need to merge the blaze part this into blaze, because now we have a weird dependency cycle
+-- lib "lua-bind"
+-- 	path "modules/lua-bind"
+-- 	dependency {"lua", "flame"}
+--
+-- 	include "modules/blaze/include"
+-- 	include "third_party/sol2"
+--
+-- lib "blaze"
+-- 	path "modules/blaze"
+-- 	dependency {"lua-bind", "generated"}
+--
+-- 	-- Include platform headers
+-- 	include "modules/blaze/platform/android/include"
+--
+-- executable "game"
+-- 	dist()
+-- 	path "game"
+-- 	dependency "blaze"
+--
+-- 	--args "test"
+--
+-- executable "packager"
+-- 	path "tools/packager"
+-- 	dependency {"lua-bind", "generated"}
+--
+-- 	links "stdc++fs"
+--
+-- executable "keygen"
+-- 	dist()
+-- 	path "tools/keygen"
+-- 	-- @todo We only depend on flame for binary_helper so maybe that should be split off
+-- 	dependency {"logger", "parser", "crypto", "flame"}

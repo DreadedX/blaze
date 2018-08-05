@@ -9,6 +9,6 @@ namespace BLAZE_NAMESPACE::platform {
 		public:
 			const std::string get_base_path() const override;
 			bool has_async_support() const override;
-			std::function<void(Level, std::string)> logger() override;
+			logger::LogHandler get_logger() override;
 	};
 }

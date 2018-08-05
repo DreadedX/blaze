@@ -36,3 +36,7 @@ Module['preRun'] = [
 function getLog() {
 	return new TextDecoder('utf-8').decode(FS.readFile('/data/blaze.log'));
 }
+// @todo This should only be added if we are in debug mode
+function getVerboseLog() {
+	return new TextDecoder('utf-8').decode(FS.readFile('/data/blaze.verbose.log'));
+}

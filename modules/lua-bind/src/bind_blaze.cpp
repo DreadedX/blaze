@@ -34,6 +34,7 @@ namespace BLAZE_NAMESPACE::lua {
 
 		// Override print function
 		// @todo Improve this
+		// @todo Instead of using the macro we should call the function ourselfs so we can include file and line data
 		lua.set_function("print", [](sol::variadic_args va) {
 			for (auto v : va) {
 				switch (v.get_type()) {

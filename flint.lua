@@ -4,6 +4,10 @@
 plugin "plugin_default.so"
 
 run_dir "build/archives"
+-- @todo This is only temporary until we have fully ported everything to be based in flint
+if target == "packager" then
+	run_dir "."
+end
 
 lib "bigint"
 	src "*third_party/bigint"
@@ -69,5 +73,11 @@ lib "blaze"
 executable "game"
 	path "game"
 	dependency "blaze"
+
+executable "packager"
+	path "tools/packager"
+	dependency("lua-bind", "generated")
+
+	link "stdc++fs"
 
 run_target "game"
