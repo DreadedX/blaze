@@ -1,5 +1,5 @@
-#include "meta_asset.h"
-#include "asset_data.h"
+#include "flame/meta_asset.h"
+#include "flame/asset_data.h"
 
 #include <iostream>
 
@@ -36,8 +36,8 @@ namespace FLAME_NAMESPACE {
 
 		// Construct a new workflow based on the base workflow and given workflow
 		std::vector<Task> final_workflow;
-		final_workflow.insert(std::end(final_workflow), std::begin(_base_workflow), std::end(_base_workflow));
-		final_workflow.insert(std::end(final_workflow), std::begin(workflow), std::end(workflow));
+		final_workflow.insert(final_workflow.end(), _base_workflow.begin(), _base_workflow.end());
+		final_workflow.insert(final_workflow.end(), workflow.begin(), workflow.end());
 
 		return AssetData(_fh, _size, _offset, final_workflow, async);
 	}

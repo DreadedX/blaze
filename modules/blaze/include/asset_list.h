@@ -2,9 +2,9 @@
 
 #include "blaze.h"
 
-#include "meta_asset.h"
-#include "archive.h"
-#include "asset_data.h"
+#include "flame/meta_asset.h"
+#include "flame/archive.h"
+#include "flame/asset_data.h"
 
 #include <unordered_map>
 

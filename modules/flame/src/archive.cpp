@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "archive.h"
-#include "asset_data.h"
-#include "tasks.h"
-#include "binary_helper.h"
+#include "flame/archive.h"
+#include "flame/asset_data.h"
+#include "flame/tasks.h"
+#include "flame/binary_helper.h"
 
 #include "sha3.h"
 

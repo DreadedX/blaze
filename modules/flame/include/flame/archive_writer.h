@@ -1,7 +1,7 @@
 #pragma once
 
-#include "archive.h"
-#include "meta_asset.h"
+#include "flame/archive.h"
+#include "flame/meta_asset.h"
 
 namespace FLAME_NAMESPACE {
 	class ArchiveWriter {

@@ -2,7 +2,7 @@
 
 #include "blaze.h"
 
-#include "archive.h"
+#include "flame/archive.h"
 
 #include <unordered_map>
 #include <list>

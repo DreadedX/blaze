@@ -1,8 +1,8 @@
 #pragma once
 
 #include "flame.h"
-#include "file_handler.h"
-#include "meta_asset.h"
+#include "flame/file_handler.h"
+#include "flame/meta_asset.h"
 
 #include "rsa.h"
 

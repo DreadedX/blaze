@@ -2,7 +2,7 @@
 
 #include "flame.h"
 
-#include "file_handler.h"
+#include "flame/file_handler.h"
 
 #include <memory>
 #include <string>

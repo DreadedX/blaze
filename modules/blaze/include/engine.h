@@ -6,7 +6,7 @@
 #include "events.h"
 #include "platform/platform.h"
 
-#include "binary_helper.h"
+#include "flame/binary_helper.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"

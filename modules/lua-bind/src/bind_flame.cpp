@@ -1,9 +1,9 @@
 #include "bind_flame.h"
 
-#include "archive.h"
-#include "archive_writer.h"
-#include "meta_asset.h"
-#include "asset_data.h"
+#include "flame/archive.h"
+#include "flame/archive_writer.h"
+#include "flame/meta_asset.h"
+#include "flame/asset_data.h"
 
 #include <string>
 #include <memory>

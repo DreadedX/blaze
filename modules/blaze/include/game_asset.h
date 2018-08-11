@@ -4,7 +4,7 @@
 
 #include "blaze.h"
 
-#include "asset_data.h"
+#include "flame/asset_data.h"
 #include "asset_list.h"
 #include "engine.h"
 
