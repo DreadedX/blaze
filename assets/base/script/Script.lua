@@ -1,7 +1,4 @@
-local objects = require "base/Objects"
-
 function init()
-	objects.register()
 	subscription = blaze.ChatSubscription.new(chat_handler)
 
 	durability = 12

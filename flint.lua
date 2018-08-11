@@ -1,13 +1,6 @@
--- Load flint plugins
--- plugin "packager"
-
-plugin "plugin_default.so"
-
-run_dir "build/archives"
--- @todo This is only temporary until we have fully ported everything to be based in flint
-if target == "packager" then
-	run_dir "."
-end
+-- @todo This is needed in order to support the old packager archives
+-- run_dir "build/archives"
+run_dir ".flint/build/linux/debug/archives"
 
 lib "bigint"
 	src "*third_party/bigint"
@@ -24,10 +17,6 @@ lib "lua"
 	io.write('#include "lua.h"\n#include "lualib.h"\n#include "lauxlib.h"')
 	io.close()
 	include ".flint/generated/lua"
-
-	-- if platform.name == "linux" then
-	-- 	link "dl"
-	-- end
 
 lib "zlib"
 	src("*third_party/zlib", "-third_party/zlib/{gzlib.c,gzwrite.c,gzread.c}")
@@ -73,11 +62,74 @@ lib "blaze"
 executable "game"
 	path "game"
 	dependency "blaze"
+	-- @todo Does it make sense to always have these as dependencies
+	-- During dev it is useful, but will probably get slower in the future
+	-- And for release we only have to build this once and it will work on all platforms
+	-- Beter idea for in the future ./flint -r game archives
+	-- This command build game and the archives and then runs the game
+	-- This requires multiple targets and meta targets in flint
+	-- Maybe implement run_dependency these are only dependencies when running
+	-- run_dependency "base"
+	-- Now when building game nothing happend but when running they will get rebuild, unless ofcource -s is set
 
-executable "packager"
-	path "tools/packager"
-	dependency("lua-bind", "generated")
+subfile("../flint/flint.lua", "flint")
 
-	link "stdc++fs"
+shared "plugin_packager"
+	path "tools/plugin_packager"
+
+	dependency("flint", "flame", "crypto")
 
 run_target "game"
+
+local packager = plugin ".flint/build/linux/debug/bin/plugin_packager.so"
+
+if packager then
+
+	local langpack = require "scripts.langpack"
+
+	meta "archives"
+		dependency("base", "my_first_mod")
+
+	archive "my_first_mod"
+		author "Dreaded_X"
+		description "My first mod!"
+		key "build/keys/unofficial.priv"
+		-- compression(flame.Compression.none)
+		compression(0)
+		version(3)
+
+		script "assets/my_first_mod/script/Script.lua"
+
+		-- @todo This overrides an existing command
+		requires "base"
+			version_min (1)
+
+		asset "my_first_mod/script/Hello"
+			path "assets/my_first_mod/script/Hello.lua"
+
+		asset "base/language/Dutch"
+			path "assets/my_first_mod/language/Dutch.lang"
+			task (langpack)
+			version(10)
+
+	archive "base"
+		author "Dreaded_X"
+		description "This archive contains the base game"
+		key "build/keys/test.priv"
+		-- compression(flame.Compression.none)
+		compression(0)
+		version(1)
+
+		script "assets/base/script/Script.lua"
+
+		asset "base/language/Dutch"
+			path "assets/base/language/Dutch.lang"
+			task (langpack)
+
+		asset "base/language/English"
+			path "assets/base/language/English.lang"
+			task (langpack)
+
+else
+	print "Packager plugin not loaded, skipping building archives"
+end

@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # @todo We need to do more checking of the command line args
+# --config
+#	update		Change the version of flint used by default
+# --version		Temporarily use a different version of flint
 
 FLINTLOCK=.flintlock
 
@@ -36,7 +39,8 @@ if [[ $1 == "--config" ]]; then
 	fi
 else
 	VERSION=$(awk '{print $1}' $FLINTLOCK)
-	FLINT_PATH=$(awk '{print $2}' $FLINTLOCK)
+	FLINT_PATH=.flint
+	DEBUG=""
 	ARGS=$@
 
 	if [[ $1 == "--version" ]]; then
@@ -54,7 +58,13 @@ else
 
 	if [[ $VERSION == "custom" ]]; then
 		printf "Path: $FLINT_PATH\n"
-		LD_LIBRARY_PATH=$FLINT_PATH $FLINT_PATH/flint $ARGS
+		FLINT_PATH=$(awk '{print $2}' $FLINTLOCK)
+
+		if [[ $1 == "--debug-flint" ]]; then
+			DEBUG="gdb --args"
+			ARGS=${@:2}
+		fi
+
 	else
 
 		mkdir -p .flint
@@ -74,11 +84,10 @@ else
 			# @todo Display download progress
 			printf "Downloading flint\n"
 			wget https://downloads.mtgames.nl/release/flint/$VERSION/flint -O .flint/flint  -q --show-progress
-			wget https://downloads.mtgames.nl/release/flint/$VERSION/plugin_default.so -O .flint/plugin_default.so -q --show-progress
 			chmod +x .flint/flint
 		fi
 		rm .flint/checksum
 
-		LD_LIBRARY_PATH=.flint .flint/flint $ARGS
 	fi
+	LD_LIBRARY_PATH=$FLINT_PATH $DEBUG $FLINT_PATH/flint $ARGS
 fi
