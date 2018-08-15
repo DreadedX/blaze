@@ -10,7 +10,7 @@
 
 class State {
 	public:
-		State(size_t w) : _w(w), _state(25*w) {}
+		State(size_t w) : _w(w), _l(log2(w)), _state(25*w) {}
 
 		bool get(size_t x, size_t y, size_t z) const {
 			index_check(x,y,z);
@@ -27,12 +27,34 @@ class State {
 		auto get_state() const {
 			return _state;
 		}
-		auto get_w() const {
+		inline auto get_w() const {
 			return _w;
+		}
+		inline auto get_l() const {
+			return _l;
+		}
+
+		// Copy constructor
+		State(const State& other) : _w(other._w), _l(other._l) {
+			_state = other._state;
+		}
+		// Move constructor
+		State(State&& other) : _w(other._w), _l(other._l) {
+			_state = std::move(other._state);
+		}
+		// Move assignment operator
+		State& operator=(State&& other) {
+			// Make sure that the state are of the same size
+			assert(_w == other._w);
+
+			_state = std::move(other._state);
+
+			return *this;
 		}
 
 	private:
-		size_t _w;
+		const size_t _w;
+		const size_t _l;
 		std::vector<bool> _state;
 
 		void index_check(size_t x, size_t y, size_t z) const {
@@ -44,7 +66,7 @@ class State {
 
 State theta(State A) {
 	size_t w = A.get_w();
-	std::vector<bool> C(5*w);
+	static std::vector<bool> C(5*w);
 
 	for (size_t x = 0; x < 5; ++x) {
 		for (size_t z = 0; z < w; ++z) {
@@ -53,39 +75,27 @@ State theta(State A) {
 	}
 
 
-	std::vector<bool> D(5*w);
+	static std::vector<bool> D(5*w);
 
 	for (size_t x = 0; x < 5; ++x) {
 		for (size_t z = 0; z < w; ++z) {
 			D[w*x + z] = C[w*((x-1+5) % 5) + z] ^ C[w*((x+1) % 5) + ((z-1+w) % w)];
-		}
-	}
-
-	State Aprime(w);
-
-	for (size_t y = 0; y < 5; ++y) {
-		for (size_t x = 0; x < 5; ++x) {
-			for (size_t z = 0; z < w; ++z) {
-				Aprime.set(x, y, z, A.get(x, y, z) ^ D[w*x+ z]);
+			for (size_t y = 0; y < 5; ++y) {
+				A.set(x, y, z, A.get(x, y, z) ^ D[w*x+ z]);
 			}
 		}
 	}
 
-	return Aprime;
+	return A;
 }
 
 State rho(State A) {
 	size_t w = A.get_w();
-	State Aprime(w);
-
-	for (size_t z = 0; z < w; ++z) {
-		Aprime.set(0, 0, z, A.get(0,0,z));
-	}
+	State Aprime = A;
 
 	size_t x = 1;
 	size_t y = 0;
 
-	// @todo t from 0 to 23 (assume inclusive for now)
 	for (size_t t = 0; t < 24; ++t) {
 		for (size_t z = 0; z < w; ++z) {
 			Aprime.set(x, y, z, A.get(x, y, (z-((t+1)*(t+2))/2) % w));
@@ -134,21 +144,21 @@ bool rc(size_t t) {
 	if ((t % 255) == 0) {
 		return 1;
 	}
-	std::vector<bool> R(8);
+	static std::vector<bool> R(9);
+	std::fill(R.begin(), R.end(), 0);
+	
 	R[0] = 1;
 
 	for (size_t i = 1; i < (t % 255)+1; ++i) {
-		auto old = R;
-		R.clear();
-		R.push_back(0);
-		R.insert(R.end(), old.begin(), old.end());
+		for (size_t i = 8; i--;) {
+			R[i + 1] = R[i];
+		}
+		R[0] = 0;
 
 		R[0] = R[0] ^ R[8];
 		R[4] = R[4] ^ R[8];
 		R[5] = R[5] ^ R[8];
 		R[6] = R[6] ^ R[8];
-
-		R.resize(8);
 	}
 
 	return R[0];
@@ -156,32 +166,33 @@ bool rc(size_t t) {
 
 State iotta(State A, size_t i_r) {
 	size_t w = A.get_w();
-	size_t l = log(w)/log(2);
+	size_t l = A.get_l();
 
-	State Aprime = A;
-
-	std::vector<bool> RC(w);
+	static std::vector<bool> RC(w);
 
 	for (size_t j = 0; j < l+1; ++j) {
-		size_t index = pow(2, j) - 1;
+		size_t index;
+		if (j == 0) {
+			index = 0;
+		} else {
+			index = (2 << (j-1)) - 1;
+		}
 		RC[index] = rc(j + 7*i_r);
 	}
 
 	for (size_t z = 0; z < w; ++z) {
-		Aprime.set(0, 0, z, Aprime.get(0, 0, z) ^ RC[z]);
+		A.set(0, 0, z, A.get(0, 0, z) ^ RC[z]);
 	}
 
-	return Aprime;
+	return A;
 }
 
 State round(State A, size_t i_r) {
-	A = theta(A);
-	A = rho(A);
-	A = pi(A);
-	A = chi(A);
-	A = iotta(A, i_r);
-	// print_data(from_bits<uint8_t>(A.get_state()));
-	// exit(0);
+	A = theta(std::move(A));
+	A = rho(std::move(A));
+	A = pi(std::move(A));
+	A = chi(std::move(A));
+	A = iotta(std::move(A), i_r);
 
 	return A;
 }
@@ -190,13 +201,14 @@ std::vector<bool> keccakp(std::vector<bool> S, size_t n_r) {
 	size_t b = S.size();
 	assert(b == 25 || b == 50 || b == 100 || b == 200 || b == 400 || b == 800 || b == 1600);
 	size_t w = b/25;
-	size_t l = log(w)/log(2);
 
 	State A(w);
 	A.set_state(S);
 
+	size_t l = A.get_l();
+
 	for (size_t i_r = (12+2*l) - n_r; i_r < 12+2*l; ++i_r) {
-		A = round(A, i_r);
+		A = round(std::move(A), i_r);
 	}
 
 
