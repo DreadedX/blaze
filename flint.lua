@@ -1,6 +1,7 @@
 -- @todo This is needed in order to support the old packager archives
--- run_dir "build/archives"
 run_dir ".flint/build/linux/debug/archives"
+
+subfile("modules/iohelper/flint.lua", "iohelper")
 
 lib "bigint"
 	src "*third_party/bigint"
@@ -31,13 +32,9 @@ lib "sol2"
 
 subfile("modules/logger/flint.lua", "logger")
 
-lib "parser"
-	path "modules/parser"
-	dependency "logger"
-
 lib "crypto"
 	path "modules/crypto"
-	dependency("logger", "bigint")
+	dependency("logger", "bigint", "iohelper")
 
 lib "generated"
 	path "modules/generated"
@@ -45,7 +42,7 @@ lib "generated"
 
 lib "flame"
 	path "modules/flame"
-	dependency("zlib", "crypto")
+	dependency("zlib", "crypto", "iohelper")
 
 lib "lua-bind"
 	path "modules/lua-bind"
@@ -75,12 +72,20 @@ executable "game"
 subfile("../flint/flint.lua", "flint")
 
 shared "plugin_packager"
-	path "tools/plugin_packager"
+	path "plugin/packager"
 
 	dependency("flint", "flame", "crypto")
 
+-- executable "tests"
+-- 	src "test/test.cpp"
+--
+-- 	include "third_party/Catch/single_include"
+--
+-- 	dependency "crypto"
+
 run_target "game"
 
+-- local packager = plugin ".flint/build/linux/release/bin/plugin_packager.so"
 local packager = plugin ".flint/build/linux/debug/bin/plugin_packager.so"
 
 if packager then
@@ -93,7 +98,8 @@ if packager then
 	archive "my_first_mod"
 		author "Dreaded_X"
 		description "My first mod!"
-		key "build/keys/unofficial.priv"
+		-- key "build/keys/unofficial.priv"
+		key "keys/official.pem"
 		-- compression(flame.Compression.none)
 		compression(0)
 		version(3)
@@ -115,7 +121,8 @@ if packager then
 	archive "base"
 		author "Dreaded_X"
 		description "This archive contains the base game"
-		key "build/keys/test.priv"
+		-- key "build/keys/test.priv"
+		key "keys/test.pem"
 		-- compression(flame.Compression.none)
 		compression(0)
 		version(1)

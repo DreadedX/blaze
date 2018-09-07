@@ -32,8 +32,7 @@ namespace CRYPTO_NAMESPACE {
 
 	};
 
-	// @todo Make e configurable
-	std::pair<RSA, RSA> generate_rsa_keys(size_t b);
-	void store(std::string filename, RSA key);
-	RSA load(std::string filename);
+	std::vector<uint8_t> default_e();
+
+	std::pair<RSA, RSA> load(std::string filename);
 }

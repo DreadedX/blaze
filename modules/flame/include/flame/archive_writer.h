@@ -6,12 +6,12 @@
 namespace FLAME_NAMESPACE {
 	class ArchiveWriter {
 		public:
-			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies);
+			// @todo Make key optional
+			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies, crypto::RSA priv);	
 
-			void sign(crypto::RSA& priv_key);
+			void sign();
 
 			void add(MetaAsset& meta_asset, Compression compression);
-			void add_dependency(std::string name, uint16_t version);
 
 			void close() {
 				_fh->close();
@@ -27,6 +27,7 @@ namespace FLAME_NAMESPACE {
 			std::string _description;
 			uint16_t _version;
 			std::vector<Dependency> _dependencies;
+			crypto::RSA _priv;
 
 			bool _signed = false;
 

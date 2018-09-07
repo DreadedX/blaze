@@ -57,6 +57,5 @@ namespace FLAME_NAMESPACE {
 			std::vector<MetaAsset> _meta_assets;
 
 			crypto::RSA _key;
-
 	};
 };

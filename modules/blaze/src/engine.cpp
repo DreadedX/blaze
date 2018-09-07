@@ -19,7 +19,7 @@ namespace BLAZE_NAMESPACE {
 
 	void init() {
 		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table);
-		flame::lua::bind(lua_state);
+		// @todo Just build all of this into the engine instead of a seperate library
 		lua::bind(lua_state);
 	}
 

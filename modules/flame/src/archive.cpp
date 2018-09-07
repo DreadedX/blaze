@@ -5,6 +5,8 @@
 #include "flame/tasks.h"
 #include "flame/binary_helper.h"
 
+#include "iohelper/read.h"
+
 #include "sha3.h"
 
 #define CHUNK_SIZE 1024
@@ -18,8 +20,10 @@ namespace FLAME_NAMESPACE {
 
 		auto& fs = fh->lock();
 
-		size -= 2*KEY_SIZE + sizeof(MAGIC); 
-		fs.seekg(2*KEY_SIZE + sizeof(MAGIC));
+		fs.seekg(sizeof(MAGIC));
+		iohelper::read<std::vector<uint8_t>>(fs);
+		iohelper::read<std::vector<uint8_t>>(fs);
+		size -= fs.tellg(); 
 
 		uint32_t remaining = size;
 		crypto::SHA3_256 hash;
@@ -43,6 +47,7 @@ namespace FLAME_NAMESPACE {
 	}
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
+	// @todo What is the purpose of the _key here
 	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
@@ -54,10 +59,10 @@ namespace FLAME_NAMESPACE {
 		fs.seekg(0);
 		// If the file is smaller than this it is definetly not valid
 		// @todo Re-evaluate this
-		if (size < 2*KEY_SIZE + sizeof(MAGIC)) {
-			_fh->unlock();
-			throw std::runtime_error("File too small");
-		}
+		// if (size < 2*KEY_SIZE + sizeof(MAGIC)) {
+		// 	_fh->unlock();
+		// 	throw std::runtime_error("File too small");
+		// }
 
 		uint8_t magic[sizeof(MAGIC)];
 		binary::read(fs, magic, sizeof(MAGIC));
@@ -67,25 +72,25 @@ namespace FLAME_NAMESPACE {
 		}
 
 		// @todo There should be a function in crypto that provides this
-		std::vector<uint8_t> n(KEY_SIZE);
-		binary::read(fs, n.data(), KEY_SIZE);
+		auto n = iohelper::read<std::vector<uint8_t>>(fs);
 
 		// @todo For some very weird reason this blocks if the key is corrupt and we have a lock (???)
 		_fh->unlock();
 		{
+			// @todo Just assume that the key is valid for now
 			// Make sure the key is not empty
-			auto check = [n] {
-				for (auto&& byte : n) {
-					if (byte != 0x00) {
-						return true;
-					}
-				}
-				return false;
-			};
+			// auto check = [n] {
+			// 	for (auto&& byte : n) {
+			// 		if (byte != 0x00) {
+			// 			return true;
+			// 		}
+			// 	}
+			// 	return false;
+			// };
 
-			if (!check()) {
-				throw std::runtime_error("File is corrupted");
-			}
+			// if (!check()) {
+			// 	throw std::runtime_error("File is corrupted");
+			// }
 		}
 		_key = crypto::RSA(n, crypto::default_e());
 		if (!_fh || !_fh->is_open()) {
@@ -93,8 +98,7 @@ namespace FLAME_NAMESPACE {
 		}
 		_fh->lock();
 
-		std::vector<uint8_t> signature(KEY_SIZE);
-		binary::read(fs, signature.data(), KEY_SIZE);
+		auto signature = iohelper::read<std::vector<uint8_t>>(fs);
 		// @todo Encrypt is the wrong term here
 		std::vector<uint8_t> stored_digest = _key.encrypt(signature);
 
@@ -104,11 +108,11 @@ namespace FLAME_NAMESPACE {
 
 		size_t length = stored_digest.size();
 		if (length != digest.size()) {
-			throw std::runtime_error("File is corrupted");
+			throw std::runtime_error("File is corrupted (Digest size is different)");
 		}
 
 		if (!binary::compare(digest.data(), stored_digest.data(), length)) {
-			throw std::runtime_error("File is corrupted");
+			throw std::runtime_error("File is corrupted (Digest is different)");
 		}
 
 		if (!_fh || !_fh->is_open()) {
@@ -116,7 +120,12 @@ namespace FLAME_NAMESPACE {
 		}
 		_fh->lock();
 
-		fs.seekg(2*KEY_SIZE + sizeof(MAGIC));
+		// @todo We should maybe just store the location
+		// Jump to the start of the data
+		fs.seekg(sizeof(MAGIC));
+		iohelper::read<std::vector<uint8_t>>(fs);
+		iohelper::read<std::vector<uint8_t>>(fs);
+
 		binary::read(fs, _name);
 		binary::read(fs, _author);
 		binary::read(fs, _description);

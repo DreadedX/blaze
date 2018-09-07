@@ -4,9 +4,16 @@
 #include "flame/binary_helper.h"
 #include "flame/tasks.h"
 
+#include "iohelper/write.h"
+#include "iohelper/read.h"
+
 namespace FLAME_NAMESPACE {
 
-	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies) {
+	// @todo Allow unsigned archives, these just store the digest
+	// @todo Update flame to use iohelper and retire binary_helper
+	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
+	// @current
+	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -16,17 +23,16 @@ namespace FLAME_NAMESPACE {
 		binary::write(fs, MAGIC, sizeof(MAGIC));
 
 		// Reserve space for Signature and Key
-		// if keysize is 1024
-		// sizeof(n) = 1024
-		// sizeof(signature) = 1024
-		for (size_t i = 0; i < 2*KEY_SIZE; ++i) {
-			binary::write(fs, (uint8_t) 0x00);
-		}
+		iohelper::write(fs, _priv.get_n());
+		// @todo Figure out the correct way to determine the length of the key
+		std::vector<uint8_t> digest_reserve((_priv.get_d().size()/8)*8);
+		iohelper::write(fs, digest_reserve);
 
 		// binary::write(fs, static_cast<uint8_t>(_compression));
 		binary::write(fs, _name);
 		binary::write(fs, _author);
 		binary::write(fs, _description);
+		// @todo What is the point of this when each archive contains a version as well...
 		binary::write(fs, _version);
 
 		for (auto& dependency : _dependencies) {
@@ -39,9 +45,7 @@ namespace FLAME_NAMESPACE {
 		_fh->unlock();
 	}
 
-	void ArchiveWriter::sign(crypto::RSA& priv_key) {
-
-		assert(priv_key.get_n().size() == KEY_SIZE);
+	void ArchiveWriter::sign() {
 
 		if (_signed) {
 			throw std::logic_error("Archive is already finalized");
@@ -57,12 +61,12 @@ namespace FLAME_NAMESPACE {
 		auto size = fs.tellp();
 		_fh->unlock();
 
+		// @todo Make sure this function starts in the right place
 		std::vector<uint8_t> digest = calculate_hash(_fh, size);
 
 		// Sign with private key
-		assert(priv_key.get_d().size() == KEY_SIZE);
-		std::vector<uint8_t> signature = priv_key.encrypt(digest);
-		assert(signature.size() == KEY_SIZE);
+		std::vector<uint8_t> signature = _priv.encrypt(digest);
+		std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
 
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
@@ -70,8 +74,8 @@ namespace FLAME_NAMESPACE {
 		_fh->lock();
 
 		fs.seekp(sizeof(MAGIC));
-		binary::write(fs, priv_key.get_n().data(), priv_key.get_n().size());
-		binary::write(fs, signature.data(), signature.size());
+		iohelper::read<std::vector<uint8_t>>(fs);
+		iohelper::write(fs, signature);
 
 		_fh->unlock();
 

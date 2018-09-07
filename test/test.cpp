@@ -91,14 +91,14 @@ TEST_CASE( "sha3 hashes are calculated", "[sha3]" ) {
 }
 
 TEST_CASE( "rsa encryption and decryption" ) {
-	SECTION( "rsa key generation" ) {
-		// @note This test take a long time and we can't really verify anything
-		// auto keys = crypto::generate_rsa_keys(1024);
-        //
-		// crypto::store("test/key-temp.priv", keys.first);
-		// crypto::store("test/key-temp.pub", keys.second);
-		// @todo Test if files exists and remove them again
-	}
+	// SECTION( "rsa key generation" ) {
+	// 	// @note This test take a long time and we can't really verify anything
+	// 	// auto keys = crypto::generate_rsa_keys(1024);
+    //     //
+	// 	// crypto::store("test/key-temp.priv", keys.first);
+	// 	// crypto::store("test/key-temp.pub", keys.second);
+	// 	// @todo Test if files exists and remove them again
+	// }
 
 	SECTION( "rsa decrypt short") {
 		auto priv = crypto::load("test/key.priv");

@@ -56,7 +56,8 @@ void Archive::build(Config& config) {
 		_description = "(none)";
 	}
 
-	flame::ArchiveWriter archive_writer(get_name(), config.build_path + _path, _author, _description, _version, dependencies);
+	auto [pub, priv] = crypto::load(_key);
+	flame::ArchiveWriter archive_writer(get_name(), config.build_path + _path, _author, _description, _version, dependencies, priv);
 
 	for (auto& asset : _assets) {
 		// for (flame::MetaAsset::Task task : asset.tasks) {
@@ -72,8 +73,7 @@ void Archive::build(Config& config) {
 	}
 
 	// @todo Load the private key and sign the archive
-	crypto::RSA key = crypto::load(_key);
-	archive_writer.sign(key);
+	archive_writer.sign();
 	archive_writer.close();
 }
 

@@ -1,9 +1,6 @@
 [submodule "third_party/sol2"]
 	path = third_party/sol2
 	url = https://github.com/ThePhD/sol2/
-[submodule "third_party/premake-androidmk"]
-	path = third_party/premake-androidmk
-	url = https://github.com/Meoo/premake-androidmk
 [submodule "third_party/lua"]
 	path = third_party/lua
 	url = https://github.com/lua/lua
@@ -13,9 +10,9 @@
 [submodule "third_party/zlib"]
 	path = third_party/zlib
 	url = https://github.com/madler/zlib
-[submodule "third_party/luafilesystem"]
-	path = third_party/luafilesystem
-	url = https://github.com/keplerproject/luafilesystem.git
 [submodule "modules/logger"]
 	path = modules/logger
 	url = https://git.mtgames.nl/Dreaded_X/Logger
+[submodule "modules/iohelper"]
+	path = modules/iohelper
+	url = https://git.mtgames.nl/Blaze/IOHelper
