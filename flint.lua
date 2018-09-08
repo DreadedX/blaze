@@ -99,7 +99,7 @@ if packager then
 		author "Dreaded_X"
 		description "My first mod!"
 		-- key "build/keys/unofficial.priv"
-		key "keys/official.pem"
+		-- key "keys/official.pem"
 		-- compression(flame.Compression.none)
 		compression(0)
 		version(3)
@@ -122,7 +122,7 @@ if packager then
 		author "Dreaded_X"
 		description "This archive contains the base game"
 		-- key "build/keys/test.priv"
-		key "keys/test.pem"
+		key "keys/official.pem"
 		-- compression(flame.Compression.none)
 		compression(0)
 		version(1)

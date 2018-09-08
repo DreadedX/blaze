@@ -13,17 +13,14 @@
 
 namespace FLAME_NAMESPACE {
 
-	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size) {
+	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, size_t size, size_t offset) {
 		if (!fh || !fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
 
 		auto& fs = fh->lock();
 
-		fs.seekg(sizeof(MAGIC));
-		iohelper::read<std::vector<uint8_t>>(fs);
-		iohelper::read<std::vector<uint8_t>>(fs);
-		size -= fs.tellg(); 
+		fs.seekg(offset);
 
 		uint32_t remaining = size;
 		crypto::SHA3_256 hash;
@@ -71,40 +68,28 @@ namespace FLAME_NAMESPACE {
 			throw std::runtime_error("File is not a FLMb file");
 		}
 
-		// @todo There should be a function in crypto that provides this
-		auto n = iohelper::read<std::vector<uint8_t>>(fs);
+		_signed = iohelper::read<bool>(fs);
 
-		// @todo For some very weird reason this blocks if the key is corrupt and we have a lock (???)
-		_fh->unlock();
-		{
-			// @todo Just assume that the key is valid for now
-			// Make sure the key is not empty
-			// auto check = [n] {
-			// 	for (auto&& byte : n) {
-			// 		if (byte != 0x00) {
-			// 			return true;
-			// 		}
-			// 	}
-			// 	return false;
-			// };
+		_offset1 = fs.tellg();
 
-			// if (!check()) {
-			// 	throw std::runtime_error("File is corrupted");
-			// }
+		std::vector<uint8_t> stored_digest;
+		if (_signed) {
+			// @todo There should be a function in crypto that provides this
+			auto n = iohelper::read<std::vector<uint8_t>>(fs);
+			_key = crypto::RSA(n, crypto::default_e());
+
+			auto signature = iohelper::read<std::vector<uint8_t>>(fs);
+			// @todo Encrypt is the wrong term here
+			stored_digest = _key.encrypt(signature);
+		} else {
+			stored_digest = iohelper::read<std::vector<uint8_t>>(fs);
 		}
-		_key = crypto::RSA(n, crypto::default_e());
-		if (!_fh || !_fh->is_open()) {
-			throw std::runtime_error("File stream closed");
-		}
-		_fh->lock();
 
-		auto signature = iohelper::read<std::vector<uint8_t>>(fs);
-		// @todo Encrypt is the wrong term here
-		std::vector<uint8_t> stored_digest = _key.encrypt(signature);
+		_offset2 = fs.tellg();
 
 		_fh->unlock();
 
-		std::vector<uint8_t> digest = calculate_hash(_fh, size);
+		std::vector<uint8_t> digest = calculate_hash(_fh, size - _offset2, _offset2);
 
 		size_t length = stored_digest.size();
 		if (length != digest.size()) {
@@ -120,31 +105,20 @@ namespace FLAME_NAMESPACE {
 		}
 		_fh->lock();
 
-		// @todo We should maybe just store the location
 		// Jump to the start of the data
-		fs.seekg(sizeof(MAGIC));
-		iohelper::read<std::vector<uint8_t>>(fs);
-		iohelper::read<std::vector<uint8_t>>(fs);
+		fs.seekg(_offset2);
 
-		binary::read(fs, _name);
-		binary::read(fs, _author);
-		binary::read(fs, _description);
-		binary::read(fs, _version);
+		_name = iohelper::read<std::string>(fs);
+		_author = iohelper::read<std::string>(fs);
+		_description = iohelper::read<std::string>(fs);
+		_version = iohelper::read<uint16_t>(fs);
 
-		while (true) {
-			uint8_t next;
-			binary::read(fs, next);
-			if (next == 0x00) {
-				break;
-			}
-			fs.seekg(-1, std::ios::cur);
+		uint16_t count = iohelper::read<uint16_t>(fs);
+		for (int i = 0; i < count; ++i) {
+			auto name = iohelper::read<std::string>(fs);;
+			auto version_min = iohelper::read<uint16_t>(fs);;
+			auto version_max = iohelper::read<uint16_t>(fs);;
 
-			std::string name;
-			binary::read(fs, name);
-			uint16_t version_min;
-			binary::read(fs, version_min);
-			uint16_t version_max = 0;
-			binary::read(fs, version_max);
 			_dependencies.push_back(Dependency(name, version_min, version_max));
 		}
 
@@ -152,15 +126,10 @@ namespace FLAME_NAMESPACE {
 		unsigned long next_meta_asset = fs.tellg();
 		while (next_meta_asset < size) {
 			fs.seekg(next_meta_asset);
-			std::string name;
-			binary::read(fs, name);
-			uint16_t version;
-			binary::read(fs, version);
-			uint8_t x;
-			binary::read(fs, x);
-			Compression compression = static_cast<Compression>(x);
-			uint32_t size;
-			binary::read(fs, size);
+			std::string name = iohelper::read<std::string>(fs);
+			uint16_t version = iohelper::read<uint16_t>(fs);
+			Compression compression = static_cast<Compression>(iohelper::read<uint8_t>(fs));
+			uint32_t size = iohelper::read<uint32_t>(fs);
 			uint32_t offset = fs.tellg();
 
 			auto workflow = create_workflow(compression);
@@ -186,6 +155,10 @@ namespace FLAME_NAMESPACE {
 	}
 
 	bool Archive::is_trusted(crypto::RSA& trusted_key) {
+		if (!_signed) {
+			return false;
+		}
+
 		// @todo Make vector compare, which checks if size if correct
 		if (_key.get_d().size() != trusted_key.get_d().size()) {
 			return false;

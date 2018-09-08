@@ -15,11 +15,12 @@ namespace FLAME_NAMESPACE {
 
 	typedef std::tuple<std::string, uint16_t, uint16_t> Dependency;
 
-	constexpr uint8_t MAGIC[] = {'F','L','M','b'};
+	// FLMx is the new wip spec
+	constexpr uint8_t MAGIC[] = {'F','L','M','x'};
 	// 1024 bit key
 	const int KEY_SIZE = 1024/8;
 
-	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, uint32_t size);
+	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, size_t size, size_t offset = 0);
 
 	class MetaAsset;
 	class FileHandler;
@@ -57,5 +58,10 @@ namespace FLAME_NAMESPACE {
 			std::vector<MetaAsset> _meta_assets;
 
 			crypto::RSA _key;
+
+			bool _signed;
+
+			size_t _offset1;
+			size_t _offset2;
 	};
 };

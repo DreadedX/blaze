@@ -56,8 +56,14 @@ void Archive::build(Config& config) {
 		_description = "(none)";
 	}
 
-	auto [pub, priv] = crypto::load(_key);
-	flame::ArchiveWriter archive_writer(get_name(), config.build_path + _path, _author, _description, _version, dependencies, priv);
+	auto archive_writer = [=] {
+		if (!_key.empty()) {
+			auto [pub, priv] = crypto::load(_key);
+			return flame::ArchiveWriter(get_name(), config.build_path + _path, _author, _description, _version, dependencies, priv);
+		} else {
+			return flame::ArchiveWriter(get_name(), config.build_path + _path, _author, _description, _version, dependencies);
+		}
+	}();
 
 	for (auto& asset : _assets) {
 		// for (flame::MetaAsset::Task task : asset.tasks) {
@@ -72,8 +78,7 @@ void Archive::build(Config& config) {
 		archive_writer.add(meta_asset, asset.compression);
 	}
 
-	// @todo Load the private key and sign the archive
-	archive_writer.sign();
+	archive_writer.finalize();
 	archive_writer.close();
 }
 

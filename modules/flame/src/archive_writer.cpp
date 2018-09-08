@@ -9,7 +9,6 @@
 
 namespace FLAME_NAMESPACE {
 
-	// @todo Allow unsigned archives, these just store the digest
 	// @todo Update flame to use iohelper and retire binary_helper
 	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
 	// @current
@@ -22,32 +21,45 @@ namespace FLAME_NAMESPACE {
 		auto& fs = _fh->lock();
 		binary::write(fs, MAGIC, sizeof(MAGIC));
 
-		// Reserve space for Signature and Key
-		iohelper::write(fs, _priv.get_n());
-		// @todo Figure out the correct way to determine the length of the key
-		std::vector<uint8_t> digest_reserve((_priv.get_d().size()/8)*8);
+		_signed = _priv.get_d().size() & _priv.get_n().size();
+		iohelper::write<bool>(fs, _signed);
+
+		_offset1 = fs.tellp();
+
+		size_t digest_size;
+		if (_signed) {
+			// Reserve space for Signature and Key
+			iohelper::write(fs, _priv.get_n());
+			// @todo Figure out the correct way to determine the length of the key
+			digest_size = (_priv.get_d().size()/8)*8;
+		} else {
+			// Reserve space for sha3 digest
+			digest_size = 256/8;
+		}
+		std::vector<uint8_t> digest_reserve(digest_size);
 		iohelper::write(fs, digest_reserve);
 
-		// binary::write(fs, static_cast<uint8_t>(_compression));
-		binary::write(fs, _name);
-		binary::write(fs, _author);
-		binary::write(fs, _description);
-		// @todo What is the point of this when each archive contains a version as well...
-		binary::write(fs, _version);
+		_offset2 = fs.tellp();
 
+		iohelper::write<std::string>(fs, _name);
+		iohelper::write<std::string>(fs, _author);
+		iohelper::write<std::string>(fs, _description);
+		// @todo What is the point of this when each archive contains a version as well...
+		iohelper::write<uint16_t>(fs, _version);
+
+		// We can have max of 65536 dependencies
+		iohelper::write<uint16_t>(fs, _dependencies.size());
 		for (auto& dependency : _dependencies) {
-			binary::write(fs, std::get<0>(dependency));
-			binary::write(fs, std::get<1>(dependency));
-			binary::write(fs, std::get<2>(dependency));
+			iohelper::write<std::string>(fs, std::get<0>(dependency));
+			iohelper::write<uint16_t>(fs, std::get<1>(dependency));
+			iohelper::write<uint16_t>(fs, std::get<2>(dependency));
 		}
-		binary::write(fs, (uint8_t) 0x00);
 
 		_fh->unlock();
 	}
 
-	void ArchiveWriter::sign() {
-
-		if (_signed) {
+	void ArchiveWriter::finalize() {
+		if (_finalized) {
 			throw std::logic_error("Archive is already finalized");
 		}
 
@@ -58,28 +70,40 @@ namespace FLAME_NAMESPACE {
 
 		// Calculate hash
 		fs.seekp(0, std::ios::end);
-		auto size = fs.tellp();
+		size_t size = fs.tellp();
 		_fh->unlock();
 
 		// @todo Make sure this function starts in the right place
-		std::vector<uint8_t> digest = calculate_hash(_fh, size);
+		std::vector<uint8_t> digest = calculate_hash(_fh, size - _offset2, _offset2);
 
-		// Sign with private key
-		std::vector<uint8_t> signature = _priv.encrypt(digest);
-		std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
+		if (_signed) {
+			// Sign with private key
+			std::vector<uint8_t> signature = _priv.encrypt(digest);
+			std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
 
-		if (!_fh || !_fh->is_open()) {
-			throw std::runtime_error("File stream closed");
+			if (!_fh || !_fh->is_open()) {
+				throw std::runtime_error("File stream closed");
+			}
+			_fh->lock();
+
+			fs.seekp(_offset1);
+			iohelper::read<std::vector<uint8_t>>(fs);
+			iohelper::write(fs, signature);
+
+			_fh->unlock();
+		} else {
+			if (!_fh || !_fh->is_open()) {
+				throw std::runtime_error("File stream closed");
+			}
+			_fh->lock();
+
+			fs.seekp(_offset1);
+			iohelper::write(fs, digest);
+
+			_fh->unlock();
 		}
-		_fh->lock();
 
-		fs.seekp(sizeof(MAGIC));
-		iohelper::read<std::vector<uint8_t>>(fs);
-		iohelper::write(fs, signature);
-
-		_fh->unlock();
-
-		_signed = true;
+		_finalized = true;
 	}
 
 	std::vector<MetaAsset::Task> ArchiveWriter::create_workflow(Compression compression) {
@@ -99,7 +123,7 @@ namespace FLAME_NAMESPACE {
 	}
 
 	void ArchiveWriter::add(MetaAsset& meta_asset, Compression compression = Compression::none) {
-		if (_signed) {
+		if (_finalized) {
 			throw std::logic_error("Archive is already finalized");
 		}
 
@@ -112,13 +136,12 @@ namespace FLAME_NAMESPACE {
 		}
 
 		auto& fs = _fh->lock();
-		binary::write(fs, meta_asset.get_name());
-		binary::write(fs, meta_asset.get_version());
-		binary::write(fs, static_cast<uint8_t>(compression));
-		// We save the size of the data stream, not the size of the file on disk
-		// @note This blocks until the stream is finished loading
+		iohelper::write<std::string>(fs, meta_asset.get_name());
+		iohelper::write<uint16_t>(fs, meta_asset.get_version());
+		iohelper::write<uint8_t>(fs, static_cast<uint8_t>(compression));
 
-		binary::write(fs, data.get_size());
+		iohelper::write<uint32_t>(fs, data.get_size());
+		// @todo We will keep this until we revampt the meta asset and asset data and file handler stuff 
 		binary::write(fs, data.as<uint8_t*>(), data.get_size());
 
 		_fh->unlock();
