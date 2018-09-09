@@ -6,7 +6,7 @@
 struct Asset {
 	std::string name;
 	std::string path;
-	uint16_t version;
+	size_t version;
 
 	flame::Compression compression;
 	std::vector<flame::MetaAsset::Task> tasks;
@@ -14,8 +14,8 @@ struct Asset {
 
 struct Dependency {
 	std::string name;
-	uint16_t min_version;
-	uint16_t max_version;
+	size_t min_version;
+	size_t max_version;
 };
 
 enum class ContextType {
@@ -53,7 +53,7 @@ class Archive : public Data {
 	private:
 		std::string _author;
 		std::string _description;
-		uint16_t _version = 1;
+		size_t _version = 1;
 		// @todo We need to expose compression to lua: flame.compression.{zlib,none}
 		flame::Compression _compression = flame::Compression::zlib;
 		std::string _key;

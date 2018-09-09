@@ -7,7 +7,7 @@ namespace FLAME_NAMESPACE {
 	class ArchiveWriter {
 		public:
 			// @todo Make key optional
-			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies, crypto::RSA priv = crypto::RSA(std::vector<uint8_t>(), std::vector<uint8_t>()));	
+			ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv = crypto::RSA(std::vector<uint8_t>(), std::vector<uint8_t>()));	
 
 			void finalize();
 
@@ -25,7 +25,7 @@ namespace FLAME_NAMESPACE {
 			std::string _name;
 			std::string _author;
 			std::string _description;
-			uint16_t _version;
+			size_t _version;
 			std::vector<Dependency> _dependencies;
 			crypto::RSA _priv;
 

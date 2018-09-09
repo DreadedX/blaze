@@ -61,11 +61,10 @@ namespace FLAME_NAMESPACE {
 		// 	throw std::runtime_error("File too small");
 		// }
 
-		uint8_t magic[sizeof(MAGIC)];
-		binary::read(fs, magic, sizeof(MAGIC));
-		if (!binary::compare(magic, MAGIC, sizeof(MAGIC))) {
+		auto magic = iohelper::read<std::vector<uint8_t>>(fs, MAGIC.size());
+		if (!binary::compare(magic.data(), MAGIC.data(), MAGIC.size())) {
 			_fh->unlock();
-			throw std::runtime_error("File is not a FLMb file");
+			throw std::runtime_error("File is not a FLMx file");
 		}
 
 		_signed = iohelper::read<bool>(fs);
@@ -111,26 +110,26 @@ namespace FLAME_NAMESPACE {
 		_name = iohelper::read<std::string>(fs);
 		_author = iohelper::read<std::string>(fs);
 		_description = iohelper::read<std::string>(fs);
-		_version = iohelper::read<uint16_t>(fs);
+		_version = iohelper::read_length(fs);
 
-		uint16_t count = iohelper::read<uint16_t>(fs);
-		for (int i = 0; i < count; ++i) {
+		auto count = iohelper::read_length(fs);
+		for (size_t i = 0; i < count; ++i) {
 			auto name = iohelper::read<std::string>(fs);;
-			auto version_min = iohelper::read<uint16_t>(fs);;
-			auto version_max = iohelper::read<uint16_t>(fs);;
+			auto version_min = iohelper::read_length(fs);;
+			auto version_max = iohelper::read_length(fs);;
 
 			_dependencies.push_back(Dependency(name, version_min, version_max));
 		}
-
 
 		unsigned long next_meta_asset = fs.tellg();
 		while (next_meta_asset < size) {
 			fs.seekg(next_meta_asset);
 			std::string name = iohelper::read<std::string>(fs);
-			uint16_t version = iohelper::read<uint16_t>(fs);
+			// @todo Meta asset should use size_t instead of uint16_t
+			size_t version = iohelper::read_length(fs);
 			Compression compression = static_cast<Compression>(iohelper::read<uint8_t>(fs));
-			uint32_t size = iohelper::read<uint32_t>(fs);
-			uint32_t offset = fs.tellg();
+			size_t size = iohelper::read_length(fs);
+			size_t offset = fs.tellg();
 
 			auto workflow = create_workflow(compression);
 
@@ -170,7 +169,7 @@ namespace FLAME_NAMESPACE {
 		return binary::compare(_key.get_d().data(), trusted_key.get_d().data(), _key.get_d().size()) && binary::compare(_key.get_n().data(), trusted_key.get_n().data(), _key.get_n().size());
 	}
 
-	const uint16_t& Archive::get_version() const {
+	const size_t& Archive::get_version() const {
 		return _version;
 	}
 

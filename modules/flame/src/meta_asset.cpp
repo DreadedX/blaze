@@ -4,31 +4,25 @@
 #include <iostream>
 
 namespace FLAME_NAMESPACE {
-	MetaAsset::MetaAsset(std::string name, std::string filename, uint16_t version, std::vector<Task> workflow) : _name(name), _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _version(version), _offset(0), _base_workflow(workflow) {
+	MetaAsset::MetaAsset(std::string name, std::string filename, size_t version, std::vector<Task> workflow) : _name(name), _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _version(version), _offset(0), _base_workflow(workflow) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
 
 		auto& fs = _fh->lock();
 		fs.seekg(0, std::ios::end);
-		size_t size = fs.tellg();
 
-		if (size > std::numeric_limits<uint32_t>::max()) {
-			_fh->unlock();
-			throw std::runtime_error("File is bigger than max allowed file size");
-		}
-
-		_size = size;
+		_size =  fs.tellg();
 		_fh->unlock();
 	}
 
-	MetaAsset::MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, uint16_t version, uint32_t offset, uint32_t size, std::vector<Task> workflow) : _name(name), _fh(fh), _version(version), _offset(offset), _size(size), _base_workflow(workflow) {}
+	MetaAsset::MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, size_t version, size_t offset, size_t size, std::vector<Task> workflow) : _name(name), _fh(fh), _version(version), _offset(offset), _size(size), _base_workflow(workflow) {}
 
 	const std::string& MetaAsset::get_name() const {
 		return _name;
 	}
 
-	uint16_t MetaAsset::get_version() const {
+	size_t MetaAsset::get_version() const {
 		return _version;
 	}
 

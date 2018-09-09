@@ -124,7 +124,7 @@ void Archive::version(sol::variadic_args args) {
 		return;
 	}
 
-	auto version = args.get<uint16_t>(0);
+	auto version = args.get<size_t>(0);
 
 	switch (_context_type) {
 		case ContextType::none: {
@@ -260,7 +260,7 @@ void Archive::version_max(sol::variadic_args args) {
 		return;
 	}
 
-	_dependencies[_context].min_version = args.get<uint16_t>(0);
+	_dependencies[_context].min_version = args.get<size_t>(0);
 	// LOG_D("Min Version: {} (Dependency: {})\n", _dependencies[_context].min_version, _dependencies[_context].name);
 }
 
@@ -274,7 +274,7 @@ void Archive::version_min(sol::variadic_args args) {
 		return;
 	}
 
-	_dependencies[_context].max_version = args.get<uint16_t>(0);
+	_dependencies[_context].max_version = args.get<size_t>(0);
 	// LOG_D("Max Version: {} (Dependency: {})\n", _dependencies[_context].max_version, _dependencies[_context].name);
 }
 

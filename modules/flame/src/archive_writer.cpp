@@ -12,14 +12,14 @@ namespace FLAME_NAMESPACE {
 	// @todo Update flame to use iohelper and retire binary_helper
 	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
 	// @current
-	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, uint16_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {
+	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
 
 		// Magic number
 		auto& fs = _fh->lock();
-		binary::write(fs, MAGIC, sizeof(MAGIC));
+		iohelper::write(fs, MAGIC, false);
 
 		_signed = _priv.get_d().size() & _priv.get_n().size();
 		iohelper::write<bool>(fs, _signed);
@@ -45,14 +45,14 @@ namespace FLAME_NAMESPACE {
 		iohelper::write<std::string>(fs, _author);
 		iohelper::write<std::string>(fs, _description);
 		// @todo What is the point of this when each archive contains a version as well...
-		iohelper::write<uint16_t>(fs, _version);
+		iohelper::write_length(fs, _version);
 
 		// We can have max of 65536 dependencies
-		iohelper::write<uint16_t>(fs, _dependencies.size());
+		iohelper::write_length(fs, _dependencies.size());
 		for (auto& dependency : _dependencies) {
 			iohelper::write<std::string>(fs, std::get<0>(dependency));
-			iohelper::write<uint16_t>(fs, std::get<1>(dependency));
-			iohelper::write<uint16_t>(fs, std::get<2>(dependency));
+			iohelper::write_length(fs, std::get<1>(dependency));
+			iohelper::write_length(fs, std::get<2>(dependency));
 		}
 
 		_fh->unlock();
@@ -137,10 +137,10 @@ namespace FLAME_NAMESPACE {
 
 		auto& fs = _fh->lock();
 		iohelper::write<std::string>(fs, meta_asset.get_name());
-		iohelper::write<uint16_t>(fs, meta_asset.get_version());
+		iohelper::write_length(fs, meta_asset.get_version());
 		iohelper::write<uint8_t>(fs, static_cast<uint8_t>(compression));
 
-		iohelper::write<uint32_t>(fs, data.get_size());
+		iohelper::write_length(fs, data.get_size());
 		// @todo We will keep this until we revampt the meta asset and asset data and file handler stuff 
 		binary::write(fs, data.as<uint8_t*>(), data.get_size());
 

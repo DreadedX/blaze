@@ -8,10 +8,10 @@
 #define CHUNK_SIZE 16384
 
 namespace FLAME_NAMESPACE {
-	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow) {
+	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow) {
 		std::vector<uint8_t> data(size);
 
-		uint32_t remaining = size;
+		size_t remaining = size;
 
 		while (remaining > 0) {
 			if (!fh || !fh->is_open()) {
@@ -23,7 +23,7 @@ namespace FLAME_NAMESPACE {
 			auto& fs = fh->lock();
 			fs.seekg(offset + (size-remaining));
 
-			uint32_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
+			size_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
 
 			fs.read(reinterpret_cast<char*>(data.data() + (size-remaining) ), chunk);
 			fh->unlock();
@@ -38,7 +38,7 @@ namespace FLAME_NAMESPACE {
 		return data;
 	}
 
-	AssetData::AssetData(std::shared_ptr<FileHandler> fh, uint32_t size, uint32_t offset, std::vector<MetaAsset::Task> workflow, bool async) : _async(async) {
+	AssetData::AssetData(std::shared_ptr<FileHandler> fh, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async) : _async(async) {
 		std::launch policy = _async ? std::launch::async : std::launch::deferred;
 		_future = std::async(policy, async_load, fh, size, offset, workflow);
 	}
@@ -51,7 +51,7 @@ namespace FLAME_NAMESPACE {
 		return _loaded;
 	}
 
-	uint32_t AssetData::get_size() {
+	size_t AssetData::get_size() {
 		_wait_until_loaded();
 		return _data.size();
 	}
