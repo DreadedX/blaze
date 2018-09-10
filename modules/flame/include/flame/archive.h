@@ -45,7 +45,9 @@ namespace FLAME_NAMESPACE {
 				_fh = nullptr;
 			}
 
-		private:
+		protected:
+			Archive(std::shared_ptr<FileHandler> fh, std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _fh(fh), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {}
+
 			std::vector<MetaAsset::Task> create_workflow(Compression compression);
 
 			std::shared_ptr<FileHandler> _fh;
@@ -57,11 +59,13 @@ namespace FLAME_NAMESPACE {
 
 			std::vector<MetaAsset> _meta_assets;
 
-			crypto::RSA _key;
+			crypto::RSA _priv;
 
-			bool _signed;
+			bool _signed = false;
 
+			// Start of key/hash
 			size_t _offset1;
+			// Start of actual data
 			size_t _offset2;
 	};
 };

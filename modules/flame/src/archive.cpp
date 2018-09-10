@@ -44,8 +44,8 @@ namespace FLAME_NAMESPACE {
 	}
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
-	// @todo What is the purpose of the _key here
-	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+	// @todo What is the purpose of the _priv here
+	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _priv(std::vector<uint8_t>(), std::vector<uint8_t>()) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
@@ -75,11 +75,11 @@ namespace FLAME_NAMESPACE {
 		if (_signed) {
 			// @todo There should be a function in crypto that provides this
 			auto n = iohelper::read<std::vector<uint8_t>>(fs);
-			_key = crypto::RSA(n, crypto::default_e());
+			_priv = crypto::RSA(n, crypto::default_e());
 
 			auto signature = iohelper::read<std::vector<uint8_t>>(fs);
 			// @todo Encrypt is the wrong term here
-			stored_digest = _key.encrypt(signature);
+			stored_digest = _priv.encrypt(signature);
 		} else {
 			stored_digest = iohelper::read<std::vector<uint8_t>>(fs);
 		}
@@ -159,14 +159,14 @@ namespace FLAME_NAMESPACE {
 		}
 
 		// @todo Make vector compare, which checks if size if correct
-		if (_key.get_d().size() != trusted_key.get_d().size()) {
+		if (_priv.get_d().size() != trusted_key.get_d().size()) {
 			return false;
 		}
-		if (_key.get_n().size() != trusted_key.get_n().size()) {
+		if (_priv.get_n().size() != trusted_key.get_n().size()) {
 			return false;
 		}
 		
-		return binary::compare(_key.get_d().data(), trusted_key.get_d().data(), _key.get_d().size()) && binary::compare(_key.get_n().data(), trusted_key.get_n().data(), _key.get_n().size());
+		return binary::compare(_priv.get_d().data(), trusted_key.get_d().data(), _priv.get_d().size()) && binary::compare(_priv.get_n().data(), trusted_key.get_n().data(), _priv.get_n().size());
 	}
 
 	const size_t& Archive::get_version() const {

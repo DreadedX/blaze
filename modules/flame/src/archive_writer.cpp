@@ -12,7 +12,7 @@ namespace FLAME_NAMESPACE {
 	// @todo Update flame to use iohelper and retire binary_helper
 	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
 	// @current
-	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary)), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {
+	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : Archive(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary), name, author, description, version, dependencies, priv) {
 		if (!_fh || !_fh->is_open()) {
 			throw std::runtime_error("File stream closed");
 		}
