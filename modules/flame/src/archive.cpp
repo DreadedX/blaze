@@ -1,7 +1,6 @@
 #include "flame/archive.h"
 #include "flame/asset_data.h"
 #include "flame/tasks.h"
-#include "flame/binary_helper.h"
 
 #include "iohelper/read.h"
 
@@ -9,8 +8,21 @@
 
 #include <iostream>
 #include <fstream>
+#include <cassert>
 
 #define CHUNK_SIZE 1024
+
+// @todo Get rid of this
+namespace binary {
+	bool compare(const uint8_t array1[], const uint8_t array2[], const uint32_t size) {
+		for (uint32_t i = 0; i < size; ++i) {
+			if (array1[i] != array2[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
 
 namespace FLAME_NAMESPACE {
 

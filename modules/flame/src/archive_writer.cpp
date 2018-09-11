@@ -1,6 +1,5 @@
 #include "flame/archive_writer.h"
 #include "flame/asset_data.h"
-#include "flame/binary_helper.h"
 #include "flame/tasks.h"
 
 #include "iohelper/write.h"
@@ -111,8 +110,6 @@ namespace FLAME_NAMESPACE {
 		iohelper::write_length(_fs, meta_asset.get_version());
 		iohelper::write<uint8_t>(_fs, static_cast<uint8_t>(compression));
 
-		iohelper::write_length(_fs, data.get_size());
-		// @todo We will keep this until we revampt the meta asset and asset data and file handler stuff 
-		binary::write(_fs, data.as<uint8_t*>(), data.get_size());
+		iohelper::write(_fs, data.as<std::vector<uint8_t>&>());
 	}
 }

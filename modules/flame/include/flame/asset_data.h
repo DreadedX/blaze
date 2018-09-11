@@ -17,6 +17,7 @@ namespace FLAME_NAMESPACE {
 
 			bool is_loaded();
 			size_t get_size();
+			// @todo Redo this stuff
 			template <typename T>
 			T as();
 			uint8_t& operator[](uint32_t idx);

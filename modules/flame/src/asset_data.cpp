@@ -1,7 +1,5 @@
 #include "flame/asset_data.h"
 
-#include "flame/binary_helper.h"
-
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -56,6 +54,12 @@ namespace FLAME_NAMESPACE {
 	uint8_t* AssetData::as() {
 		_wait_until_loaded();
 		return _data.data();
+	}
+
+	template<>
+	std::vector<uint8_t>& AssetData::as() {
+		_wait_until_loaded();
+		return _data;
 	}
 
 
