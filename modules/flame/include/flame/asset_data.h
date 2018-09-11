@@ -2,7 +2,6 @@
 
 #include "flame.h"
 
-#include "flame/file_handler.h"
 #include "flame/meta_asset.h"
 
 #include <cstdint>
@@ -14,7 +13,7 @@ namespace FLAME_NAMESPACE {
 
 	class AssetData {
 		public:
-			AssetData(std::shared_ptr<FileHandler> fh, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async = true);
+			AssetData(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async = true);
 
 			bool is_loaded();
 			size_t get_size();

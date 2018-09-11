@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "flame/archive.h"
 #include "flame/asset_data.h"
 #include "flame/tasks.h"
@@ -9,17 +7,14 @@
 
 #include "sha3.h"
 
+#include <iostream>
+#include <fstream>
+
 #define CHUNK_SIZE 1024
 
 namespace FLAME_NAMESPACE {
 
-	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, size_t size, size_t offset) {
-		if (!fh || !fh->is_open()) {
-			throw std::runtime_error("File stream closed");
-		}
-
-		auto& fs = fh->lock();
-
+	std::vector<uint8_t> calculate_hash(std::fstream& fs, size_t size, size_t offset) {
 		fs.seekg(offset);
 
 		uint32_t remaining = size;
@@ -38,19 +33,18 @@ namespace FLAME_NAMESPACE {
 
 		assert(digest.size() == hash.digest_size());
 
-		fh->unlock();
-
 		return digest;
 	}
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
 	// @todo What is the purpose of the _priv here
-	Archive::Archive(std::string filename) : _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _priv(std::vector<uint8_t>(), std::vector<uint8_t>()) {
-		if (!_fh || !_fh->is_open()) {
-			throw std::runtime_error("File stream closed");
+	Archive::Archive(std::string filename) : _priv(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+
+		std::fstream fs(filename, std::ios::in | std::ios::binary);
+		if (!fs.is_open()) {
+			throw std::runtime_error("Failed to open file");
 		}
 
-		auto& fs = _fh->lock();
 		fs.seekg(0, std::ios::end);
 		unsigned long size = fs.tellg();
 		fs.seekg(0);
@@ -63,7 +57,6 @@ namespace FLAME_NAMESPACE {
 
 		auto magic = iohelper::read<std::vector<uint8_t>>(fs, MAGIC.size());
 		if (!binary::compare(magic.data(), MAGIC.data(), MAGIC.size())) {
-			_fh->unlock();
 			throw std::runtime_error("File is not a FLMx file");
 		}
 
@@ -86,9 +79,7 @@ namespace FLAME_NAMESPACE {
 
 		_offset2 = fs.tellg();
 
-		_fh->unlock();
-
-		std::vector<uint8_t> digest = calculate_hash(_fh, size - _offset2, _offset2);
+		std::vector<uint8_t> digest = calculate_hash(fs, size - _offset2, _offset2);
 
 		size_t length = stored_digest.size();
 		if (length != digest.size()) {
@@ -99,15 +90,11 @@ namespace FLAME_NAMESPACE {
 			throw std::runtime_error("File is corrupted (Digest is different)");
 		}
 
-		if (!_fh || !_fh->is_open()) {
-			throw std::runtime_error("File stream closed");
-		}
-		_fh->lock();
-
 		// Jump to the start of the data
 		fs.seekg(_offset2);
 
 		_name = iohelper::read<std::string>(fs);
+		std::cout << "NAME: " << _name << '\n';
 		_author = iohelper::read<std::string>(fs);
 		_description = iohelper::read<std::string>(fs);
 		_version = iohelper::read_length(fs);
@@ -135,10 +122,10 @@ namespace FLAME_NAMESPACE {
 
 			next_meta_asset = offset + size;
 
-			_meta_assets.push_back(MetaAsset(name, _fh, version, offset, size, workflow));
+			_meta_assets.push_back(MetaAsset(name, filename, version, offset, size, workflow));
 		}
 
-		_fh->unlock();
+		fs.close();
 	}
 
 	const std::string& Archive::get_name() const {

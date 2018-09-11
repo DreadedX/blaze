@@ -2,21 +2,27 @@
 #include "flame/asset_data.h"
 
 #include <iostream>
+#include <fstream>
 
 namespace FLAME_NAMESPACE {
-	MetaAsset::MetaAsset(std::string name, std::string filename, size_t version, std::vector<Task> workflow) : _name(name), _fh(std::make_shared<FileHandler>(filename, std::ios::in | std::ios::binary)), _version(version), _offset(0), _base_workflow(workflow) {
-		if (!_fh || !_fh->is_open()) {
-			throw std::runtime_error("File stream closed");
+	MetaAsset::MetaAsset(std::string name, std::string filename, size_t version, size_t offset, size_t size, std::vector<Task> workflow) : _filename(filename), _name(name), _version(version), _offset(offset), _size(size), _base_workflow(workflow) {
+		// @todo Check if the file exists
+		std::fstream fs(filename, std::ios::in | std::ios::binary);
+
+		if (!fs.is_open()) {
+			throw std::runtime_error("Failed to open file");
 		}
 
-		auto& fs = _fh->lock();
-		fs.seekg(0, std::ios::end);
+		if (!size) {
+			fs.seekg(0, std::ios::end);
+			_size = fs.tellg();
+		} else {
+			_size = size;
+		}
 
-		_size =  fs.tellg();
-		_fh->unlock();
+
+		fs.close();
 	}
-
-	MetaAsset::MetaAsset(std::string name, std::shared_ptr<FileHandler> fh, size_t version, size_t offset, size_t size, std::vector<Task> workflow) : _name(name), _fh(fh), _version(version), _offset(offset), _size(size), _base_workflow(workflow) {}
 
 	const std::string& MetaAsset::get_name() const {
 		return _name;
@@ -33,6 +39,6 @@ namespace FLAME_NAMESPACE {
 		final_workflow.insert(final_workflow.end(), _base_workflow.begin(), _base_workflow.end());
 		final_workflow.insert(final_workflow.end(), workflow.begin(), workflow.end());
 
-		return AssetData(_fh, _size, _offset, final_workflow, async);
+		return AssetData(_filename, _size, _offset, final_workflow, async);
 	}
 }

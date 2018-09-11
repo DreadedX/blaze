@@ -29,6 +29,7 @@ namespace BLAZE_NAMESPACE {
 		}
 
 		_archives.push_back(archive);
+
 		for (auto& meta_asset : archive.get_meta_assets()) {
 			add(meta_asset);
 		}

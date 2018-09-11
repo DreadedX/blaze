@@ -1,7 +1,6 @@
 #pragma once
 
 #include "flame.h"
-#include "flame/file_handler.h"
 #include "flame/meta_asset.h"
 
 #include "rsa.h"
@@ -20,7 +19,7 @@ namespace FLAME_NAMESPACE {
 	// 1024 bit key
 	const int KEY_SIZE = 1024/8;
 
-	std::vector<uint8_t> calculate_hash(std::shared_ptr<FileHandler> fh, size_t size, size_t offset = 0);
+	std::vector<uint8_t> calculate_hash(std::fstream& fs, size_t size, size_t offset = 0);
 
 	class MetaAsset;
 	class FileHandler;
@@ -39,18 +38,11 @@ namespace FLAME_NAMESPACE {
 			const std::vector<Dependency>& get_dependencies() const;
 			std::vector<MetaAsset> get_meta_assets();
 
-			// @note File stream automatically closes if the program ends, only if you explicitly need to close the archive
-			void close() {
-				_fh->close();
-				_fh = nullptr;
-			}
-
 		protected:
-			Archive(std::shared_ptr<FileHandler> fh, std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _fh(fh), _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {}
+			Archive(std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {}
 
 			std::vector<MetaAsset::Task> create_workflow(Compression compression);
 
-			std::shared_ptr<FileHandler> _fh;
 			std::string _name;
 			std::string _author;
 			std::string _description;

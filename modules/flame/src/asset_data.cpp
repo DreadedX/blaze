@@ -3,33 +3,22 @@
 #include "flame/binary_helper.h"
 
 #include <iostream>
+#include <fstream>
 #include <cstring>
 
 #define CHUNK_SIZE 16384
 
 namespace FLAME_NAMESPACE {
-	std::vector<uint8_t> async_load(std::shared_ptr<FileHandler> fh, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow) {
+	std::vector<uint8_t> async_load(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow) {
 		std::vector<uint8_t> data(size);
 
-		size_t remaining = size;
-
-		while (remaining > 0) {
-			if (!fh || !fh->is_open()) {
-				// @todo Eventbus executes everything on the thread of the caller, so we can not call it from other threads
-				// event_bus::send<Error>("Failed to load asset", __FILE__, __LINE__);
-				return std::vector<uint8_t>(0);
-			}
-
-			auto& fs = fh->lock();
-			fs.seekg(offset + (size-remaining));
-
-			size_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
-
-			fs.read(reinterpret_cast<char*>(data.data() + (size-remaining) ), chunk);
-			fh->unlock();
-
-			remaining -= chunk;
+		std::fstream fs(filename, std::ios::in | std::ios::binary);
+		if (!fs.is_open()) {
+			throw std::runtime_error("ASYNC: Failed to open file");
 		}
+
+		fs.seekg(offset);
+		fs.read(reinterpret_cast<char*>(data.data()), size);
 
 		for (auto& t : workflow) {
 			data = t(std::move(data));
@@ -38,9 +27,9 @@ namespace FLAME_NAMESPACE {
 		return data;
 	}
 
-	AssetData::AssetData(std::shared_ptr<FileHandler> fh, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async) : _async(async) {
+	AssetData::AssetData(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async) : _async(async) {
 		std::launch policy = _async ? std::launch::async : std::launch::deferred;
-		_future = std::async(policy, async_load, fh, size, offset, workflow);
+		_future = std::async(policy, async_load, filename, size, offset, workflow);
 	}
 
 	bool AssetData::is_loaded() {

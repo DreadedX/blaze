@@ -10,6 +10,8 @@
 #include "version.h"
 #include "enviroment.h"
 
+#include <fstream>
+
 // @note This is implemtented by the user
 void game();
 

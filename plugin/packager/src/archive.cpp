@@ -79,7 +79,6 @@ void Archive::build(Config& config) {
 	}
 
 	archive_writer.finalize();
-	archive_writer.close();
 }
 
 void Archive::author(sol::variadic_args args) {
