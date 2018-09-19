@@ -20,7 +20,6 @@ namespace FLAME_NAMESPACE {
 			_size = size;
 		}
 
-
 		fs.close();
 	}
 

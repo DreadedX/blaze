@@ -7,7 +7,6 @@
 
 namespace FLAME_NAMESPACE {
 
-	// @current
 	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
 	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : Archive(name, author, description, version, dependencies, priv), _fs(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary) {
 		if (!_fs.is_open()) {

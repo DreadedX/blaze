@@ -12,11 +12,13 @@ lib "lua"
 	include "third_party/lua"
 
 	-- Generate a hpp file so that we can easily access the library from c++
+	-- We can also just put this in a folder that we control and include it
 	os.execute("mkdir -p .flint/generated/lua");
 	local header = io.open(".flint/generated/lua/lua.hpp", "w")
 	io.output(header)
 	io.write('#include "lua.h"\n#include "lualib.h"\n#include "lauxlib.h"')
 	io.close()
+
 	include ".flint/generated/lua"
 
 lib "zlib"
@@ -37,8 +39,39 @@ lib "crypto"
 	dependency("logger", "bigint", "iohelper")
 
 lib "generated"
-	path "modules/generated"
+	-- path "modules/generated"
+	include "modules/generated/include"
 	dependency "crypto"
+
+	template("trusted_key.cpp.tpl", "trusted_key.cpp", function(template)
+		local key = "test"
+		local n = string.gsub(key, ".", function(c)
+				return string.format('0x%02X,', string.byte(c))
+			end)
+		return string.format(template, n)
+	end)
+
+	template("version.cpp.tpl", "version.cpp", function(template)
+		local handle = io.popen("git rev-list --count HEAD")
+		local version_number = string.gsub(handle:read("a*"), "\n", "")
+		handle:close()
+
+		local handle = io.popen("git describe HEAD --always")
+		local version_string = version_number .. "-" .. string.gsub(handle:read("a*"), "\n", "")
+		handle:close()
+
+		local handle = io.popen("git status --porcelain --ignore-submodules=dirty")
+		if handle:read("a*") ~= "" then
+			version_string = version_string .. "-dirty"
+		end
+		handle:close()
+
+		--return {version_number, version_string}
+		return string.format(template, version_number, version_string)
+	end)
+
+	-- @todo This should happen automatically or something
+	src "*.flint/build/linux/debug/generated/generated"
 
 lib "flame"
 	path "modules/flame"
