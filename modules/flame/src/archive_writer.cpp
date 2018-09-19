@@ -7,9 +7,8 @@
 
 namespace FLAME_NAMESPACE {
 
-	// @todo Update flame to use iohelper and retire binary_helper
-	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
 	// @current
+	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
 	ArchiveWriter::ArchiveWriter(std::string name, std::string filename, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : Archive(name, author, description, version, dependencies, priv), _fs(filename, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary) {
 		if (!_fs.is_open()) {
 			throw std::runtime_error("Failed to open file");
@@ -17,17 +16,17 @@ namespace FLAME_NAMESPACE {
 
 		iohelper::write(_fs, MAGIC, false);
 
-		_signed = _priv.get_d().size() & _priv.get_n().size();
+		_signed = _key.get_d().size() & _key.get_n().size();
 		iohelper::write<bool>(_fs, _signed);
 
 		_offset1 = _fs.tellp();
 
 		size_t digest_size;
+		// @todo Figure out the correct way to determine the length of the digest
 		if (_signed) {
 			// Reserve space for Signature and Key
-			iohelper::write(_fs, _priv.get_n());
-			// @todo Figure out the correct way to determine the length of the key
-			digest_size = (_priv.get_d().size()/8)*8;
+			iohelper::write(_fs, _key.get_n());
+			digest_size = (_key.get_d().size()/8)*8;
 		} else {
 			// Reserve space for sha3 digest
 			digest_size = 256/8;
@@ -66,7 +65,7 @@ namespace FLAME_NAMESPACE {
 
 		if (_signed) {
 			// Sign with private key
-			std::vector<uint8_t> signature = _priv.encrypt(digest);
+			std::vector<uint8_t> signature = _key.encrypt(digest);
 			std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
 
 			_fs.seekp(_offset1);

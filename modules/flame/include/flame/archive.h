@@ -39,7 +39,7 @@ namespace FLAME_NAMESPACE {
 			std::vector<MetaAsset> get_meta_assets();
 
 		protected:
-			Archive(std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA priv) : _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _priv(priv) {}
+			Archive(std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA key) : _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _key(key) {}
 
 			std::vector<MetaAsset::Task> create_workflow(Compression compression);
 
@@ -51,7 +51,7 @@ namespace FLAME_NAMESPACE {
 
 			std::vector<MetaAsset> _meta_assets;
 
-			crypto::RSA _priv;
+			crypto::RSA _key;
 
 			bool _signed = false;
 

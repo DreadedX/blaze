@@ -12,18 +12,6 @@
 
 #define CHUNK_SIZE 1024
 
-// @todo Get rid of this
-namespace binary {
-	bool compare(const uint8_t array1[], const uint8_t array2[], const uint32_t size) {
-		for (uint32_t i = 0; i < size; ++i) {
-			if (array1[i] != array2[i]) {
-				return false;
-			}
-		}
-		return true;
-	}
-}
-
 namespace FLAME_NAMESPACE {
 
 	std::vector<uint8_t> calculate_hash(std::fstream& fs, size_t size, size_t offset) {
@@ -49,8 +37,8 @@ namespace FLAME_NAMESPACE {
 	}
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
-	// @todo What is the purpose of the _priv here
-	Archive::Archive(std::string filename) : _priv(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+	// @todo What is the purpose of the _key here
+	Archive::Archive(std::string filename) : _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
 
 		std::fstream fs(filename, std::ios::in | std::ios::binary);
 		if (!fs.is_open()) {
@@ -68,7 +56,7 @@ namespace FLAME_NAMESPACE {
 		// }
 
 		auto magic = iohelper::read<std::vector<uint8_t>>(fs, MAGIC.size());
-		if (!binary::compare(magic.data(), MAGIC.data(), MAGIC.size())) {
+		if (!std::equal(magic.begin(), magic.begin(), MAGIC.end())) {
 			throw std::runtime_error("File is not a FLMx file");
 		}
 
@@ -80,11 +68,11 @@ namespace FLAME_NAMESPACE {
 		if (_signed) {
 			// @todo There should be a function in crypto that provides this
 			auto n = iohelper::read<std::vector<uint8_t>>(fs);
-			_priv = crypto::RSA(n, crypto::default_e());
+			_key = crypto::RSA(n, crypto::default_e());
 
 			auto signature = iohelper::read<std::vector<uint8_t>>(fs);
 			// @todo Encrypt is the wrong term here
-			stored_digest = _priv.encrypt(signature);
+			stored_digest = _key.encrypt(signature);
 		} else {
 			stored_digest = iohelper::read<std::vector<uint8_t>>(fs);
 		}
@@ -98,7 +86,7 @@ namespace FLAME_NAMESPACE {
 			throw std::runtime_error("File is corrupted (Digest size is different)");
 		}
 
-		if (!binary::compare(digest.data(), stored_digest.data(), length)) {
+		if (!std::equal(digest.begin(), digest.begin(), stored_digest.end())) {
 			throw std::runtime_error("File is corrupted (Digest is different)");
 		}
 
@@ -157,15 +145,7 @@ namespace FLAME_NAMESPACE {
 			return false;
 		}
 
-		// @todo Make vector compare, which checks if size if correct
-		if (_priv.get_d().size() != trusted_key.get_d().size()) {
-			return false;
-		}
-		if (_priv.get_n().size() != trusted_key.get_n().size()) {
-			return false;
-		}
-		
-		return binary::compare(_priv.get_d().data(), trusted_key.get_d().data(), _priv.get_d().size()) && binary::compare(_priv.get_n().data(), trusted_key.get_n().data(), _priv.get_n().size());
+		return std::equal(_key.get_d().begin(), _key.get_d().end(), trusted_key.get_d().begin()) && std::equal(_key.get_n().begin(), _key.get_n().end(), trusted_key.get_n().begin());
 	}
 
 	const size_t& Archive::get_version() const {
