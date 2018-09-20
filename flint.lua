@@ -39,11 +39,10 @@ lib "crypto"
 	dependency("logger", "bigint", "iohelper")
 
 lib "generated"
-	-- path "modules/generated"
-	include "modules/generated/include"
+	path "modules/generated"
 	dependency "crypto"
 
-	template("trusted_key.cpp.tpl", "trusted_key.cpp", function(template)
+	template("modules/generated/src/trusted_key.cpp.tpl", "trusted_key.cpp", function(template)
 		local key = "test"
 		local n = string.gsub(key, ".", function(c)
 				return string.format('0x%02X,', string.byte(c))
@@ -51,7 +50,7 @@ lib "generated"
 		return string.format(template, n)
 	end)
 
-	template("version.cpp.tpl", "version.cpp", function(template)
+	template("modules/generated/src/version.cpp.tpl", "version.cpp", function(template)
 		local handle = io.popen("git rev-list --count HEAD")
 		local version_number = string.gsub(handle:read("a*"), "\n", "")
 		handle:close()
@@ -69,9 +68,6 @@ lib "generated"
 		--return {version_number, version_string}
 		return string.format(template, version_number, version_string)
 	end)
-
-	-- @todo This should happen automatically or something
-	src "*.flint/build/linux/debug/generated/generated"
 
 lib "flame"
 	path "modules/flame"
