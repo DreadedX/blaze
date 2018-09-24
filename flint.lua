@@ -10,16 +10,7 @@ lib "bigint"
 lib "lua"
 	src("*third_party/lua", "-third_party/lua/lua.c")
 	include "third_party/lua"
-
-	-- Generate a hpp file so that we can easily access the library from c++
-	-- We can also just put this in a folder that we control and include it
-	os.execute("mkdir -p .flint/generated/lua");
-	local header = io.open(".flint/generated/lua/lua.hpp", "w")
-	io.output(header)
-	io.write('#include "lua.h"\n#include "lualib.h"\n#include "lauxlib.h"')
-	io.close()
-
-	include ".flint/generated/lua"
+	include "third_party/headers"
 
 lib "zlib"
 	src("*third_party/zlib", "-third_party/zlib/{gzlib.c,gzwrite.c,gzread.c}")
@@ -42,7 +33,7 @@ lib "generated"
 	path "modules/generated"
 	dependency "crypto"
 
-	template("modules/generated/src/trusted_key.cpp.tpl", "trusted_key.cpp", function(template)
+	hook(step.PRE_BUILD, template, "modules/generated/src/trusted_key.cpp.tpl", "trusted_key.cpp", function(template)
 		local key = "test"
 		local n = string.gsub(key, ".", function(c)
 				return string.format('0x%02X,', string.byte(c))
@@ -50,7 +41,7 @@ lib "generated"
 		return string.format(template, n)
 	end)
 
-	template("modules/generated/src/version.cpp.tpl", "version.cpp", function(template)
+	hook(step.PRE_BUILD, template, "modules/generated/src/version.cpp.tpl", "version.cpp", function(template)
 		local handle = io.popen("git rev-list --count HEAD")
 		local version_number = string.gsub(handle:read("a*"), "\n", "")
 		handle:close()
