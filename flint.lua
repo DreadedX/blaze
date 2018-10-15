@@ -33,7 +33,7 @@ lib "generated"
 	path "modules/generated"
 	dependency "crypto"
 
-	hook(step.PRE_BUILD, template, "modules/generated/src/trusted_key.cpp.tpl", "trusted_key.cpp", function(template)
+	hook(step.PRE_BUILD, template, "modules/generated/src/trusted_key.cpp.tpl", "trusted_key.cpp", function(template, config)
 		local key = "test"
 		local n = string.gsub(key, ".", function(c)
 				return string.format('0x%02X,', string.byte(c))
@@ -41,42 +41,71 @@ lib "generated"
 		return string.format(template, n)
 	end)
 
-	hook(step.PRE_BUILD, template, "modules/generated/src/version.cpp.tpl", "version.cpp", function(template)
+	hook(step.PRE_BUILD, template, "modules/generated/src/version.cpp.tpl", "version.cpp", function(template, config)
 		local handle = io.popen("git rev-list --count HEAD")
-		local version_number = string.gsub(handle:read("a*"), "\n", "")
+		local build_number = string.gsub(handle:read("a*"), "\n", "")
 		handle:close()
 
-		local handle = io.popen("git describe HEAD --always")
-		local version_string = version_number .. "-" .. string.gsub(handle:read("a*"), "\n", "")
+		local handle = io.popen("git tag --points-at HEAD")
+		local version_tag = string.gsub(handle:read("a*"), "\n", "")
 		handle:close()
 
 		local handle = io.popen("git status --porcelain --ignore-submodules=dirty")
-		if handle:read("a*") ~= "" then
-			version_string = version_string .. "-dirty"
-		end
+		local dirty = handle:read("a*") ~= ""
 		handle:close()
 
-		--return {version_number, version_string}
-		return string.format(template, version_number, version_string)
+		local version_string
+		if version_tag == "" or dirty then
+			local handle = io.popen("git describe HEAD --always")
+			version_string = build_number .. "_" .. string.gsub(handle:read("a*"), "\n", "")
+			handle:close()
+		else
+			version_string = version_tag
+		end
+
+		if dirty then
+			version_string = version_string .. "_dirty"
+		end
+
+		if config.debug then
+			version_string = version_string .. "_debug"
+		end
+
+		-- @todo Add variable that indicates if we are a debug build
+		-- version_string = version_string .. " (debug)"
+
+		return string.format(template, build_number, version_string)
 	end)
 
 lib "flame"
 	path "modules/flame"
 	dependency("zlib", "crypto", "iohelper")
 
+-- @todo This needs to really merge with the respective things
 lib "lua-bind"
 	path "modules/lua-bind"
 	dependency("sol2", "flame")
 
 	include("modules/blaze/include")
+	if platform.name == "android" then
+		include "modules/blaze/platform/android/include"
+	end
 
 lib "blaze"
 	path "modules/blaze"
 	dependency("lua-bind", "generated")
 
-	include "modules/blaze/platform/android/include"
+	-- @todo This should auto happen in flint
+	if platform.name == "android" then
+		include "modules/blaze/platform/android/include"
+		src "*modules/blaze/platform/android/src"
+	end
 
-executable "game"
+local name = "game"
+if platform.name == "android" then
+	name = "libgame"
+end
+executable(name)
 	path "game"
 	dependency "blaze"
 	-- @todo Does it make sense to always have these as dependencies
@@ -91,10 +120,15 @@ executable "game"
 
 subfile("../flint/flint.lua", "flint")
 
-shared "plugin_packager"
+local packager_path = shared "plugin_packager"
 	path "plugin/packager"
 
 	dependency("flint", "flame", "crypto")
+
+	-- We can just use the host platform plugin to generate the archives
+	if string.sub(platform.name, 1, string.len("linux")) ~= "linux" then
+		optional(true)
+	end
 
 -- executable "tests"
 -- 	src "test/test.cpp"
@@ -105,8 +139,11 @@ shared "plugin_packager"
 
 run_target "game"
 
--- local packager = plugin ".flint/build/linux/release/bin/plugin_packager.so"
-local packager = plugin ".flint/build/linux/debug/bin/plugin_packager.so"
+if string.sub(platform.name, 1, string.len("linux")) ~= "linux" then
+	-- @todo Figure out something better then hardcoding this
+	packager_path = ".flint/build/linux/debug/bin/plugin_packager.so"
+end
+local packager = plugin(packager_path)
 
 if packager then
 

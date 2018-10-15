@@ -2,7 +2,7 @@
 
 #include "platform/platform.h"
 
-void java_print(std::string text);
+#include <jni.h>
 
 namespace BLAZE_NAMESPACE::platform {
 	class Android : public Platform {

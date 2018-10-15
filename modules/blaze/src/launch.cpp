@@ -5,7 +5,6 @@
 #include "logger.h"
 
 #include "engine.h"
-#include "android.h"
 
 #include "version.h"
 #include "enviroment.h"
@@ -71,7 +70,6 @@ int main() {
 	}
 	#endif
 	logger::add(file_logger);
-
 
 	LOG_D("BLZNGN Version: {}\n", get_version_string().c_str());
 

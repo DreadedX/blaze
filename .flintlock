@@ -1,1 +1,3 @@
-nightly
+[flint.py]
+version = nightly
+

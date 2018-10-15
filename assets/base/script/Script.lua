@@ -20,5 +20,5 @@ function done()
 end
 
 function chat_handler(event)
-	print("<USERNAME>" .. event.text);
+	print("<USERNAME> " .. event.text);
 end

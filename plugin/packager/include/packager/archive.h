@@ -26,14 +26,14 @@ enum class ContextType {
 
 class Archive : public Data {
 	public:
-		Archive(std::string name);
+		Archive(Config config, std::string name);
 		~Archive() override {}
 
 		const std::string get_type() const override {
 			return "archive";
 		}
 
-		void build(Config& config) override;
+		void build() override;
 
 		void author(sol::variadic_args args);
 		void description(sol::variadic_args args);

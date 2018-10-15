@@ -9,7 +9,7 @@
 
 // @todo We need to make sure that the 'archives' folder gets created
 
-Archive::Archive(std::string name) : Data(name) {
+Archive::Archive(Config config, std::string name) : Data(config, name) {
 	flint::register_global("author");
 	_functions["author"] = std::bind(&Archive::author, this, std::placeholders::_1);
 	flint::register_global("description");
@@ -39,9 +39,9 @@ Archive::Archive(std::string name) : Data(name) {
 	_path = "/archives/" + name + ".flm";
 }
 
-void Archive::build(Config& config) {
+void Archive::build() {
 	
-	helper::create_directory(config.build_path + '/' + "archives");
+	helper::create_directory(_config.build_path + '/' + "archives");
 
 	// Convert the dependecies to actual dependencies
 	std::vector<flame::Dependency> dependencies;
@@ -59,9 +59,9 @@ void Archive::build(Config& config) {
 	auto archive_writer = [=] {
 		if (!_key.empty()) {
 			auto [pub, priv] = crypto::load(_key);
-			return flame::ArchiveWriter(get_name(), config.build_path + _path, _author, _description, _version, dependencies, priv);
+			return flame::ArchiveWriter(get_name(), _config.build_path + _path, _author, _description, _version, dependencies, priv);
 		} else {
-			return flame::ArchiveWriter(get_name(), config.build_path + _path, _author, _description, _version, dependencies);
+			return flame::ArchiveWriter(get_name(), _config.build_path + _path, _author, _description, _version, dependencies);
 		}
 	}();
 

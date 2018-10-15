@@ -7,19 +7,15 @@
 #include <string>
 #include <functional>
 
-#if __ANDROID__
-	#include <android/log.h>
-#endif
-
 #if __EMSCRIPTEN__
 	#include <emscripten.h>
 #endif
 
 // @todo Move each of these things into their own module and make the build system link the proper modules
 // @todo Print function that calls native implemtation or something along thoses lines
+// @todo Move the environment stuff in here
 
 namespace BLAZE_NAMESPACE::platform {
-
 	class Platform {
 		public:
 			Platform() {}
@@ -31,7 +27,7 @@ namespace BLAZE_NAMESPACE::platform {
 			virtual logger::LogHandler get_logger() =0;
 	};
 
-#if __linux__
+#ifdef __linux__
 	class Linux : public Platform {
 		public:
 			const std::string get_base_path() const override {
@@ -50,7 +46,7 @@ namespace BLAZE_NAMESPACE::platform {
 	class Linux : public Platform {};
 #endif
 
-#if _WIN32
+#ifdef _WIN32
 	class Windows : public Platform {
 		public:
 			const std::string get_base_path() const override {
@@ -69,7 +65,7 @@ namespace BLAZE_NAMESPACE::platform {
 	class Windows : public Platform {};
 #endif
 
-#if __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
 	class Web : public Platform {
 		public:
 			Web();
@@ -90,3 +86,11 @@ namespace BLAZE_NAMESPACE::platform {
 	class Web : public Platform {};
 #endif
 }
+
+#ifdef __ANDROID__
+	#include "android.h"
+#else
+namespace BLAZE_NAMESPACE::platform {
+	class Android : public Platform {};
+}
+#endif

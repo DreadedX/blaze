@@ -1,4 +1,4 @@
-let &makeprg="./flint game plugin_packager"
+let &makeprg="./flint.py --version dev"
 map <silent> <F9> :Make<cr>
-map <silent> <F10> :Start ./flint game -rs && read<cr>
-map <silent> <S-F10> :Make --rebuild<cr>
+map <silent> <S-F9> :Make --rebuild<cr>
+map <silent> <F10> :Start ./flint.py --version dev game -rs && read<cr>

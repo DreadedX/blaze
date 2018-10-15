@@ -47,7 +47,14 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 
 }
 
+#define FORCE_UNDEFINED_SYMBOL(x) void* __ ## x ## _fp =(void*)&x;
 void game() {
+	#ifdef __ANDROID__
+		// @todo This is needed because otherwise it is not included
+		// Add export command to flint where we can add things that need to be exported
+		FORCE_UNDEFINED_SYMBOL(JNI_OnLoad);
+	#endif
+
 	// Setup event handlers
 	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
 	event_bus::subscribe<Error>(std::ref(handle_error));
