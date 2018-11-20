@@ -10,6 +10,8 @@
 
 #include "enviroment.h"
 
+#include "game_asset_types.h"
+
 sol::state lua_state;
 std::vector<std::shared_ptr<blaze::Script>> scripts;
 

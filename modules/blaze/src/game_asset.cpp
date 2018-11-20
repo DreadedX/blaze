@@ -1,4 +1,7 @@
 #include "game_asset.h"
+#include "game_asset_types.h"
+
+// @todo Split this file
 
 #include "iohelper/memstream.h"
 

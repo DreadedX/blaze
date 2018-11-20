@@ -86,10 +86,11 @@ lib "flame"
 	path "modules/flame"
 	dependency("zlib", "crypto", "iohelper")
 
--- @todo This needs to really merge with the respective things
+-- @todo This needs to really merge with the respective things !!!
+-- @current
 lib "lua-bind"
 	path "modules/lua-bind"
-	dependency("sol2", "flame")
+	dependency("sol2", "flame", "lang")
 
 	include("modules/blaze/include")
 	if config.platform.target == "android" then

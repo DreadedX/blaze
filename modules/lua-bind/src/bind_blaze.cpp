@@ -1,7 +1,7 @@
 #include "bind_blaze.h"
 
 #include "events.h"
-#include "game_asset.h"
+#include "game_asset_types.h"
 #include "engine.h"
 
 namespace BLAZE_NAMESPACE::lua {

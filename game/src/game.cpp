@@ -6,6 +6,8 @@
 
 #include "enviroment.h"
 
+#include "game_asset_types.h"
+
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
