@@ -1,0 +1,58 @@
+; THIS IS A EXAMPLE LANG FILE
+; @todo We can not use all special characters in a string
+
+test = This key has no section
+
+; @todo Add support for subsections etc
+; The question is how deep do we want this to be able to go
+; [section]
+; <subsection>
+
+; Section
+[items]
+; We can have multiple levels
+[[pickaxe]]
+; Key value assigment
+; @todo Spaces are important arount the equal sign otherwise things break, needs to be imporved
+name = Pickaxe
+; Values in {} get replaced
+; @todo In the future make this kind of programmable {0: 1 > Singular; 2 > Multiple}
+; @todo The first step is to detect this and store the numbers in the correct order
+; @todo Also allow {} for cases where the order they appear is correct
+description = Durability {0}/{1}
+
+; @todo Macros, should be resolved while packing
+;#s = {0: 2+ > s}
+[[shoe]]
+name = Shoe#s
+description = Something to wear on your foot
+
+[[mouse]]
+; Here the 0 indicates which variable we look at
+; Before > are the conditions comma seperated
+; Default is used when no variable is specified
+; After > is the value we want to fill in
+name = {0: 1,default > Mouse; 2+ > Mice}
+description = Input device for your computer
+[[[settings]]]
+dpi = 800
+
+[tutorial]
+; Using \ we can continue on the next line, whitespace before the first character will be ignored
+; @todo Instead of keys numerical should build an array? Not quite clear on how
+1 = This is to test special characters ~!@#$%^&*()~`
+2 = This an example string. \
+	 We have multi-line values. \
+	 This is another line.
+
+; We can also reset the group
+[]
+title = Testerino
+long = Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ac nisi iaculis, vehicula ligula id, condimentum est. \
+       Phasellus vehicula dolor quis auctor aliquam. \
+	   Proin eget velit ligula. \
+	   Duis non eleifend est. \
+	   Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. \
+	   Suspendisse egestas eros ac bibendum bibendum. \
+	   Fusce in rutrum mi, quis bibendum enim. \
+	   Sed consectetur ante sit amet lacus ultrices porttitor. 

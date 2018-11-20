@@ -40,10 +40,10 @@ void handle_error(std::shared_ptr<Error> event) {
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
-		LOG_M("{}\n", lang->get("tutorial.part1"));
+		LOG_M("{}\n", lang->get("tutorials.basic.1"));
 
-		LOG_M("{}\n", lang->get("pickaxe.name"));
-		LOG_M("{}\n", lang->get("pickaxe.description", 47, 100));
+		LOG_M("{}\n", lang->get("items.pickaxe.name"));
+		LOG_M("{}\n", lang->get("items.pickaxe.description", 47, 100));
 
 }
 

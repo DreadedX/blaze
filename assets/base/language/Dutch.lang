@@ -1,7 +1,10 @@
 ; Author: Dreaded_X
-[tutorial]
-part1 = Dit is het eerste deel van de tutorial:\t\tDeze tekst is dubbel getabbed!
+[tutorials]
+[[basic]]
+; part1 = Dit is het eerste deel van de tutorial:\t\tDeze tekst is dubbel getabbed!
+1 = Dit is het eerste deel van de tutorial:		Deze tekst is dubbel getabbed!
 
-[pickaxe]
+[items]
+[[pickaxe]]
 name        = Pikhouweel
 description = Duurzaamheid {0}/{1}

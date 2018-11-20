@@ -102,7 +102,7 @@ namespace CRYPTO_NAMESPACE {
 		file.close();
 
 		auto decoded = iohelper::base64::decode(encoded);
-		auto stream = iohelper::imemstream(decoded);
+		iohelper::imemstream stream(decoded);
 
 		// SEQUENCE
 		if (iohelper::read<uint8_t>(stream) != 0x30) { throw std::runtime_error("File not in correct format"); }

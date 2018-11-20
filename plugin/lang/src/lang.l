@@ -1,0 +1,44 @@
+%{
+#include <string>
+#include "lang.tab.hpp"
+
+#include <iostream>
+
+	void yyerror(const char* s);
+%}
+
+%option noyywrap
+
+%%
+
+	/* Skip comments */
+[ \t]*[;][^\n]+ ;
+	/* Match text */
+[^\[\]{}\n=\\]+ {
+	yylval.sval = new std::string(yytext, yyleng);
+	return STRING;
+}
+[\\] {
+	return CONTINUE;
+}
+"=" {
+	return ASSIGNMENT;
+}
+"[" {
+	return SECTION_START;
+}
+"]" {
+	return SECTION_END;
+}
+"{" {
+	return FILL_START;
+}
+"}" {
+	return FILL_END;
+}
+"\n"+ {
+	return NEWLINE;
+}
+[ \t] ;
+
+%%

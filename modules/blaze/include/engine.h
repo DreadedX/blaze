@@ -8,8 +8,10 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#include "sol/state.hpp"
+#pragma warning(push, 0)
+#include "sol.hpp"
 #pragma GCC diagnostic pop
+#pragma warning(pop)
 
 #include "game_asset.h"
 

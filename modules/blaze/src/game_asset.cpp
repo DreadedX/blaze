@@ -1,5 +1,7 @@
 #include "game_asset.h"
 
+#include "iohelper/memstream.h"
+
 namespace BLAZE_NAMESPACE {
 	GameAsset::GameAsset(std::string asset_name) : _data(asset_list::find_asset(asset_name)), _name(asset_name) {}
 
@@ -12,7 +14,6 @@ namespace BLAZE_NAMESPACE {
 		if (loaded) {
 			asset->post_load();
 		}
-
 
 		return loaded;
 	}
@@ -49,30 +50,7 @@ namespace BLAZE_NAMESPACE {
 	Language::Language(std::string asset_name) : GameAsset(asset_name) {}
 
 	void Language::post_load() {
-		auto size = _data.get_size();
-		uint32_t current = 0;
-
-		// @todo Improve this
-		while (current < size) {
-			auto next = _data[current];
-			std::string name = "";
-			while (next != 0x0) {
-				name += next;
-				current++;
-				next = _data[current];
-			}
-
-			current++;
-			next = _data[current];
-			std::string value = "";
-			while (next != 0x0) {
-				value += next;
-				current++;
-				next = _data[current];
-			}
-			current++;
-
-			_strings[name] = value;
-		}
+		iohelper::imemstream memstream(_data.as<std::vector<uint8_t>&>());
+		_root = lang::parse_file(memstream);
 	}
 }

@@ -5,6 +5,7 @@ subfile("modules/iohelper/flint.lua", "iohelper")
 
 lib "bigint"
 	src "*third_party/bigint"
+	src "-third_party/bigint/{testsuite,sample}.cc"
 	include "third_party/bigint"
 
 lib "lua"
@@ -28,6 +29,10 @@ subfile("modules/logger/flint.lua", "logger")
 lib "crypto"
 	path "modules/crypto"
 	dependency("logger", "bigint", "iohelper")
+
+lib "lang"
+	path "modules/lang"
+	dependency("iohelper")
 
 lib "generated"
 	path "modules/generated"
@@ -87,22 +92,24 @@ lib "lua-bind"
 	dependency("sol2", "flame")
 
 	include("modules/blaze/include")
-	if platform.name == "android" then
+	if config.platform.target == "android" then
 		include "modules/blaze/platform/android/include"
 	end
 
 lib "blaze"
 	path "modules/blaze"
-	dependency("lua-bind", "generated")
+	dependency("lua-bind", "generated", "lang")
 
 	-- @todo This should auto happen in flint
-	if platform.name == "android" then
-		include "modules/blaze/platform/android/include"
-		src "*modules/blaze/platform/android/src"
+	if config.platform.target == "android" then
+		path "modules/blaze/platform/android"
 	end
+	-- if config.platform.target == "windows" then
+	-- 	path "modules/blaze/platform/windows"
+	-- end
 
 local name = "game"
-if platform.name == "android" then
+if config.platform.target == "android" then
 	name = "libgame"
 end
 executable(name)
@@ -117,6 +124,13 @@ executable(name)
 	-- Maybe implement run_dependency these are only dependencies when running
 	-- run_dependency "base"
 	-- Now when building game nothing happend but when running they will get rebuild, unless ofcource -s is set
+	
+	-- @todo We really need to only build static if we are cross compiling
+	if config.platform.target == "windows" and config.platform.host == "linux" then
+		static()
+	end
+
+	threads()
 
 subfile("../flint/flint.lua", "flint")
 
@@ -126,9 +140,34 @@ local packager_path = shared "plugin_packager"
 	dependency("flint", "flame", "crypto")
 
 	-- We can just use the host platform plugin to generate the archives
-	if string.sub(platform.name, 1, string.len("linux")) ~= "linux" then
+	if config.platform.target ~= "linux" then
 		optional(true)
 	end
+
+	static()
+
+if config.platform.target == "linux" then
+	local parser_lexer = plugin "plugin_lexer_parser.so"
+	if not parser_lexer then
+		print "Plugin parser lexer is needed!"
+		os.exit()
+	end
+
+	parser "plugin_lang-parser"
+		path "plugin/lang"
+		dependency "lang"
+
+	lexer "plugin_lang-lexer"
+		path "plugin/lang"
+		dependency "plugin_lang-parser"
+
+	-- This should actually be a plugin in the future, for now it is just a tool
+	executable "plugin_lang"
+		path "plugin/lang"
+		dependency "plugin_lang-lexer"
+		dependency "iohelper"
+
+end
 
 -- executable "tests"
 -- 	src "test/test.cpp"
@@ -139,7 +178,7 @@ local packager_path = shared "plugin_packager"
 
 run_target "game"
 
-if string.sub(platform.name, 1, string.len("linux")) ~= "linux" then
+if config.platform.target ~= "linux" then
 	-- @todo Figure out something better then hardcoding this
 	packager_path = ".flint/build/linux/debug/bin/plugin_packager.so"
 end
@@ -171,8 +210,8 @@ if packager then
 			path "assets/my_first_mod/script/Hello.lua"
 
 		asset "base/language/Dutch"
-			path "assets/my_first_mod/language/Dutch.lang"
-			task (langpack)
+			path "assets/my_first_mod/language/Dutch.langpack"
+			-- task (langpack)
 			version(10)
 
 	archive "base"
@@ -187,12 +226,12 @@ if packager then
 		script "assets/base/script/Script.lua"
 
 		asset "base/language/Dutch"
-			path "assets/base/language/Dutch.lang"
-			task (langpack)
+			path "assets/base/language/Dutch.langpack"
+			-- task (langpack)
 
 		asset "base/language/English"
-			path "assets/base/language/English.lang"
-			task (langpack)
+			path "assets/base/language/English.langpack"
+			-- task (langpack)
 
 else
 	print "Packager plugin not loaded, skipping building archives"

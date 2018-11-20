@@ -9,31 +9,31 @@
 
 // @todo We need to make sure that the 'archives' folder gets created
 
-Archive::Archive(Config config, std::string name) : Data(config, name) {
-	flint::register_global("author");
+Archive::Archive(Flint& flint, Config config, std::string name) : Data(flint, config, name), _flint(flint) {
+	_flint.register_global("author");
 	_functions["author"] = std::bind(&Archive::author, this, std::placeholders::_1);
-	flint::register_global("description");
+	_flint.register_global("description");
 	_functions["description"] = std::bind(&Archive::description, this, std::placeholders::_1);
-	flint::register_global("version");
+	_flint.register_global("version");
 	_functions["version"] = std::bind(&Archive::version, this, std::placeholders::_1);
-	flint::register_global("compression");
+	_flint.register_global("compression");
 	_functions["compression"] = std::bind(&Archive::compression, this, std::placeholders::_1);
-	flint::register_global("key");
+	_flint.register_global("key");
 	_functions["key"] = std::bind(&Archive::key, this, std::placeholders::_1);
-	flint::register_global("path");
+	_flint.register_global("path");
 	_functions["path"] = std::bind(&Archive::path, this, std::placeholders::_1);
-	flint::register_global("requires");
+	_flint.register_global("requires");
 	_functions["task"] = std::bind(&Archive::task, this, std::placeholders::_1);
-	flint::register_global("task");
+	_flint.register_global("task");
 	_functions["requires"] = std::bind(&Archive::requires, this, std::placeholders::_1);
-	flint::register_global("version_min");
+	_flint.register_global("version_min");
 	_functions["version_min"] = std::bind(&Archive::version_min, this, std::placeholders::_1);
-	flint::register_global("version_max");
+	_flint.register_global("version_max");
 	_functions["version_max"] = std::bind(&Archive::version_max, this, std::placeholders::_1);
-	flint::register_global("script");
+	_flint.register_global("script");
 	_functions["script"] = std::bind(&Archive::script, this, std::placeholders::_1);
 
-	flint::register_global("asset");
+	_flint.register_global("asset");
 	_functions["asset"] = std::bind(&Archive::asset, this, std::placeholders::_1);
 
 	_path = "/archives/" + name + ".flm";
@@ -287,7 +287,7 @@ void Archive::script(sol::variadic_args args) {
 		return;
 	}
 
-	flint::call("asset", get_name() + "/Script");
-	flint::call("path", args.get<std::string>(0));
+	_flint.call("asset", get_name() + "/Script");
+	_flint.call("path", args.get<std::string>(0));
 	_context_type = ContextType::none;
 }

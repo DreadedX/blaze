@@ -8,6 +8,8 @@
 #include "asset_list.h"
 #include "engine.h"
 
+#include "lang.h"
+
 namespace BLAZE_NAMESPACE {
 
 	class GameAsset {
@@ -49,16 +51,13 @@ namespace BLAZE_NAMESPACE {
 
 			template <typename... Args>
 			std::string get(std::string name, Args... args) {
-				auto it = _strings.find(name);
-				if (it == _strings.end()) {
-					return "(undefined)";
-				}
+				std::string value = _root.get_value(name);
 
-				return fmt::format(it->second, args...);
+				return fmt::format(value, args...);
 			}
 		private:
 			void post_load();
 
-			std::unordered_map<std::string, std::string> _strings;
+			lang::Node _root;
 	};
 }

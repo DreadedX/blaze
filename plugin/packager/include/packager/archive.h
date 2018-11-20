@@ -26,7 +26,7 @@ enum class ContextType {
 
 class Archive : public Data {
 	public:
-		Archive(Config config, std::string name);
+		Archive(Flint& flint, Config config, std::string name);
 		~Archive() override {}
 
 		const std::string get_type() const override {
@@ -65,4 +65,6 @@ class Archive : public Data {
 		size_t _context;
 		// This does not default to none
 		ContextType _context_type = ContextType::none;
+
+		Flint& _flint;
 };
