@@ -1,0 +1,7 @@
+[meta]
+author = blaze
+name = packager
+
+[linux]
+plugin.so = ../../.flint/build/linux/debug/bin/plugin_packager.so
+

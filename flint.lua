@@ -1,6 +1,8 @@
 -- @todo This is needed in order to support the old packager archives
 run_dir ".flint/build/linux/debug/archives"
 
+plugin "android@Dreaded_X"
+
 subfile("modules/iohelper/flint.lua", "iohelper")
 
 lib "bigint"
@@ -109,13 +111,34 @@ lib "blaze"
 	-- 	path "modules/blaze/platform/windows"
 	-- end
 
+-- @todo Allows skipping the second argument
+local packager = plugin "packager@blaze"
+
+if packager then
+	subfile("packager.lua", "")
+else
+	print "Packager plugin not loaded, skipping building archives"
+end
+
 local name = "game"
 if config.platform.target == "android" then
 	name = "libgame"
+
+	android "game"
+		path "modules/android"
+		main "nl.mtgames.blaze/.Bootstrap"
+
+		dependency "libgame"
 end
 executable(name)
 	path "game"
 	dependency "blaze"
+
+	-- @todo We should add a meta target called game that depends on plugin_packager and that warns the user to build again if packager is not loaded
+	-- Or we should just make packagers a seperate project
+	if packager then
+		dependency "archives"
+	end
 	-- @todo Does it make sense to always have these as dependencies
 	-- During dev it is useful, but will probably get slower in the future
 	-- And for release we only have to build this once and it will work on all platforms
@@ -138,7 +161,7 @@ subfile("../flint/flint.lua", "flint")
 local packager_path = shared "plugin_packager"
 	path "plugin/packager"
 
-	dependency("flint", "flame", "crypto")
+	dependency("flint_base", "flame", "crypto")
 
 	-- We can just use the host platform plugin to generate the archives
 	if config.platform.target ~= "linux" then
@@ -148,7 +171,7 @@ local packager_path = shared "plugin_packager"
 	static()
 
 if config.platform.target == "linux" then
-	local parser_lexer = plugin "plugin_lexer_parser.so"
+	local parser_lexer = plugin "lexer_parser@Dreaded_X"
 	if not parser_lexer then
 		print "Plugin parser lexer is needed!"
 		os.exit()
@@ -178,62 +201,3 @@ end
 -- 	dependency "crypto"
 
 run_target "game"
-
-if config.platform.target ~= "linux" then
-	-- @todo Figure out something better then hardcoding this
-	packager_path = ".flint/build/linux/debug/bin/plugin_packager.so"
-end
-local packager = plugin(packager_path)
-
-if packager then
-
-	local langpack = require "scripts.langpack"
-
-	meta "archives"
-		dependency("base", "my_first_mod")
-
-	archive "my_first_mod"
-		author "Dreaded_X"
-		description "My first mod!"
-		-- key "build/keys/unofficial.priv"
-		-- key "keys/official.pem"
-		-- compression(flame.Compression.none)
-		compression(0)
-		version(3)
-
-		script "assets/my_first_mod/script/Script.lua"
-
-		-- @todo This overrides an existing command
-		requires "base"
-			version_min (1)
-
-		asset "my_first_mod/script/Hello"
-			path "assets/my_first_mod/script/Hello.lua"
-
-		asset "base/language/Dutch"
-			path "assets/my_first_mod/language/Dutch.langpack"
-			-- task (langpack)
-			version(10)
-
-	archive "base"
-		author "Dreaded_X"
-		description "This archive contains the base game"
-		-- key "build/keys/test.priv"
-		key "keys/official.pem"
-		-- compression(flame.Compression.none)
-		compression(0)
-		version(1)
-
-		script "assets/base/script/Script.lua"
-
-		asset "base/language/Dutch"
-			path "assets/base/language/Dutch.langpack"
-			-- task (langpack)
-
-		asset "base/language/English"
-			path "assets/base/language/English.langpack"
-			-- task (langpack)
-
-else
-	print "Packager plugin not loaded, skipping building archives"
-end

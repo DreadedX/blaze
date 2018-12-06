@@ -1,0 +1,46 @@
+local packager = plugin "packager@blaze"
+
+meta "archives"
+	dependency("base", "my_first_mod")
+
+archive "my_first_mod"
+	author "Dreaded_X"
+	description "My first mod!"
+	-- key "build/keys/unofficial.priv"
+	-- key "keys/official.pem"
+	-- compression(flame.Compression.none)
+	compression(0)
+	version(3)
+
+	script "assets/my_first_mod/script/Script.lua"
+
+	-- @todo This overrides an existing command
+	requires "base"
+		version_min (1)
+
+	asset "my_first_mod/script/Hello"
+		path "assets/my_first_mod/script/Hello.lua"
+
+	asset "base/language/Dutch"
+		path "assets/my_first_mod/language/Dutch.langpack"
+		-- task (langpack)
+		version(10)
+
+archive "base"
+	author "Dreaded_X"
+	description "This archive contains the base game"
+	-- key "build/keys/test.priv"
+	key "keys/official.pem"
+	-- compression(flame.Compression.none)
+	compression(0)
+	version(1)
+
+	script "assets/base/script/Script.lua"
+
+	asset "base/language/Dutch"
+		path "assets/base/language/Dutch.langpack"
+		-- task (langpack)
+
+	asset "base/language/English"
+		path "assets/base/language/English.langpack"
+		-- task (langpack)

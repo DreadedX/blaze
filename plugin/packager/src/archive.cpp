@@ -56,6 +56,17 @@ void Archive::build() {
 		_description = "(none)";
 	}
 
+	bool rebuild = false;
+	for (auto& asset : _assets) {
+		if (!_flint.check_cache(asset.path)) {
+			rebuild = true;
+		}
+	}
+
+	if (!rebuild) {
+		return;
+	}
+
 	auto archive_writer = [=] {
 		if (!_key.empty()) {
 			auto [pub, priv] = crypto::load(_key);

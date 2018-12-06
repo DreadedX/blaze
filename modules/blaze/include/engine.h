@@ -6,12 +6,18 @@
 #include "events.h"
 #include "platform/platform.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma warning(push, 0)
+#if defined(__GNUC__) || defined (__clang__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#else
+	#pragma warning(push, 0)
+#endif
 #include "sol.hpp"
-#pragma GCC diagnostic pop
-#pragma warning(pop)
+#if defined(__GNUC__) || defined (__clang__)
+	#pragma GCC diagnostic pop
+#else
+	#pragma warning(pop)
+#endif
 
 #include "game_asset.h"
 

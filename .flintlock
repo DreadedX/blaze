@@ -1,3 +1,8 @@
 [flint.py]
 version = dev
+base_url = https://downloads.mtgames.nl/release/flint
+
+[flint.py-plugins]
+lexer_parser@dreaded_x.local = ../plugin_lexer_parser
+android@dreaded_x.local = ../plugin_android
 
