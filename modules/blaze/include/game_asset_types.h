@@ -33,7 +33,7 @@ namespace BLAZE_NAMESPACE {
 				return fmt::format(value, args...);
 			}
 		private:
-			void load(std::vector<uint8_t> data);
+			std::vector<uint8_t> load(std::vector<uint8_t> data);
 
 			lang::Node _root;
 	};

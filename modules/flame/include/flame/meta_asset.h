@@ -24,7 +24,7 @@ namespace FLAME_NAMESPACE {
 			const std::string& get_name() const;
 			size_t get_version() const;
 
-			AssetData get_data(bool async = true, std::vector<Task> workflow = std::vector<Task>(), std::function<void(std::vector<uint8_t>)> callback = nullptr);
+			AssetData get_data(bool async = true, std::vector<Task> workflow = std::vector<Task>());
 
 		private:
 			std::string _filename;

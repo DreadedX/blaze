@@ -16,15 +16,13 @@ namespace BLAZE_NAMESPACE {
 		return _name;
 	}
 
-	GameAssetLoaded::GameAssetLoaded(std::string asset_name, std::function<void(std::vector<uint8_t>)> callback) : GameAssetBase(asset_name), _data(asset_list::find_asset(asset_name, callback)) {
-		// @todo Install load() callback
-	}
+	GameAssetLoaded::GameAssetLoaded(std::string asset_name, std::vector<flame::MetaAsset::Task> tasks) : GameAssetBase(asset_name), _data(asset_list::find_asset(asset_name, tasks)) {}
 
 	bool GameAssetLoaded::is_loaded() {
 		return _data.is_loaded();
 	}
 
-	Script::Script(std::string asset_name) : GameAssetLoaded(asset_name, nullptr), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
+	Script::Script(std::string asset_name) : GameAssetLoaded(asset_name), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
 
 	Script::~Script() {
 		// Should always be true as loading_assets will have a valid reference to this object until it is loaded
@@ -54,12 +52,15 @@ namespace BLAZE_NAMESPACE {
 		return loaded;
 	}
 
-	Language::Language(std::string asset_name) : GameAssetLoaded(asset_name, std::bind(&Language::load, this, std::placeholders::_1)) {}
+	Language::Language(std::string asset_name) : GameAssetLoaded(asset_name, {std::bind(&Language::load, this, std::placeholders::_1)}) {}
 
-	void Language::load(std::vector<uint8_t> data) {
+	// Kind of abuse the flame task system to run callbacks on other threads
+	std::vector<uint8_t> Language::load(std::vector<uint8_t> data) {
 		LOG_D("Thread id: {} ({})\n", std::this_thread::get_id(), get_name());
 
 		iohelper::imemstream memstream(data);
 		_root = lang::parse_file(memstream);
+
+		return data;
 	}
 }

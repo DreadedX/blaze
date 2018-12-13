@@ -29,7 +29,7 @@ namespace BLAZE_NAMESPACE {
 
 	class GameAssetLoaded : public GameAssetBase {
 		public:
-			GameAssetLoaded(std::string asset_name, std::function<void(std::vector<uint8_t>)> callback);
+			GameAssetLoaded(std::string asset_name, std::vector<flame::MetaAsset::Task> tasks = std::vector<flame::MetaAsset::Task>());
 			virtual ~GameAssetLoaded() {}
 
 			bool is_loaded() override;

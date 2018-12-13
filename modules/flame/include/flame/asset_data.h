@@ -13,7 +13,7 @@ namespace FLAME_NAMESPACE {
 
 	class AssetData {
 		public:
-			AssetData(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async = true, std::function<void(std::vector<uint8_t>)> callback = nullptr);
+			AssetData(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async = true);
 
 			bool is_loaded();
 			size_t get_size();

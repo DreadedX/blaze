@@ -31,13 +31,13 @@ namespace FLAME_NAMESPACE {
 		return _version;
 	}
 
-	AssetData MetaAsset::get_data(bool async, std::vector<Task> workflow, std::function<void(std::vector<uint8_t>)> callback) {
+	AssetData MetaAsset::get_data(bool async, std::vector<Task> workflow) {
 
 		// Construct a new workflow based on the base workflow and given workflow
 		std::vector<Task> final_workflow;
 		final_workflow.insert(final_workflow.end(), _base_workflow.begin(), _base_workflow.end());
 		final_workflow.insert(final_workflow.end(), workflow.begin(), workflow.end());
 
-		return AssetData(_filename, _size, _offset, final_workflow, async, callback);
+		return AssetData(_filename, _size, _offset, final_workflow, async);
 	}
 }
