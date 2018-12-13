@@ -8,23 +8,33 @@
 #include "asset_list.h"
 #include "engine.h"
 
+#include <string>
+#include <string_view>
+#include <functional>
+
 namespace BLAZE_NAMESPACE {
 
-	class GameAsset {
+	class GameAssetBase {
 		public:
-			GameAsset(std::string asset_name);
-			virtual ~GameAsset() {}
+			GameAssetBase(std::string asset_name);
+			virtual ~GameAssetBase() {}
 
-			bool is_loaded();
-			static bool finish_if_loaded(std::shared_ptr<GameAsset> asset);
+			virtual bool is_loaded() = 0;
 
-			const std::string& get_name() const;
+			std::string_view get_name() const;
+
+		private:
+			std::string _name;
+	};
+
+	class GameAssetLoaded : public GameAssetBase {
+		public:
+			GameAssetLoaded(std::string asset_name, std::function<void(std::vector<uint8_t>)> callback);
+			virtual ~GameAssetLoaded() {}
+
+			bool is_loaded() override;
 
 		protected:
 			flame::AssetData _data;
-			std::string _name;
-			
-		private:
-			virtual void post_load() = 0;
 	};
 }

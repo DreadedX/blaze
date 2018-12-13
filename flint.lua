@@ -170,6 +170,7 @@ local packager_path = shared "plugin_packager"
 
 	static()
 
+if false then
 if config.platform.target == "linux" then
 	local parser_lexer = plugin "lexer_parser@Dreaded_X"
 	if not parser_lexer then
@@ -190,6 +191,8 @@ if config.platform.target == "linux" then
 		path "plugin/lang"
 		dependency "plugin_lang-lexer"
 		dependency "iohelper"
+
+end
 
 end
 

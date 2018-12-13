@@ -10,7 +10,7 @@ namespace BLAZE_NAMESPACE {
 		public:
 			template <typename T, typename... Args>
 			static std::shared_ptr<T> new_asset(std::string asset_name, Args... args) {
-				static_assert(std::is_base_of<GameAsset, T>(), "T must be derived from GameAsset");
+				static_assert(std::is_base_of<GameAssetBase, T>(), "T must be derived from GameAssetBase");
 				std::shared_ptr<T> game_asset = std::make_shared<T>(asset_name, args...);
 				_loading_assets.push_back(game_asset);
 				return game_asset;
@@ -22,7 +22,7 @@ namespace BLAZE_NAMESPACE {
 
 
 		private:
-			static std::list<std::shared_ptr<GameAsset>> _loading_assets;
+			static std::list<std::shared_ptr<GameAssetBase>> _loading_assets;
 	};
 
 }

@@ -8,6 +8,9 @@
 
 #include "game_asset_types.h"
 
+// @todo This is just for the thread id stuff
+#include <fmt/ostream.h>
+
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
@@ -67,6 +70,8 @@ void game() {
 	// 	flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
 	// 	blaze::asset_list::add(lua_asset);
 	// }
+
+	LOG_D("Thread id: {} (GAME)\n", std::this_thread::get_id());
 
 	// Load base archive
 	blaze::load_archive("base");

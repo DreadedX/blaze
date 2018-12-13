@@ -7,7 +7,7 @@
 #define CHUNK_SIZE 16384
 
 namespace FLAME_NAMESPACE {
-	std::vector<uint8_t> async_load(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow) {
+	std::vector<uint8_t> async_load(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, std::function<void(std::vector<uint8_t>)> callback) {
 		std::vector<uint8_t> data(size);
 
 		std::fstream fs(filename, std::ios::in | std::ios::binary);
@@ -22,12 +22,16 @@ namespace FLAME_NAMESPACE {
 			data = t(std::move(data));
 		}
 
+		if (callback != nullptr) {
+			callback(data);
+		}
+
 		return data;
 	}
 
-	AssetData::AssetData(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async) : _async(async) {
+	AssetData::AssetData(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow, bool async, std::function<void(std::vector<uint8_t>)> callback) : _async(async) {
 		std::launch policy = _async ? std::launch::async : std::launch::deferred;
-		_future = std::async(policy, async_load, filename, size, offset, workflow);
+		_future = std::async(policy, async_load, filename, size, offset, workflow, callback);
 	}
 
 	bool AssetData::is_loaded() {

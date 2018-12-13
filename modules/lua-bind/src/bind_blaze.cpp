@@ -71,7 +71,7 @@ namespace BLAZE_NAMESPACE::lua {
 		);
 
 		blaze.new_usertype<Language>("Language",
-			sol::base_classes, sol::bases<GameAsset>(),
+			sol::base_classes, sol::bases<GameAssetBase>(),
 			// We need some extra code to convert the variadic args to a fmt ArgList
 			"get", [](Language& base, std::string name, sol::variadic_args va) {
 				// @todo Make sure we the amount of arguments does not exceed the max

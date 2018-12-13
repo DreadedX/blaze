@@ -5,16 +5,18 @@
 #include "events.h"
 #include "engine.h"
 
+#include "flame/meta_asset.h"
+
 #include <iostream>
 
 namespace BLAZE_NAMESPACE {
 	std::vector<flame::Archive> asset_list::_archives;
 	std::unordered_map<std::string, flame::MetaAsset> asset_list::_meta_assets;
 
-	flame::AssetData asset_list::find_asset(std::string name) {
+	flame::AssetData asset_list::find_asset(std::string name, std::function<void(std::vector<uint8_t>)> callback) {
 		auto meta_asset = _meta_assets.find(name);
 		if (meta_asset != _meta_assets.end()) {
-			return meta_asset->second.get_data(get_platform()->has_async_support());
+			return meta_asset->second.get_data(get_platform()->has_async_support(), std::vector<flame::MetaAsset::Task>(), callback);
 		}
 		throw std::runtime_error("Can not find asset: '" + name + '\'');
 	}

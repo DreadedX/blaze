@@ -5,27 +5,26 @@
 
 #include "iohelper/memstream.h"
 
+// @todo This is just for the thread id stuff
+#include <fmt/ostream.h>
+
 namespace BLAZE_NAMESPACE {
-	GameAsset::GameAsset(std::string asset_name) : _data(asset_list::find_asset(asset_name)), _name(asset_name) {}
 
-	bool GameAsset::is_loaded() {
-		return _data.is_loaded();
-	}
+	GameAssetBase::GameAssetBase(std::string asset_name) : _name(asset_name) {}
 
-	bool GameAsset::finish_if_loaded(std::shared_ptr<GameAsset> asset) {
-		bool loaded = asset->is_loaded();
-		if (loaded) {
-			asset->post_load();
-		}
-
-		return loaded;
-	}
-
-	const std::string& GameAsset::get_name() const {
+	std::string_view GameAssetBase::get_name() const {
 		return _name;
 	}
 
-	Script::Script(std::string asset_name) : GameAsset(asset_name), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
+	GameAssetLoaded::GameAssetLoaded(std::string asset_name, std::function<void(std::vector<uint8_t>)> callback) : GameAssetBase(asset_name), _data(asset_list::find_asset(asset_name, callback)) {
+		// @todo Install load() callback
+	}
+
+	bool GameAssetLoaded::is_loaded() {
+		return _data.is_loaded();
+	}
+
+	Script::Script(std::string asset_name) : GameAssetLoaded(asset_name, nullptr), environment(get_lua_state(), sol::create, get_lua_state().globals()) {}
 
 	Script::~Script() {
 		// Should always be true as loading_assets will have a valid reference to this object until it is loaded
@@ -42,18 +41,25 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
-	void Script::post_load() {
-		// @todo Do we need safe_script?
-		get_lua_state().script(_data.as<std::string>(), environment);
-		_loaded = true;
+	bool Script::is_loaded() {
+		bool loaded = GameAssetLoaded::is_loaded();
+		if (loaded && !_loaded) {
+			LOG_D("Calling lua init function ({})\n", get_name());
+			get_lua_state().script(_data.as<std::string>(), environment);
+			_loaded = true;
 
-		environment["init"]();
+			environment["init"]();
+		}
+
+		return loaded;
 	}
 
-	Language::Language(std::string asset_name) : GameAsset(asset_name) {}
+	Language::Language(std::string asset_name) : GameAssetLoaded(asset_name, std::bind(&Language::load, this, std::placeholders::_1)) {}
 
-	void Language::post_load() {
-		iohelper::imemstream memstream(_data.as<std::vector<uint8_t>&>());
+	void Language::load(std::vector<uint8_t> data) {
+		LOG_D("Thread id: {} ({})\n", std::this_thread::get_id(), get_name());
+
+		iohelper::imemstream memstream(data);
 		_root = lang::parse_file(memstream);
 	}
 }

@@ -4,23 +4,25 @@
 
 #include "lang.h"
 
+#include <atomic>
+
 namespace BLAZE_NAMESPACE {
 
-	class Script : public GameAsset {
+	class Script : public GameAssetLoaded {
 		public:
 			Script(std::string asset_name);
 			~Script();
 
+			bool is_loaded() override;
+
 			void update();
 
 		private:
-			void post_load() override;
-
 			sol::environment environment;
 			bool _loaded = false;
 	};
 
-	class Language : public GameAsset {
+	class Language : public GameAssetLoaded {
 		public:
 			Language(std::string asset_name);
 
@@ -31,7 +33,7 @@ namespace BLAZE_NAMESPACE {
 				return fmt::format(value, args...);
 			}
 		private:
-			void post_load();
+			void load(std::vector<uint8_t> data);
 
 			lang::Node _root;
 	};

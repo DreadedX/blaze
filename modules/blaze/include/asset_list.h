@@ -12,7 +12,7 @@ namespace BLAZE_NAMESPACE {
 
 	class asset_list {
 		public:
-			static flame::AssetData find_asset(std::string name);
+			static flame::AssetData find_asset(std::string name, std::function<void(std::vector<uint8_t>)> = nullptr);
 			static void add(flame::Archive& archive);
 			static void add(flame::MetaAsset& meta_asset);
 			static bool check_dependency(flame::Dependency dependency);
