@@ -31,13 +31,34 @@ namespace FLAME_NAMESPACE {
 		return _version;
 	}
 
-	AssetData MetaAsset::get_data(bool async, std::vector<Task> workflow) {
+	std::vector<uint8_t> async_load(std::string filename, size_t size, size_t offset, std::vector<MetaAsset::Task> workflow) {
+		std::vector<uint8_t> data(size);
+
+		std::fstream fs(filename, std::ios::in | std::ios::binary);
+		if (!fs.is_open()) {
+			throw std::runtime_error("ASYNC: Failed to open file");
+		}
+
+		fs.seekg(offset);
+		fs.read(reinterpret_cast<char*>(data.data()), size);
+
+		for (auto& t : workflow) {
+			data = t(std::move(data));
+		}
+
+		return data;
+	}
+
+	DataLoader MetaAsset::get_data(bool async, std::vector<Task> workflow) {
 
 		// Construct a new workflow based on the base workflow and given workflow
 		std::vector<Task> final_workflow;
 		final_workflow.insert(final_workflow.end(), _base_workflow.begin(), _base_workflow.end());
 		final_workflow.insert(final_workflow.end(), workflow.begin(), workflow.end());
 
-		return AssetData(_filename, _size, _offset, final_workflow, async);
+		// return AssetData(_filename, _size, _offset, final_workflow, async);
+
+		std::launch policy = async ? std::launch::async : std::launch::deferred;
+		return DataLoader(std::async(policy, async_load, _filename, _size, _offset, workflow), async);
 	}
 }

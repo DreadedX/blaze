@@ -43,7 +43,7 @@ namespace BLAZE_NAMESPACE {
 		bool loaded = GameAssetLoaded::is_loaded();
 		if (loaded && !_loaded) {
 			LOG_D("Calling lua init function ({})\n", get_name());
-			get_lua_state().script(_data.as<std::string>(), environment);
+			get_lua_state().script(_data.get_as<std::string>(), environment);
 			_loaded = true;
 
 			environment["init"]();

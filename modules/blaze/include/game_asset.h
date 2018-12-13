@@ -35,6 +35,6 @@ namespace BLAZE_NAMESPACE {
 			bool is_loaded() override;
 
 		protected:
-			flame::AssetData _data;
+			flame::DataLoader _data;
 	};
 }

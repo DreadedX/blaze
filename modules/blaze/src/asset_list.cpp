@@ -13,7 +13,7 @@ namespace BLAZE_NAMESPACE {
 	std::vector<flame::Archive> asset_list::_archives;
 	std::unordered_map<std::string, flame::MetaAsset> asset_list::_meta_assets;
 
-	flame::AssetData asset_list::find_asset(std::string name, std::vector<flame::MetaAsset::Task> tasks) {
+	flame::DataLoader asset_list::find_asset(std::string name, std::vector<flame::MetaAsset::Task> tasks) {
 		auto meta_asset = _meta_assets.find(name);
 		if (meta_asset != _meta_assets.end()) {
 			return meta_asset->second.get_data(get_platform()->has_async_support(), tasks);

@@ -108,6 +108,7 @@ namespace FLAME_NAMESPACE {
 		iohelper::write_length(_fs, meta_asset.get_version());
 		iohelper::write<uint8_t>(_fs, static_cast<uint8_t>(compression));
 
-		iohelper::write(_fs, data.as<std::vector<uint8_t>&>());
+		// Since async = false we do not have to check if data is loaded
+		iohelper::write(_fs, data.get());
 	}
 }
