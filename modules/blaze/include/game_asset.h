@@ -4,7 +4,7 @@
 
 #include "blaze.h"
 
-#include "flame/asset_data.h"
+#include "flame/data_loader.h"
 #include "asset_list.h"
 #include "engine.h"
 
@@ -29,7 +29,7 @@ namespace BLAZE_NAMESPACE {
 
 	class GameAssetLoaded : public GameAssetBase {
 		public:
-			GameAssetLoaded(std::string asset_name, std::vector<flame::MetaAsset::Task> tasks = std::vector<flame::MetaAsset::Task>());
+			GameAssetLoaded(std::string asset_name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
 			virtual ~GameAssetLoaded() {}
 
 			bool is_loaded() override;

@@ -1,5 +1,5 @@
 #include "flame/archive_writer.h"
-#include "flame/asset_data.h"
+#include "flame/data_loader.h"
 #include "flame/tasks.h"
 
 #include "iohelper/write.h"
@@ -79,8 +79,8 @@ namespace FLAME_NAMESPACE {
 		_fs.close();
 	}
 
-	std::vector<MetaAsset::Task> ArchiveWriter::create_workflow(Compression compression) {
-		std::vector<MetaAsset::Task> workflow;
+	std::vector<FileHandle::Task> ArchiveWriter::create_workflow(Compression compression) {
+		std::vector<FileHandle::Task> workflow;
 
 		switch (compression) {
 			case Compression::none:
@@ -95,20 +95,21 @@ namespace FLAME_NAMESPACE {
 		return workflow;
 	}
 
-	void ArchiveWriter::add(MetaAsset& meta_asset, Compression compression = Compression::none) {
+	void ArchiveWriter::add(FileHandle& file_handle, Compression compression = Compression::none) {
 		if (_finalized) {
 			throw std::logic_error("Archive is already finalized");
 		}
 
 		// Start loading
 		// @note We run in deferred mode because there is no point here in running async
-		auto data = meta_asset.get_data(false, create_workflow(compression));
+		auto data_loader = file_handle.get_data(false, create_workflow(compression));
 
-		iohelper::write<std::string>(_fs, meta_asset.get_name());
-		iohelper::write_length(_fs, meta_asset.get_version());
+		iohelper::write<std::string>(_fs, file_handle.get_name());
+		iohelper::write_length(_fs, file_handle.get_version());
 		iohelper::write<uint8_t>(_fs, static_cast<uint8_t>(compression));
 
 		// Since async = false we do not have to check if data is loaded
-		iohelper::write(_fs, data.get());
+		auto data = data_loader.get();
+		iohelper::write(_fs, data);
 	}
 }

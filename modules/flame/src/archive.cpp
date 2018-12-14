@@ -1,5 +1,5 @@
 #include "flame/archive.h"
-#include "flame/asset_data.h"
+#include "flame/data_loader.h"
 #include "flame/tasks.h"
 
 #include "iohelper/read.h"
@@ -108,21 +108,24 @@ namespace FLAME_NAMESPACE {
 			_dependencies.push_back(Dependency(name, version_min, version_max));
 		}
 
-		unsigned long next_meta_asset = fs.tellg();
-		while (next_meta_asset < size) {
-			fs.seekg(next_meta_asset);
+		unsigned long next_file_handle = fs.tellg();
+		while (next_file_handle < size) {
+			internal::FileInfo file_info = {};
+			file_info.filename = filename;
+
+			fs.seekg(next_file_handle);
 			std::string name = iohelper::read<std::string>(fs);
 			// @todo Meta asset should use size_t instead of uint16_t
 			size_t version = iohelper::read_length(fs);
 			Compression compression = static_cast<Compression>(iohelper::read<uint8_t>(fs));
-			size_t size = iohelper::read_length(fs);
-			size_t offset = fs.tellg();
+			file_info.size = iohelper::read_length(fs);
+			file_info.offset = fs.tellg();
 
 			auto workflow = create_workflow(compression);
 
-			next_meta_asset = offset + size;
+			next_file_handle = file_info.offset + file_info.size;
 
-			_meta_assets.push_back(MetaAsset(name, filename, version, offset, size, workflow));
+			_file_handles.push_back(FileHandle(name, version, file_info, workflow));
 		}
 
 		fs.close();
@@ -156,8 +159,8 @@ namespace FLAME_NAMESPACE {
 		return _dependencies;
 	}
 
-	std::vector<MetaAsset::Task> Archive::create_workflow(Compression compression) {
-		std::vector<MetaAsset::Task> workflow;
+	std::vector<FileHandle::Task> Archive::create_workflow(Compression compression) {
+		std::vector<FileHandle::Task> workflow;
 
 		switch (compression) {
 			case Compression::none:
@@ -172,7 +175,7 @@ namespace FLAME_NAMESPACE {
 		return workflow;
 	}
 
-	std::vector<MetaAsset> Archive::get_meta_assets() {
-		return _meta_assets;
+	std::vector<FileHandle> Archive::get_file_handles() {
+		return _file_handles;
 	}
 }

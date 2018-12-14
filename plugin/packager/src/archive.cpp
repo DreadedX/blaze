@@ -77,16 +77,18 @@ void Archive::build() {
 	}();
 
 	for (auto& asset : _assets) {
-		// for (flame::MetaAsset::Task task : asset.tasks) {
-		// 	LOG_D("FUCK\n");
-		// 	std::vector<uint8_t> data = { 0x00, 0x01 };
-		// 	data = task(data);
-		// 	LOG_D("FUCKER\n");
-		// }
+		flame::internal::FileInfo file_info = {};
+		file_info.filename = asset.path;
 
-		flame::MetaAsset meta_asset(asset.name, asset.path, asset.version, asset.tasks);
-		// flame::MetaAsset meta_asset(asset.name, asset.path, asset.version);
-		archive_writer.add(meta_asset, asset.compression);
+		std::ifstream file(file_info.filename, std::ios::in | std::ios::ate);
+		if (!file.is_open()) {
+			throw std::runtime_error("Failed to open file");
+		}
+		file_info.size = file.tellg();
+		file.close();
+
+		flame::FileHandle file_handle(asset.name, asset.version, file_info, asset.tasks);
+		archive_writer.add(file_handle, asset.compression);
 	}
 
 	archive_writer.finalize();
@@ -239,7 +241,7 @@ void Archive::task(sol::variadic_args args) {
 	}
 
 	for (sol::function func : args) {
-		_assets[_context].tasks.push_back(flame::MetaAsset::Task(func));
+		_assets[_context].tasks.push_back(flame::FileHandle::Task(func));
 	}
 }
 

@@ -16,7 +16,7 @@ namespace BLAZE_NAMESPACE {
 		return _name;
 	}
 
-	GameAssetLoaded::GameAssetLoaded(std::string asset_name, std::vector<flame::MetaAsset::Task> tasks) : GameAssetBase(asset_name), _data(asset_list::find_asset(asset_name, tasks)) {}
+	GameAssetLoaded::GameAssetLoaded(std::string asset_name, std::vector<flame::FileHandle::Task> tasks) : GameAssetBase(asset_name), _data(asset_list::find_asset(asset_name, tasks)) {}
 
 	bool GameAssetLoaded::is_loaded() {
 		return _data.is_loaded();

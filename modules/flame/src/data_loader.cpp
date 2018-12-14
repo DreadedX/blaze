@@ -1,4 +1,4 @@
-#include "flame/asset_data.h"
+#include "flame/data_loader.h"
 
 #include <iostream>
 #include <fstream>
@@ -14,7 +14,7 @@ namespace FLAME_NAMESPACE {
 	}
 
 	bool DataLoader::is_loaded() {
-		return is_valid() && (_async || _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready);
+		return is_valid() && (!_async || _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready);
 	}
 
 	void DataLoader::wait() {

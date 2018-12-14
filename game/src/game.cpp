@@ -67,7 +67,7 @@ void game() {
 	// Override assets so we don't have to repackage everytime
 	// if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux && blaze::enviroment::debug) {
 	// 	// @todo We can propably reuse the packager script if we override some of the functions that are used to create archives
-	// 	flame::MetaAsset lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
+	// 	flame::FileHandle lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
 	// 	blaze::asset_list::add(lua_asset);
 	// }
 
@@ -103,9 +103,9 @@ void game() {
 
 	// Flame tests
 	{
-		LOG_D("{}\n", "====ASSETS====");
-		blaze::asset_list::debug_list_meta_assets();
-		LOG_D("{}\n", "==============");
+		LOG_D("{}\n", "====FILE_HANDLES====");
+		blaze::asset_list::debug_list_file_handles();
+		LOG_D("{}\n", "====================");
 	}
 
 	// Event bus test

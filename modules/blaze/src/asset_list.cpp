@@ -5,18 +5,16 @@
 #include "events.h"
 #include "engine.h"
 
-#include "flame/meta_asset.h"
-
 #include <iostream>
 
 namespace BLAZE_NAMESPACE {
 	std::vector<flame::Archive> asset_list::_archives;
-	std::unordered_map<std::string, flame::MetaAsset> asset_list::_meta_assets;
+	std::unordered_map<std::string, flame::FileHandle> asset_list::_file_handles;
 
-	flame::DataLoader asset_list::find_asset(std::string name, std::vector<flame::MetaAsset::Task> tasks) {
-		auto meta_asset = _meta_assets.find(name);
-		if (meta_asset != _meta_assets.end()) {
-			return meta_asset->second.get_data(get_platform()->has_async_support(), tasks);
+	flame::DataLoader asset_list::find_asset(std::string name, std::vector<flame::FileHandle::Task> tasks) {
+		auto file_handle = _file_handles.find(name);
+		if (file_handle != _file_handles.end()) {
+			return file_handle->second.get_data(get_platform()->has_async_support(), tasks);
 		}
 		throw std::runtime_error("Can not find asset: '" + name + '\'');
 	}
@@ -32,28 +30,28 @@ namespace BLAZE_NAMESPACE {
 
 		_archives.push_back(archive);
 
-		for (auto& meta_asset : archive.get_meta_assets()) {
-			add(meta_asset);
+		for (auto& file_handle : archive.get_file_handles()) {
+			add(file_handle);
 		}
 	}
 
-	void asset_list::add(flame::MetaAsset& meta_asset) {
+	void asset_list::add(flame::FileHandle& file_handle) {
 		// Check if we have already 
-		auto existing = _meta_assets.find(meta_asset.get_name());
-		if (existing != _meta_assets.end()) {
-			if (existing->second.get_version() < meta_asset.get_version()) {
+		auto existing = _file_handles.find(file_handle.get_name());
+		if (existing != _file_handles.end()) {
+			if (existing->second.get_version() < file_handle.get_version()) {
 				// @todo Move this to the event bus
-				LOG_D("Replacing asset with newer version: {}\n", meta_asset.get_name());
-			} else if(existing->second.get_version() > meta_asset.get_version()) {
-				LOG_D("Already loaded newer asset: {}\n", meta_asset.get_name());
+				LOG_D("Replacing asset with newer version: {}\n", file_handle.get_name());
+			} else if(existing->second.get_version() > file_handle.get_version()) {
+				LOG_D("Already loaded newer asset: {}\n", file_handle.get_name());
 				return;
 			} else {
-				event_bus::send(std::make_shared<Error>("Conflicting asset with same version: '" + meta_asset.get_name() + "' (" + std::to_string(meta_asset.get_version()) + ')', __FILE__, __LINE__));
+				event_bus::send(std::make_shared<Error>("Conflicting asset with same version: '" + file_handle.get_name() + "' (" + std::to_string(file_handle.get_version()) + ')', __FILE__, __LINE__));
 				return;
 			}
 		}
 
-		_meta_assets[meta_asset.get_name()] = meta_asset;
+		_file_handles.insert({file_handle.get_name(), file_handle});
 	}
 
 	bool asset_list::check_dependency(flame::Dependency dependency) {
@@ -81,9 +79,9 @@ namespace BLAZE_NAMESPACE {
 		return missing;
 	}
 
-	void asset_list::debug_list_meta_assets() {
-		for (auto& meta_asset : _meta_assets) {
-			LOG_D("{}\n", meta_asset.first);
+	void asset_list::debug_list_file_handles() {
+		for (auto& file_handle : _file_handles) {
+			LOG_D("{}\n", file_handle.first);
 		}
 	}
 }

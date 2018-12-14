@@ -1,7 +1,7 @@
 #pragma once
 
 #include "flame.h"
-#include "flame/meta_asset.h"
+#include "flame/file_handle.h"
 
 #include "rsa.h"
 
@@ -21,10 +21,6 @@ namespace FLAME_NAMESPACE {
 
 	std::vector<uint8_t> calculate_hash(std::fstream& fs, size_t size, size_t offset = 0);
 
-	class MetaAsset;
-	class FileHandler;
-	class AssetList;
-
 	// Archives only exist for writing files
 	class Archive {
 		public:
@@ -36,12 +32,12 @@ namespace FLAME_NAMESPACE {
 			const size_t& get_version() const;
 			bool is_trusted(crypto::RSA& trusted_key);
 			const std::vector<Dependency>& get_dependencies() const;
-			std::vector<MetaAsset> get_meta_assets();
+			std::vector<FileHandle> get_file_handles();
 
 		protected:
 			Archive(std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA key) : _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _key(key) {}
 
-			std::vector<MetaAsset::Task> create_workflow(Compression compression);
+			std::vector<FileHandle::Task> create_workflow(Compression compression);
 
 			std::string _name;
 			std::string _author;
@@ -49,7 +45,7 @@ namespace FLAME_NAMESPACE {
 			size_t _version;
 			std::vector<Dependency> _dependencies;
 
-			std::vector<MetaAsset> _meta_assets;
+			std::vector<FileHandle> _file_handles;
 
 			crypto::RSA _key;
 

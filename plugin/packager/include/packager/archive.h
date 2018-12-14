@@ -9,7 +9,7 @@ struct Asset {
 	size_t version;
 
 	flame::Compression compression;
-	std::vector<flame::MetaAsset::Task> tasks;
+	std::vector<flame::FileHandle::Task> tasks;
 };
 
 struct Dependency {
