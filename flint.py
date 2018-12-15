@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import platform
 import errno
 import configparser
 import urllib.request
@@ -46,14 +47,23 @@ def install_plugin(url, plugins_folder, config, local = False):
 
     # @todo Use this same system for flint self
     # @todo Add multiplatform support
-    if metainfo.has_section("linux"):
+    if platform.system() == "Linux" and metainfo.has_section("linux"):
         for filename in metainfo["linux"]:
             if not local:
                 req = urllib.request.Request(url + "/" + filename)
                 with urllib.request.urlopen(req) as response, open(os.path.join(plugin_folder, filename), "wb") as f:
                     shutil.copyfileobj(response, f)
             else:
-                os.symlink(os.path.abspath(os.path.join(url, metainfo["linux"]["plugin.so"])), os.path.join(plugin_folder, "plugin.so"))
+                os.symlink(os.path.abspath(os.path.join(url, metainfo["linux"][filename])), os.path.join(plugin_folder, filename))
+    elif platform.system() == "Windows" and metainfo.has_section("windows"):
+        for filename in metainfo["windows"]:
+            if not local:
+                req = urllib.request.Request(url + "/" + filename)
+                with urllib.request.urlopen(req) as response, open(os.path.join(plugin_folder, filename), "wb") as f:
+                    shutil.copyfileobj(response, f)
+            else:
+                # @todo This requires admin mode on windows
+                os.symlink(os.path.abspath(os.path.join(url, metainfo["windows"][filename])), os.path.join(plugin_folder, filename))
 
     else:
         print("Plugin not available for current platform")
@@ -246,7 +256,13 @@ def main():
             env["VSCMD_START_DIR"] = os.getcwd()
 
         if args.debug_flint:
-            command.extend(["gdb", "--args"])
+            if platform.system() == "Linux":
+                command.extend(["gdb", "--args"])
+            elif platform.system() == "Windows":
+                command.extend(["devenv", "/debugexe"])
+            else:
+                print("Debugging not available for current platform")
+
         command.append(os.path.join(flintdir, flintbin))
         command.extend(unknownargs)
 

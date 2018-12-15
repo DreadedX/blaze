@@ -2,7 +2,13 @@
 
 #include "packager/archive.h"
 
-extern "C" void init(Flint& flint) {
+#if _WIN32
+	#define FLINT_PLUGIN __declspec(dllexport) __stdcall
+#else
+	#define FLINT_PLUGIN
+#endif
+
+extern "C" void FLINT_PLUGIN init(Flint& flint) {
 	// @todo Instead of passing in the name it should automatically be taken from the type
 	flint.register_class<Archive>("archive");
 

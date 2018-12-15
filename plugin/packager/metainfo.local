@@ -5,3 +5,6 @@ name = packager
 [linux]
 plugin.so = ../../.flint/build/linux/debug/bin/plugin_packager.so
 
+[windows]
+plugin.dll = ../../.flint/build/windows/debug/bin/plugin_packager.dll
+

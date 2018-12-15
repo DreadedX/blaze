@@ -1,5 +1,5 @@
 -- @todo This is needed in order to support the old packager archives
-run_dir ".flint/build/linux/debug/archives"
+run_dir(".flint/build/" .. config.platform.target .. "/debug/archives")
 
 plugin "android@Dreaded_X"
 
