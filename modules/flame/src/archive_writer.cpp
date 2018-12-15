@@ -15,7 +15,7 @@ namespace FLAME_NAMESPACE {
 
 		iohelper::write(_fs, MAGIC, false);
 
-		_signed = _key.get_d().size() & _key.get_n().size();
+		_signed = _key.get_d().size() && _key.get_n().size();
 		iohelper::write<bool>(_fs, _signed);
 
 		_offset1 = _fs.tellp();
@@ -68,7 +68,9 @@ namespace FLAME_NAMESPACE {
 			std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
 
 			_fs.seekp(_offset1);
-			iohelper::read<std::vector<uint8_t>>(_fs);
+			size_t key_length = iohelper::read_length(_fs);
+			_fs.seekp(key_length, std::ios::cur);
+
 			iohelper::write(_fs, signature);
 		} else {
 			_fs.seekp(_offset1);
