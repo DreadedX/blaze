@@ -42,13 +42,13 @@ namespace BLAZE_NAMESPACE {
 			if (existing->second.get_version() < file_handle.get_version()) {
 				// @todo Move this to the event bus
 				LOG_D("Replacing asset with newer version: {}\n", file_handle.get_name());
+				existing->second = file_handle;
 			} else if(existing->second.get_version() > file_handle.get_version()) {
 				LOG_D("Already loaded newer asset: {}\n", file_handle.get_name());
-				return;
 			} else {
 				event_bus::send(std::make_shared<Error>("Conflicting asset with same version: '" + file_handle.get_name() + "' (" + std::to_string(file_handle.get_version()) + ')', __FILE__, __LINE__));
-				return;
 			}
+			return;
 		}
 
 		_file_handles.insert({file_handle.get_name(), file_handle});
