@@ -1,4 +1,5 @@
 local packager = plugin "packager@blaze"
+plugin "langpack@blaze"
 
 meta "archives"
 	dependency("base", "my_first_mod")
@@ -22,8 +23,8 @@ archive "my_first_mod"
 		path "assets/my_first_mod/script/Hello.lua"
 
 	asset "base/language/Dutch"
-		path "assets/my_first_mod/language/Dutch.langpack"
-		-- task (langpack)
+		path "assets/my_first_mod/language/Dutch.lang"
+		task (langpack.parser)
 		version(10)
 
 archive "base"
@@ -38,9 +39,9 @@ archive "base"
 	script "assets/base/script/Script.lua"
 
 	asset "base/language/Dutch"
-		path "assets/base/language/Dutch.langpack"
-		-- task (langpack)
+		path "assets/base/language/Dutch.lang"
+		task (langpack.parser)
 
 	asset "base/language/English"
-		path "assets/base/language/English.langpack"
-		-- task (langpack)
+		path "assets/base/language/English.lang"
+		task (langpack.parser)

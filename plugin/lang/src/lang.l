@@ -4,6 +4,11 @@
 
 #include <iostream>
 
+int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read);
+
+#undef YY_INPUT
+#define YY_INPUT(b, r, s) read_input(b, &r, s)
+
 	void yyerror(const char* s);
 %}
 

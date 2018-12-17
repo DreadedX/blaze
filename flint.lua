@@ -159,7 +159,6 @@ local packager_path = shared "plugin_packager"
 
 	static()
 
-if false then
 if config.platform.target == "linux" then
 	local parser_lexer = plugin "lexer_parser@Dreaded_X"
 	if not parser_lexer then
@@ -176,12 +175,11 @@ if config.platform.target == "linux" then
 		dependency "plugin_lang-parser"
 
 	-- This should actually be a plugin in the future, for now it is just a tool
-	executable "plugin_lang"
+	shared "plugin_lang"
 		path "plugin/lang"
 		dependency "plugin_lang-lexer"
 		dependency "iohelper"
-
-end
+		dependency "flint"
 
 end
 

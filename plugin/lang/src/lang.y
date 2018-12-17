@@ -7,6 +7,7 @@
 int yylex();
 void yyerror(const char* s);
 std::string* trim_whitespace(std::string* s, bool trailing = false);
+int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read);
 
 lang::Node root;
 lang::Node* current_node = &root;

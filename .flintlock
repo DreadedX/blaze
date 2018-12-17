@@ -6,4 +6,5 @@ base_url = https://downloads.mtgames.nl/release/flint
 lexer_parser@dreaded_x.local = ../plugin_lexer_parser
 android@dreaded_x.local = ../plugin_android
 packager@blaze.local = plugin/packager
+langpack@blaze.local = plugin/lang
 

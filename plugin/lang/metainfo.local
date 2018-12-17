@@ -1,0 +1,10 @@
+[meta]
+author = blaze
+name = langpack
+
+[linux]
+plugin.so = ../../.flint/build/linux/debug/bin/plugin_lang.so
+
+[windows]
+plugin.dll = ../../.flint/build/windows/debug/bin/plugin_lang.dll
+

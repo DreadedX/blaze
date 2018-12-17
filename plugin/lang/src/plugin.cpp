@@ -54,31 +54,91 @@ void to_file(std::ostream& f, lang::Node& node) {
 	}
 }
 
-int main(int argc, const char* argv[]) {
-	if (argc != 2) {
-		std::cerr << "No file name specified!\n";
-		exit(-1);
+std::vector<uint8_t> data;
+size_t offset;
+
+int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read) {
+	size_t num_bytes_to_read = max_bytes_to_read;
+	size_t num_bytes_remaining = data.size() - offset;
+
+	if (num_bytes_to_read > num_bytes_remaining) {
+		num_bytes_to_read = num_bytes_remaining;
 	}
 
-	std::string filename = argv[1];
-
-	FILE* myfile = fopen(filename.c_str(), "r");
-
-	if (!myfile) {
-		std::cerr << "Failed to open file: " << filename << '\n';
-		return -1;
+	for (size_t i = 0; i < num_bytes_to_read; ++i) {
+		buffer[i] = data[offset+i];
 	}
+	*num_bytes_read = num_bytes_to_read;
+	offset += num_bytes_to_read;
+	return 0;
+}
 
-	yyin = myfile;
+// int main(int argc, const char* argv[]) {
+// 	if (argc != 2) {
+// 		std::cerr << "No file name specified!\n";
+// 		exit(-1);
+// 	}
+//
+// 	std::string filename = argv[1];
+//
+// 	FILE* myfile = fopen(filename.c_str(), "r");
+//
+// 	if (!myfile) {
+// 		std::cerr << "Failed to open file: " << filename << '\n';
+// 		return -1;
+// 	}
+//
+// 	yyin = myfile;
+//
+// 	yyparse();
+//
+// 	std::ofstream output(filename + "pack", std::ios::out | std::ios::trunc);
+// 	if (!output.is_open()) {
+// 		std::cerr << "Failed to open file: " << filename << "pack" << '\n';
+// 		return -1;
+// 	}
+//
+// 	display_children(get_root());
+// 	to_file(output, get_root());
+// }
 
-	yyparse();
+#include "flint.h"
 
-	std::ofstream output(filename + "pack", std::ios::out | std::ios::trunc);
-	if (!output.is_open()) {
-		std::cerr << "Failed to open file: " << filename << "pack" << '\n';
-		return -1;
-	}
+#include "iohelper/memstream.h"
 
-	display_children(get_root());
-	to_file(output, get_root());
+#if defined(__GNUC__) || defined(__clang__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
+#pragma push_macro("fmt")
+#undef fmt
+#include "sol.hpp"
+#pragma pop_macro("fmt")
+#if defined(__GNUC__) || defined(__clang__)
+	#pragma GCC diagnostic pop
+#endif
+
+#if _WIN32
+	#define FLINT_PLUGIN __declspec(dllexport) __stdcall
+#else
+	#define FLINT_PLUGIN
+#endif
+
+// @todo We should not store everything in global variables
+// or we should atleast clear them
+extern "C" void FLINT_PLUGIN init(Flint& flint) {
+	sol::table helper = flint.test_get_lua().create_named_table("langpack");
+	helper.set_function("parser", [] (std::vector<uint8_t> in) {
+			data = in;
+			offset = 0;
+			yyin = nullptr;
+			yyparse();
+			display_children(get_root());
+
+			std::vector<uint8_t> out;
+			iohelper::omemstream out_stream(out);
+			to_file(out_stream, get_root());
+
+			return out;
+	});
 }
