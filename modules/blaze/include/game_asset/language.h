@@ -4,25 +4,10 @@
 
 #include "lang.h"
 
-#include <atomic>
+#include <fmt/format.h>
 
 namespace BLAZE_NAMESPACE {
-
-	class Script : public GameAssetLoaded {
-		public:
-			Script(std::string asset_name);
-			~Script();
-
-			bool is_loaded() override;
-
-			void update();
-
-		private:
-			sol::environment environment;
-			bool _loaded = false;
-	};
-
-	class Language : public GameAssetLoaded {
+	class Language : public GameAsset {
 		public:
 			Language(std::string asset_name);
 
@@ -32,6 +17,7 @@ namespace BLAZE_NAMESPACE {
 
 				return fmt::format(value, args...);
 			}
+
 		private:
 			std::vector<uint8_t> load(std::vector<uint8_t> data);
 

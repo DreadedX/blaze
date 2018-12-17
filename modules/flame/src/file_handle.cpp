@@ -36,8 +36,8 @@ namespace FLAME_NAMESPACE {
 		return data;
 	}
 
-	DataLoader FileHandle::get_data(bool async, std::vector<Task> workflow) {
+	DataHandle FileHandle::load_data(bool async, std::vector<Task> workflow) {
 		std::launch policy = async ? std::launch::async : std::launch::deferred;
-		return DataLoader(std::async(policy, std::bind(&FileHandle::async_load, this, std::placeholders::_1), workflow), async);
+		return DataHandle(std::async(policy, std::bind(&FileHandle::async_load, this, std::placeholders::_1), workflow), async);
 	}
 }

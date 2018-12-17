@@ -8,9 +8,9 @@
 #include <vector>
 
 namespace FLAME_NAMESPACE {
-	class DataLoader {
+	class DataHandle {
 		public:
-			DataLoader(std::future<std::vector<uint8_t>> future, bool async = true);
+			DataHandle(std::future<std::vector<uint8_t>> future, bool async = true);
 
 			bool is_valid();
 			bool is_loaded();

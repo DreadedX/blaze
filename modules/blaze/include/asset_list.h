@@ -4,7 +4,7 @@
 
 #include "flame/file_handle.h"
 #include "flame/archive.h"
-#include "flame/data_loader.h"
+#include "flame/data_handle.h"
 
 #include <unordered_map>
 
@@ -12,7 +12,7 @@ namespace BLAZE_NAMESPACE {
 
 	class asset_list {
 		public:
-			static flame::DataLoader find_asset(std::string name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
+			static flame::DataHandle load_data(std::string name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
 			static void add(flame::Archive& archive);
 			static void add(flame::FileHandle& file_handle);
 			static bool check_dependency(flame::Dependency dependency);

@@ -6,7 +6,7 @@
 
 #include "enviroment.h"
 
-#include "game_asset_types.h"
+#include "game_asset/language.h"
 
 // @todo This is just for the thread id stuff
 #include <fmt/ostream.h>

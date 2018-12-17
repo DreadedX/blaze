@@ -2,7 +2,7 @@
 
 #include "flame.h"
 
-#include "flame/data_loader.h"
+#include "flame/data_handle.h"
 
 #include <memory>
 #include <string>
@@ -27,7 +27,7 @@ namespace FLAME_NAMESPACE {
 			const std::string& get_name() const;
 			size_t get_version() const;
 
-			DataLoader get_data(bool async = true, std::vector<Task> workflow = std::vector<Task>());
+			DataHandle load_data(bool async = true, std::vector<Task> workflow = std::vector<Task>());
 
 		private:
 			std::vector<uint8_t> async_load(std::vector<Task> workflow);

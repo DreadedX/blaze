@@ -11,10 +11,10 @@ namespace BLAZE_NAMESPACE {
 	std::vector<flame::Archive> asset_list::_archives;
 	std::unordered_map<std::string, flame::FileHandle> asset_list::_file_handles;
 
-	flame::DataLoader asset_list::find_asset(std::string name, std::vector<flame::FileHandle::Task> tasks) {
+	flame::DataHandle asset_list::load_data(std::string name, std::vector<flame::FileHandle::Task> tasks) {
 		auto file_handle = _file_handles.find(name);
 		if (file_handle != _file_handles.end()) {
-			return file_handle->second.get_data(get_platform()->has_async_support(), tasks);
+			return file_handle->second.load_data(get_platform()->has_async_support(), tasks);
 		}
 		throw std::runtime_error("Can not find asset: '" + name + '\'');
 	}

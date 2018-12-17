@@ -88,20 +88,9 @@ lib "flame"
 	path "modules/flame"
 	dependency("zlib", "crypto", "iohelper")
 
--- @todo This needs to really merge with the respective things !!!
--- @current
-lib "lua-bind"
-	path "modules/lua-bind"
-	dependency("sol2", "flame", "lang")
-
-	include("modules/blaze/include")
-	if config.platform.target == "android" then
-		include "modules/blaze/platform/android/include"
-	end
-
 lib "blaze"
 	path "modules/blaze"
-	dependency("lua-bind", "generated", "lang")
+	dependency("flame", "generated", "lang", "sol2")
 
 	-- @todo This should auto happen in flint
 	if config.platform.target == "android" then

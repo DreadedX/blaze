@@ -1,4 +1,4 @@
-#include "flame/data_loader.h"
+#include "flame/data_handle.h"
 
 #include <iostream>
 #include <fstream>
@@ -7,22 +7,22 @@
 #define CHUNK_SIZE 16384
 
 namespace FLAME_NAMESPACE {
-	DataLoader::DataLoader(std::future<std::vector<uint8_t>> future, bool async) : _future(std::move(future)), _async(async) {}
+	DataHandle::DataHandle(std::future<std::vector<uint8_t>> future, bool async) : _future(std::move(future)), _async(async) {}
 
-	bool DataLoader::is_valid() {
+	bool DataHandle::is_valid() {
 		return _future.valid();
 	}
 
-	bool DataLoader::is_loaded() {
+	bool DataHandle::is_loaded() {
 		return is_valid() && (!_async || _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready);
 	}
 
-	void DataLoader::wait() {
+	void DataHandle::wait() {
 		_future.wait();
 	}
 
 	// This function can only be called once after that the it will become invalid
-	std::vector<uint8_t> DataLoader::get() {
+	std::vector<uint8_t> DataHandle::get() {
 		if (is_loaded()) {
 			return _future.get();
 		} else if (is_valid()) {
@@ -33,7 +33,7 @@ namespace FLAME_NAMESPACE {
 	}
 
 	template<>
-	std::string DataLoader::get_as<std::string>() {
+	std::string DataHandle::get_as<std::string>() {
 		auto data = get();
 		return std::string(data.begin(), data.end());
 	}

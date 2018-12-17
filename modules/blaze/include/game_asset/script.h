@@ -1,6 +1,6 @@
 #pragma once
 
-#include "flame.h"
+#include "game_asset.h"
 
 #if defined(__GNUC__) || defined (__clang__)
 	#pragma GCC diagnostic push
@@ -15,6 +15,19 @@
 	#pragma warning(pop)
 #endif
 
-namespace FLAME_NAMESPACE::lua {
-	void bind(sol::state& lua);
+namespace BLAZE_NAMESPACE {
+
+	class Script : public GameAsset {
+		public:
+			Script(std::string asset_name);
+			~Script();
+
+			bool is_loaded() override;
+
+			void update();
+
+		private:
+			sol::environment environment;
+			bool _loaded = false;
+	};
 }
