@@ -6,46 +6,46 @@ plugin "android@Dreaded_X"
 subfile("modules/iohelper/flint.lua", "iohelper")
 
 lib "bigint"
-	src "*third_party/bigint"
-	src "-third_party/bigint/{testsuite,sample}.cc"
-	include "third_party/bigint"
+	src "*vendor/bigint"
+	src "-vendor/bigint/{testsuite,sample}.cc"
+	include "vendor/bigint"
 
 lib "lua"
-	src("*third_party/lua", "-third_party/lua/lua.c")
-	include "third_party/lua"
-	include "third_party/headers"
+	src("*vendor/lua", "-vendor/lua/lua.c")
+	include "vendor/lua"
+	include "vendor/headers"
 
 	warnings(false)
 
 lib "zlib"
-	src("*third_party/zlib", "-third_party/zlib/{gzlib.c,gzwrite.c,gzread.c}")
-	include "third_party/zlib"
+	src("*vendor/zlib", "-vendor/zlib/{gzlib.c,gzwrite.c,gzread.c}")
+	include "vendor/zlib"
 
 	lang "c11"
 
 lib "sol2"
-	include "third_party/sol2"
+	include "vendor/sol2"
 
 	dependency "lua"
 
 lib "glm"
-	include "third_party/glm"
+	include "vendor/glm"
 
 lib "vulkan-headers"
-	include "third_party/vulkan-headers/include"
+	include "vendor/vulkan-headers/include"
 
 lib "glfw"
-	include "third_party/glfw/include"
-	include "third_party/headers/glfw"
+	include "vendor/glfw/include"
+	include "vendor/headers/glfw"
 
-	src "third_party/glfw/src/{context,init,input,monitor,window,vulkan}.c"
-	src "third_party/glfw/src/egl_context.c"
+	src "vendor/glfw/src/{context,init,input,monitor,window,vulkan}.c"
+	src "vendor/glfw/src/egl_context.c"
 	if config.platform.target == "linux" then
-		src "third_party/glfw/src/glx_context.c"
-		src "third_party/glfw/src/x11_{init,monitor,window}.c"
-		src "third_party/glfw/src/posix_{time,tls}.c"
-		src "third_party/glfw/src/linux_joystick.c"
-		src "third_party/glfw/src/xkb_unicode.c"
+		src "vendor/glfw/src/glx_context.c"
+		src "vendor/glfw/src/x11_{init,monitor,window}.c"
+		src "vendor/glfw/src/posix_{time,tls}.c"
+		src "vendor/glfw/src/linux_joystick.c"
+		src "vendor/glfw/src/xkb_unicode.c"
 
 		define "_GLFW_X11"
 		-- @todo This is needed for strdup to work
@@ -53,8 +53,8 @@ lib "glfw"
 
 		link("dl", "X11", "Xrandr", "Xinerama", "Xcursor", "vulkan")
 	elseif config.platform.target == "windows" then
-		src "third_party/glfw/src/wgl_context.c"
-		src "third_party/glfw/src/win32_{init,joystick,monitor,time,tls,window}.c"
+		src "vendor/glfw/src/wgl_context.c"
+		src "vendor/glfw/src/win32_{init,joystick,monitor,time,tls,window}.c"
 
 		define "_GLFW_WIN32"
 		link("user32", "kernel32", "gdi32", "shell32", "vulkan-1")
@@ -231,7 +231,7 @@ end
 -- executable "tests"
 -- 	src "test/test.cpp"
 --
--- 	include "third_party/Catch/single_include"
+-- 	include "vendor/Catch/single_include"
 --
 -- 	dependency "crypto"
 
