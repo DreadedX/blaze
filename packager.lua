@@ -4,6 +4,32 @@ plugin "langpack@blaze"
 meta "archives"
 	dependency("base", "my_first_mod")
 
+archive "base"
+	author "Dreaded_X"
+	description "This archive contains the base game"
+	-- key "build/keys/test.priv"
+	key "keys/official.pem"
+	-- compression(flame.Compression.none)
+	compression(0)
+	version(1)
+
+	script "assets/base/script/Script.lua"
+
+	asset "base/language/Dutch"
+		path "assets/base/language/Dutch.lang"
+		task (langpack.parser)
+
+	asset "base/language/English"
+		path "assets/base/language/English.lang"
+		task (langpack.parser)
+
+	-- @todo Add task for compiling shaders
+	asset "base/shader/Vertex"
+		path "assets/base/shader/vert.spv"
+
+	asset "base/shader/Fragment"
+		path "assets/base/shader/frag.spv"
+
 archive "my_first_mod"
 	author "Dreaded_X"
 	description "My first mod!"
@@ -26,22 +52,3 @@ archive "my_first_mod"
 		path "assets/my_first_mod/language/Dutch.lang"
 		task (langpack.parser)
 		version(10)
-
-archive "base"
-	author "Dreaded_X"
-	description "This archive contains the base game"
-	-- key "build/keys/test.priv"
-	key "keys/official.pem"
-	-- compression(flame.Compression.none)
-	compression(0)
-	version(1)
-
-	script "assets/base/script/Script.lua"
-
-	asset "base/language/Dutch"
-		path "assets/base/language/Dutch.lang"
-		task (langpack.parser)
-
-	asset "base/language/English"
-		path "assets/base/language/English.lang"
-		task (langpack.parser)

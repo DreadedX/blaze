@@ -15,6 +15,8 @@ lib "lua"
 	include "third_party/lua"
 	include "third_party/headers"
 
+	warnings(false)
+
 lib "zlib"
 	src("*third_party/zlib", "-third_party/zlib/{gzlib.c,gzwrite.c,gzread.c}")
 	include "third_party/zlib"
@@ -25,6 +27,47 @@ lib "sol2"
 	include "third_party/sol2"
 
 	dependency "lua"
+
+lib "glm"
+	include "third_party/glm"
+
+lib "vulkan-headers"
+	include "third_party/vulkan-headers/include"
+
+lib "glfw"
+	include "third_party/glfw/include"
+	include "third_party/headers/glfw"
+
+	src "third_party/glfw/src/{context,init,input,monitor,window,vulkan}.c"
+	src "third_party/glfw/src/egl_context.c"
+	if config.platform.target == "linux" then
+		src "third_party/glfw/src/glx_context.c"
+		src "third_party/glfw/src/x11_{init,monitor,window}.c"
+		src "third_party/glfw/src/posix_{time,tls}.c"
+		src "third_party/glfw/src/linux_joystick.c"
+		src "third_party/glfw/src/xkb_unicode.c"
+
+		define "_GLFW_X11"
+		-- @todo This is needed for strdup to work
+		define "_POSIX_C_SOURCE=200809L"
+
+		link("dl", "X11", "Xrandr", "Xinerama", "Xcursor", "vulkan")
+	elseif config.platform.target == "windows" then
+		src "third_party/glfw/src/wgl_context.c"
+		src "third_party/glfw/src/win32_{init,joystick,monitor,time,tls,window}.c"
+
+		define "_GLFW_WIN32"
+		link("user32", "kernel32", "gdi32", "shell32", "vulkan-1")
+
+		-- link_dir "%VK_SDK_PATH%/Lib"
+		link_dir "C:/VulkanSDK/1.1.73.0/Lib"
+	end
+
+	lang "c11"
+
+	dependency "vulkan-headers"
+
+	warnings(false)
 
 subfile("modules/logger/flint.lua", "logger")
 
@@ -91,6 +134,7 @@ lib "flame"
 lib "blaze"
 	path "modules/blaze"
 	dependency("flame", "generated", "lang", "sol2")
+	dependency("glfw", "glm")
 
 	-- @todo This should auto happen in flint
 	if config.platform.target == "android" then
@@ -102,8 +146,9 @@ lib "blaze"
 
 -- @todo Allows skipping the second argument
 local packager = plugin "packager@blaze"
+local langpack_plugin = plugin "langpack@blaze"
 
-if packager then
+if packager and langpack_plugin then
 	subfile("packager.lua", "")
 else
 	print "Packager plugin not loaded, skipping building archives"
@@ -125,7 +170,7 @@ executable(name)
 
 	-- @todo We should add a meta target called game that depends on plugin_packager and that warns the user to build again if packager is not loaded
 	-- Or we should just make packagers a seperate project
-	if packager then
+	if packager and langpack_plugin then
 		dependency "archives"
 	end
 	-- @todo Does it make sense to always have these as dependencies

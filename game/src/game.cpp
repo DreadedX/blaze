@@ -11,6 +11,8 @@
 // @todo This is just for the thread id stuff
 #include <fmt/ostream.h>
 
+#include "graphics_backend/vulkan.h"
+
 using namespace blaze;
 
 void handle_chat_message(std::shared_ptr<ChatMessage> event) {
@@ -115,5 +117,17 @@ void game() {
 
 		event_bus::send(std::make_shared<ChatMessage>("Hello world!"));
 		event_bus::send(std::make_shared<ChatMessage>("This is a test"));
+	}
+
+	// Graphics test
+	{
+		std::shared_ptr<GraphicsBackend> graphics_backend = std::make_shared<VulkanBackend>();
+
+		graphics_backend->init();
+		// @todo GLFW should be seperate from the vulkan backend
+		while (graphics_backend->is_running()) {
+			graphics_backend->update();
+		}
+		graphics_backend->cleanup();
 	}
 }

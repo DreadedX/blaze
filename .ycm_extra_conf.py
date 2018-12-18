@@ -23,6 +23,9 @@ flags = [
     '-Ithird_party/lua',
     '-Ithird_party/headers',
     '-Ithird_party/sol2',
+    '-Ithird_party/glm',
+    '-Ithird_party/vulkan-headers/include',
+    '-Ithird_party/glfw/include',
     '-Imodules/logger/third_party/fmt',
     '-Igame/include',
     '-Iplugin/lang',
@@ -75,22 +78,5 @@ def GetStandardLibraryIndexInSysPath( sys_path ):
 
 def PythonSysPath( **kwargs ):
   sys_path = kwargs[ 'sys_path' ]
-  for folder in os.listdir( DIR_OF_THIRD_PARTY ):
-    if folder == 'python-future':
-      folder = os.path.join( folder, 'src' )
-      sys_path.insert( GetStandardLibraryIndexInSysPath( sys_path ) + 1,
-                       os.path.realpath( os.path.join( DIR_OF_THIRD_PARTY,
-                                                       folder ) ) )
-      continue
-
-    if folder == 'cregex':
-      interpreter_path = kwargs[ 'interpreter_path' ]
-      major_version = subprocess.check_output( [
-        interpreter_path, '-c', 'import sys; print( sys.version_info[ 0 ] )' ]
-      ).rstrip().decode( 'utf8' )
-      folder = os.path.join( folder, 'regex_{}'.format( major_version ) )
-
-    sys_path.insert( 0, os.path.realpath( os.path.join( DIR_OF_THIRD_PARTY,
-                                                        folder ) ) )
   return sys_path
 
