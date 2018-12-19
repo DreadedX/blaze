@@ -42,40 +42,11 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
-std::vector<uint8_t> read_file(const std::string& filename) {
-	std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open()) {
-		throw std::runtime_error("failed to open file!");
-	}
-
-	size_t file_size = (size_t) file.tellg();
-	std::vector<uint8_t> buffer(file_size);
-
-	file.seekg(0);
-	file.read(reinterpret_cast<char*>(buffer.data()), file_size);
-
-	file.close();
-
-	return buffer;
-}
-
-struct Vertex {
-	glm::vec2 pos;
-	glm::vec3 color;
-};
-
-struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-};
-
 // We are not making this a function of Vertex as vertex will be used by other graphic backends later on as well
 VkVertexInputBindingDescription get_vertex_binding_description() {
 	VkVertexInputBindingDescription binding_description  {};
 	binding_description.binding = 0;
-	binding_description.stride = sizeof(Vertex);
+	binding_description.stride = sizeof(blaze::Vertex);
 	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	return binding_description;
@@ -87,12 +58,12 @@ std::array<VkVertexInputAttributeDescription, 2> get_vertex_attribute_descriptio
 	attribute_description[0].binding = 0;
 	attribute_description[0].location = 0;
 	attribute_description[0].format = VK_FORMAT_R32G32_SFLOAT;
-	attribute_description[0].offset = offsetof(Vertex, pos);
+	attribute_description[0].offset = offsetof(blaze::Vertex, pos);
 
 	attribute_description[1].binding = 0;
 	attribute_description[1].location = 1;
 	attribute_description[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-	attribute_description[1].offset = offsetof(Vertex, color);
+	attribute_description[1].offset = offsetof(blaze::Vertex, color);
 
 	return attribute_description;
 }
@@ -950,7 +921,8 @@ namespace BLAZE_NAMESPACE {
 			render_pass_info.renderArea.offset = {0, 0};
 			render_pass_info.renderArea.extent = _swap_chain_extent;
 
-			VkClearValue clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
+			VkClearValue clear_color = {};
+			clear_color.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 			render_pass_info.clearValueCount = 1;
 			render_pass_info.pClearValues = &clear_color;
 
