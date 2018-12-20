@@ -25,3 +25,15 @@
 [submodule "third_party/glm"]
 	path = vendor/glm
 	url = https://github.com/g-truc/glm
+[submodule "plugin/glsl/vendor/shaderc"]
+	path = plugin/glsl/vendor/shaderc
+	url = https://github.com/google/shaderc/
+[submodule "plugin/glsl/vendor/spirv-tools"]
+	path = plugin/glsl/vendor/spirv-tools
+	url = https://github.com/KhronosGroup/SPIRV-Tools
+[submodule "plugin/glsl/vendor/spirv-headers"]
+	path = plugin/glsl/vendor/spirv-headers
+	url = https://github.com/KhronosGroup/SPIRV-Headers
+[submodule "plugin/glsl/vendor/glslang"]
+	path = plugin/glsl/vendor/glslang
+	url = https://github.com/KhronosGroup/glslang

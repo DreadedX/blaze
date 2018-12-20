@@ -3,8 +3,8 @@ author = blaze
 name = langpack
 
 [linux]
-plugin.so = ../../.flint/build/linux/debug/bin/plugin_lang.so
+plugin.so = ../../.flint/build/linux/debug/bin/plugin_langpack.so
 
 [windows]
-plugin.dll = ../../.flint/build/windows/debug/bin/plugin_lang.dll
+plugin.dll = ../../.flint/build/windows/debug/bin/plugin_langpack.dll
 

@@ -23,6 +23,8 @@ lib "zlib"
 
 	lang "c11"
 
+	warnings(false)
+
 lib "sol2"
 	include "vendor/sol2"
 
@@ -144,11 +146,17 @@ lib "blaze"
 	-- 	path "modules/blaze/platform/windows"
 	-- end
 
+subfile("plugin/glsl/flint.lua", "plugin_glsl")
+
+meta "plugins"
+	dependency("plugin_packager", "plugin_langpack", "plugin_glsl")
+
 -- @todo Allows skipping the second argument
 local packager = plugin "packager@blaze"
 local langpack_plugin = plugin "langpack@blaze"
+local glsl_plugin = plugin "glsl@blaze"
 
-if packager and langpack_plugin then
+if packager and langpack_plugin and glsl_plugin then
 	subfile("packager.lua", "")
 else
 	print "Packager plugin not loaded, skipping building archives"
@@ -170,7 +178,7 @@ executable(name)
 
 	-- @todo We should add a meta target called game that depends on plugin_packager and that warns the user to build again if packager is not loaded
 	-- Or we should just make packagers a seperate project
-	if packager and langpack_plugin then
+	if packager and langpack_plugin and glsl_plugin then
 		dependency "archives"
 	end
 	-- @todo Does it make sense to always have these as dependencies
@@ -220,7 +228,7 @@ if config.platform.target == "linux" then
 		dependency "plugin_lang-parser"
 
 	-- This should actually be a plugin in the future, for now it is just a tool
-	shared "plugin_lang"
+	shared "plugin_langpack"
 		path "plugin/lang"
 		dependency "plugin_lang-lexer"
 		dependency "iohelper"

@@ -106,18 +106,6 @@ int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read) {
 
 #include "iohelper/memstream.h"
 
-#if defined(__GNUC__) || defined(__clang__)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-#pragma push_macro("fmt")
-#undef fmt
-#include "sol.hpp"
-#pragma pop_macro("fmt")
-#if defined(__GNUC__) || defined(__clang__)
-	#pragma GCC diagnostic pop
-#endif
-
 #if _WIN32
 	#define FLINT_PLUGIN __declspec(dllexport) __stdcall
 #else

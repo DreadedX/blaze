@@ -1,5 +1,6 @@
-local packager = plugin "packager@blaze"
+plugin "packager@blaze"
 plugin "langpack@blaze"
+plugin "glsl@blaze"
 
 meta "archives"
 	dependency("base", "my_first_mod")
@@ -8,7 +9,7 @@ archive "base"
 	author "Dreaded_X"
 	description "This archive contains the base game"
 	-- key "build/keys/test.priv"
-	key "keys/official.pem"
+	-- key "keys/official.pem"
 	-- compression(flame.Compression.none)
 	compression(0)
 	version(1)
@@ -25,10 +26,12 @@ archive "base"
 
 	-- @todo Add task for compiling shaders
 	asset "base/shader/Vertex"
-		path "assets/base/shader/vert.spv"
+		path "assets/base/shader/triangle.vert"
+		task(shader.compiler)
 
 	asset "base/shader/Fragment"
-		path "assets/base/shader/frag.spv"
+		path "assets/base/shader/triangle.frag"
+		task(shader.compiler)
 
 archive "my_first_mod"
 	author "Dreaded_X"
@@ -36,7 +39,7 @@ archive "my_first_mod"
 	-- key "build/keys/unofficial.priv"
 	-- key "keys/official.pem"
 	-- compression(flame.Compression.none)
-	compression(0)
+	compression(1)
 	version(3)
 
 	script "assets/my_first_mod/script/Script.lua"

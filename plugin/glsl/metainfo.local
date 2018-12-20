@@ -1,0 +1,10 @@
+[meta]
+author = blaze
+name = glsl
+
+[linux]
+plugin.so = ../../.flint/build/linux/debug/bin/plugin_glsl.so
+
+[windows]
+plugin.dll = ../../.flint/build/windows/debug/bin/plugin_glsl.dll
+
