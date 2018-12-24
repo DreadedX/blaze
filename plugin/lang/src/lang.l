@@ -13,13 +13,14 @@ int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read);
 %}
 
 %option noyywrap
+%option nounistd
 
 %%
 
 	/* Skip comments */
 [ \t]*[;][^\n]+ ;
 	/* Match text */
-[^\[\]{}\n=\\]+ {
+[^\[\]{}\n\r=\\]+ {
 	yylval.sval = new std::string(yytext, yyleng);
 	return STRING;
 }
@@ -41,7 +42,7 @@ int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read);
 "}" {
 	return FILL_END;
 }
-"\n"+ {
+[\n\r]+ {
 	return NEWLINE;
 }
 [ \t] ;

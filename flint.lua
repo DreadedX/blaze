@@ -61,8 +61,11 @@ lib "glfw"
 		define "_GLFW_WIN32"
 		link("user32", "kernel32", "gdi32", "shell32", "vulkan-1")
 
-		-- link_dir "%VK_SDK_PATH%/Lib"
-		link_dir "C:/VulkanSDK/1.1.73.0/Lib"
+		if config.platform.host == "linux" then
+			link_dir "C:/VulkanSDK/1.1.73.0/Lib"
+		else
+			link_dir "%VK_SDK_PATH%/Lib"
+		end
 	end
 
 	lang "c11"
@@ -212,29 +215,26 @@ local packager_path = shared "plugin_packager"
 
 	static()
 
-if config.platform.target == "linux" then
-	local parser_lexer = plugin "lexer_parser@Dreaded_X"
-	if not parser_lexer then
-		print "Plugin parser lexer is needed!"
-		os.exit()
-	end
-
-	parser "plugin_lang-parser"
-		path "plugin/lang"
-		dependency "lang"
-
-	lexer "plugin_lang-lexer"
-		path "plugin/lang"
-		dependency "plugin_lang-parser"
-
-	-- This should actually be a plugin in the future, for now it is just a tool
-	shared "plugin_langpack"
-		path "plugin/lang"
-		dependency "plugin_lang-lexer"
-		dependency "iohelper"
-		dependency "flint"
-
+local parser_lexer = plugin "lexer_parser@Dreaded_X"
+if not parser_lexer then
+	print "Plugin parser lexer is needed!"
+	os.exit()
 end
+
+parser "plugin_lang-parser"
+	path "plugin/lang"
+	dependency "lang"
+
+lexer "plugin_lang-lexer"
+	path "plugin/lang"
+	dependency "plugin_lang-parser"
+
+-- This should actually be a plugin in the future, for now it is just a tool
+shared "plugin_langpack"
+	path "plugin/lang"
+	dependency "plugin_lang-lexer"
+	dependency "iohelper"
+	dependency "flint_base"
 
 -- executable "tests"
 -- 	src "test/test.cpp"
