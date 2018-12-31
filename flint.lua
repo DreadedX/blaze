@@ -139,27 +139,34 @@ lib "flame"
 lib "blaze"
 	path "modules/blaze"
 	dependency("flame", "generated", "lang", "sol2")
-	dependency("glfw", "glm")
+	dependency "glm"
+	if config.platform.target ~= "android" then
+		dependency "glfw"
+	end
+
+	dependency "vulkan-headers"
 
 	-- @todo This should auto happen in flint
 	if config.platform.target == "android" then
 		path "modules/blaze/platform/android"
+
+		define "VK_USE_PLATFORM_ANDROID_KHR"
+		link("log", "android", "EGL", "GLESv1_CM", "vulkan")
 	end
-	-- if config.platform.target == "windows" then
-	-- 	path "modules/blaze/platform/windows"
-	-- end
 
 subfile("plugin/glsl/flint.lua", "plugin_glsl")
+subfile("plugin/image/flint.lua", "plugin_image")
 
 meta "plugins"
-	dependency("plugin_packager", "plugin_langpack", "plugin_glsl")
+	dependency("plugin_packager", "plugin_langpack", "plugin_glsl", "plugin_image")
 
 -- @todo Allows skipping the second argument
 local packager = plugin "packager@blaze"
 local langpack_plugin = plugin "langpack@blaze"
 local glsl_plugin = plugin "glsl@blaze"
+local image_plugin = plugin "image@blaze"
 
-if packager and langpack_plugin and glsl_plugin then
+if packager and langpack_plugin and glsl_plugin and image_plugin then
 	subfile("packager.lua", "")
 else
 	print "Packager plugin not loaded, skipping building archives"

@@ -3,51 +3,58 @@
 #include <android/log.h>
 
 #include <iostream>
+#include <thread>
 
 int main();
 
-JNIEnv* _env;
-jobject _obj;
+bool _android_running = false;
+ANativeWindow* _android_window = nullptr;
+bool _android_resized = false;
 
-jmethodID _appendToLog;
-void appendToLog(std::string message) {
-	_env->CallVoidMethod(_obj, _appendToLog, _env->NewStringUTF(message.c_str()));
+std::thread game_thread;
+
+void handle_cmd(android_app* app, int32_t cmd) {
+	switch (cmd) {
+		case APP_CMD_INIT_WINDOW:
+			__android_log_print(ANDROID_LOG_INFO, "BlazeNativeHandler", "Init");
+			_android_window = app->window;
+			_android_running = true;
+			game_thread = std::thread(main);
+			break;
+
+		case APP_CMD_TERM_WINDOW:
+			__android_log_print(ANDROID_LOG_INFO, "BlazeNativeHandler", "Terminate");
+			_android_running = false;
+	 		break;
+
+		case APP_CMD_CONFIG_CHANGED:
+			__android_log_print(ANDROID_LOG_INFO, "BlazeNativeHandler", "Config change");
+			// @todo This is super janky
+			_android_resized = true;
+			break;
+
+		default:
+			//LOG_D("Event not handled: {}\n", cmd);
+			__android_log_print(ANDROID_LOG_INFO, "BlazeNativeHandler", "Unhandled");
+	}
 }
 
-// Entrypoint for android
-void startNative(JNIEnv* env, jobject obj) {
-	// Store pointers to env and obj
-	// @todo Is this allowed?
-	_env = env;
-	_obj = obj;
+void android_main(struct android_app* app) {
+	__android_log_print(ANDROID_LOG_INFO, "BlazeNative", "Starting");
+	app->onAppCmd = handle_cmd;
 
-	jclass clazz = _env->GetObjectClass(_obj);
-	_appendToLog = _env->GetMethodID(clazz, "appendLog", "(Ljava/lang/String;)V");
+	int events;
+	android_poll_source* source;
 
-	// Call the normal entrypoint
-	main();
-}
+	do {
+		if (ALooper_pollAll(_android_running ? 1 : 0, nullptr, &events, (void**)&source) >= 0) {
+			if (source != nullptr) {
+				source->process(app, source);
+			}
+		}
+	} while (app->destroyRequested == 0);
 
-JNINativeMethod _methods[] = {
-	{"startNative", "()V", (void*)startNative},
-};
-
-JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserverd) {
-	JNIEnv* env;
-	if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-		return -1;
-	}
-
-	jclass clazz = env->FindClass("nl/mtgames/blaze/ui/bootstrap/BootstrapViewModel");
-	if (clazz == nullptr) {
-		return -1;
-	}
-
-	if (env->RegisterNatives(clazz, _methods, sizeof(_methods)/sizeof(_methods[0])) < 0) {
-		return -1;
-	}
-
-	return JNI_VERSION_1_6;
+	game_thread.join();
 }
 
 namespace BLAZE_NAMESPACE::platform {
@@ -63,9 +70,71 @@ namespace BLAZE_NAMESPACE::platform {
 	}
 
 	logger::LogHandler Android::get_logger() {
-		return [](Level, std::string, int, std::string message){
-			appendToLog(message);
+		return [](Level level, std::string, int, std::string message){
+			switch (level) {
+				case Level::debug:
+					__android_log_print(ANDROID_LOG_DEBUG, "BlazeNative", message.c_str());
+					break;
+
+				case Level::message:
+					__android_log_print(ANDROID_LOG_INFO, "BlazeNative", message.c_str());
+					break;
+
+				case Level::error:
+					__android_log_print(ANDROID_LOG_ERROR, "BlazeNative", message.c_str());
+					break;
+
+			}
 		};
+	}
+
+	void Android::vulkan_init() {
+	}
+
+	void Android::vulkan_update() {
+
+	}
+
+	void Android::vulkan_destroy() {
+
+	}
+
+	bool Android::vulkan_is_running() {
+		return _android_running;
+	}
+
+	void Android::vulkan_get_framebuffer_size(int& width, int& height) {
+		width = ANativeWindow_getWidth(_android_window);
+		height = ANativeWindow_getHeight(_android_window);
+
+		LOG_D("WIDTH: {}\n", width);
+		LOG_D("HEIGHT: {}\n", height);
+	}
+
+	VkSurfaceKHR Android::vulkan_create_surface(VkInstance instance) {
+		VkAndroidSurfaceCreateInfoKHR create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+		create_info.pNext = nullptr;
+		create_info.flags = 0;
+		create_info.window = _android_window;
+
+		VkSurfaceKHR surface;
+		VkResult result = vkCreateAndroidSurfaceKHR(instance, &create_info, nullptr, &surface);
+		LOG_D("result = {}\n", result);
+		if (result != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create window surface");
+		}
+
+		return surface;
+	}
+
+	std::vector<const char*> Android::vulkan_get_required_extensions() {
+		std::vector<const char*> extensions;
+
+		extensions.push_back("VK_KHR_surface");
+		extensions.push_back("VK_KHR_android_surface");
+
+		return extensions;
 	}
 }
 

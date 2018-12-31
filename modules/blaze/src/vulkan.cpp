@@ -1,8 +1,5 @@
 #include "graphics_backend/vulkan.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/vec2.hpp"
@@ -23,8 +20,16 @@
 #include <chrono>
 
 #include "logger.h"
+#include "engine.h"
 
 #include "asset_list.h"
+
+#include "iohelper/memstream.h"
+#include "iohelper/read.h"
+
+#ifdef __ANDROID__
+	#include "android.h"
+#endif
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* create_info, const VkAllocationCallbacks* allocator, VkDebugUtilsMessengerEXT* callback) {
 	auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -75,7 +80,17 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void VulkanBackend::update() {
-		glfwPollEvents();
+		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_update();
+
+		#ifdef __ANDROID__
+			if (_android_resized) {
+				// @todo This is super janky
+				std::this_thread::sleep_for(std::chrono::milliseconds(200));
+				_android_resized = false;
+				_framebuffer_resized = true;
+			}
+		#endif
+
 		draw_frame();
 	}
 
@@ -89,6 +104,9 @@ namespace BLAZE_NAMESPACE {
 		}
 
 		cleanup_swap_chain();
+
+		vkDestroyImage(_device, _texture_image, nullptr);
+		vkFreeMemory(_device, _texture_image_memory, nullptr);
 
 		vkDestroyDescriptorPool(_device, _descriptor_pool, nullptr);
 
@@ -117,32 +135,16 @@ namespace BLAZE_NAMESPACE {
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 		vkDestroyInstance(_instance, nullptr);
 
-		glfwDestroyWindow(_window);
-		_window = nullptr;
-
-		glfwTerminate();
+		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_destroy();
 	}
 
 	bool VulkanBackend::is_running() {
-		return !glfwWindowShouldClose(_window);
+		return dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_is_running();
 	}
 
 
 	void VulkanBackend::init_window() {
-		glfwInit();
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		// glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-		glfwSetErrorCallback(glfw_error_callback);
-
-		if (glfwVulkanSupported() != GLFW_TRUE) {
-			throw std::runtime_error("Vulkan not available!");
-		}
-
-		_window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-
-		glfwSetWindowUserPointer(_window, this);
-		glfwSetFramebufferSizeCallback(_window, glfw_framebuffer_size_callback);
+		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_init();
 	}
 
 	void VulkanBackend::init_vulkan() {
@@ -158,6 +160,7 @@ namespace BLAZE_NAMESPACE {
 		create_graphics_pipeline();
 		create_framebuffers();
 		create_command_pools();
+		create_texture_image();
 		create_vertex_buffer();
 		create_index_buffer();
 		create_uniform_buffers();
@@ -186,14 +189,6 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void VulkanBackend::recreate_swapchain() {
-		int width = 0;
-		int height = 0;
-		while (width == 0 || height == 0) {
-			LOG_D("Minimized\n");
-			glfwGetFramebufferSize(_window, &width, &height);
-			glfwWaitEvents();
-		}
-
 		vkDeviceWaitIdle(_device);
 
 		LOG_D("Recreating swap chain\n");
@@ -266,9 +261,10 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void VulkanBackend::create_surface() {
-		if (glfwCreateWindowSurface(_instance, _window, nullptr, &_surface) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create window surface");
-		}
+		LOG_D("Creating surface\n");
+		_surface = dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_create_surface(_instance);
+
+		LOG_D("Surface created\n");
 	}
 
 	void VulkanBackend::pick_physical_device() {
@@ -403,7 +399,8 @@ namespace BLAZE_NAMESPACE {
 			create_info.pQueueFamilyIndices = nullptr;
 		}
 
-		create_info.preTransform = swap_chain_support.capabilities.currentTransform;
+		//create_info.preTransform = swap_chain_support.capabilities.currentTransform;
+		create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 
 		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
@@ -710,6 +707,98 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
+	void VulkanBackend::create_texture_image() {
+		auto texture_handle = asset_list::load_data("base/texture/Test");
+
+		LOG_D("Waiting for assets to finish loading...\n");
+		texture_handle.wait();
+		LOG_D("Done!\n");
+
+		std::vector<uint8_t> texture_data = texture_handle.get();
+		iohelper::imemstream stream(texture_data);
+
+		int width = iohelper::read_length(stream);
+		int height = iohelper::read_length(stream);
+		int channels = iohelper::read<uint8_t>(stream);
+
+		if (channels != 4) {
+			throw std::runtime_error("We can only load images with 4 channels");
+		}
+
+		int size = width * height * channels;
+		// @todo Kind of jenky
+		int offset = texture_data.size() - size;
+
+		VkBuffer staging_buffer;
+		VkDeviceMemory staging_buffer_memory;
+
+		create_buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
+
+		void* data;
+		vkMapMemory(_device, staging_buffer_memory, 0, size, 0, &data);
+			memcpy(data, texture_data.data() + offset, size);
+		vkUnmapMemory(_device, staging_buffer_memory);
+
+		create_image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _texture_image, _texture_image_memory);
+
+		transition_image_layout(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		copy_buffer_to_image(staging_buffer, _texture_image, width, height);
+
+		transition_image_layout(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		vkDestroyBuffer(_device, staging_buffer, nullptr);
+		vkFreeMemory(_device, staging_buffer_memory, nullptr);
+	}
+
+	void VulkanBackend::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout) {
+		// @todo In the future we should collect all commands and then submit all at once
+		VkCommandBuffer command_buffer = begin_single_time_commands(_transfer_command_pool);
+
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = old_layout;
+		barrier.newLayout = new_layout;
+
+		barrier.image = image;
+
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		VkPipelineStageFlags source_stage;
+		VkPipelineStageFlags destination_stage;
+
+		if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+			source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		} else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+			QueueFamilyIndices indices = find_queue_families(_physical_device);
+			barrier.srcQueueFamilyIndex = indices.transfer_family.value();
+			barrier.srcQueueFamilyIndex = indices.graphics_family.value();
+		} else {
+			throw std::invalid_argument("Unsupported layout transition!");
+		}
+
+		vkCmdPipelineBarrier(command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		end_single_time_commands(command_buffer, _transfer_queue);
+	}
+
 	void VulkanBackend::create_vertex_buffer() {
 		VkDeviceSize buffer_size = sizeof(_vertices[0]) * _vertices.size();
 
@@ -853,23 +942,47 @@ namespace BLAZE_NAMESPACE {
 		vkBindBufferMemory(_device, buffer, buffer_memory, 0);
 	}
 
-	void VulkanBackend::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size) {
-		VkCommandBufferAllocateInfo alloc_info = {};
-		alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		alloc_info.commandPool = _transfer_command_pool;
-		alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		alloc_info.commandBufferCount = 1;
+	void VulkanBackend::create_image(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& image_memory) {
+		VkImageCreateInfo image_info = {};
+		image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		image_info.imageType = VK_IMAGE_TYPE_2D;
+		image_info.extent.width = width;
+		image_info.extent.height = height;
+		image_info.extent.depth = 1;
+		image_info.mipLevels = 1;
+		image_info.arrayLayers = 1;
 
-		VkCommandBuffer command_buffer;
-		if (vkAllocateCommandBuffers(_device, &alloc_info, &command_buffer) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to allocate command buffers!");
+		image_info.format = format;
+		image_info.tiling = tiling;
+		image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		image_info.usage = usage;
+
+		image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+		image_info.flags = 0;
+
+		if (vkCreateImage(_device, &image_info, nullptr, &_texture_image) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create image!");
 		}
 
-		VkCommandBufferBeginInfo begin_info = {};
-		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		VkMemoryRequirements mem_requirements;
+		vkGetImageMemoryRequirements(_device, _texture_image, &mem_requirements);
 
-		vkBeginCommandBuffer(command_buffer, &begin_info);
+		VkMemoryAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		alloc_info.allocationSize = mem_requirements.size;
+		alloc_info.memoryTypeIndex = find_memory_type(mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		if (vkAllocateMemory(_device, &alloc_info, nullptr, &_texture_image_memory) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to allocate image memory!");
+		}
+
+		vkBindImageMemory(_device, _texture_image, _texture_image_memory, 0);
+	}
+
+	void VulkanBackend::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size) {
+		VkCommandBuffer command_buffer = begin_single_time_commands(_transfer_command_pool);
 
 		VkBufferCopy copy_region = {};
 		copy_region.srcOffset = 0;
@@ -878,17 +991,39 @@ namespace BLAZE_NAMESPACE {
 
 		vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, &copy_region);
 
-		vkEndCommandBuffer(command_buffer);
+		end_single_time_commands(command_buffer, _transfer_queue);
+	}
 
-		VkSubmitInfo submit_info = {};
-		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers = &command_buffer;
+	void VulkanBackend::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+		VkCommandBuffer command_buffer = begin_single_time_commands(_transfer_command_pool);
 
-		vkQueueSubmit(_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
-		vkQueueWaitIdle(_transfer_queue);
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
 
-		vkFreeCommandBuffers(_device, _transfer_command_pool, 1, &command_buffer);
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+
+		region.imageOffset = {0, 0, 0};
+		region.imageExtent = {
+			width,
+			height,
+			1
+		};
+
+		vkCmdCopyBufferToImage(
+			command_buffer,
+			buffer,
+			image,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region
+		);
+
+		end_single_time_commands(command_buffer, _transfer_queue);
 	}
 
 	void VulkanBackend::create_command_buffers() {
@@ -972,11 +1107,11 @@ namespace BLAZE_NAMESPACE {
 		uint32_t image_index;
 		VkResult result = vkAcquireNextImageKHR(_device, _swap_chain, std::numeric_limits<uint64_t>::max(), _image_available_semaphores[_current_frame], VK_NULL_HANDLE, &image_index);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
 			_framebuffer_resized = false;
 			recreate_swapchain();
 			return;
-		} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		} else if (result != VK_SUCCESS) {
 			throw std::runtime_error("Failed to acquire swap chain image!");
 		}
 
@@ -1048,10 +1183,7 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	std::vector<const char*> VulkanBackend::get_required_extensions() {
-		uint32_t glfw_extension_count = 0;
-		const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-
-		std::vector<const char*> extensions(glfw_extensions, glfw_extensions + glfw_extension_count);
+		auto extensions = dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_get_required_extensions();
 
 		if (_enable_validation_layers) {
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1112,21 +1244,25 @@ namespace BLAZE_NAMESPACE {
 		int score = 0;
 
 		// Make sure that the device supports all required features
-		if (!device_features.geometryShader) {
-			return 0;
-		}
+		//if (!device_features.geometryShader) {
+			//LOG_D("Device does not support geometry shader\n");
+			//return 0;
+		//}
 
 		// Make sure the device has the required queues
 		if (!find_queue_families(device).is_complete()) {
+			LOG_D("Device does not support families\n");
 			return 0;
 		}
 
 		if (!check_device_extension_support(device)) {
+			LOG_D("Device does not support device extensions\n");
 			return 0;
 		}
 
 		SwapChainSupportDetails swap_chain_support = query_swap_chain_support(device);
 		if (swap_chain_support.formats.empty() || swap_chain_support.present_modes.empty()) {
+			LOG_D("Device does not support swapchain stuff\n");
 			return 0;
 		}
 
@@ -1256,9 +1392,9 @@ namespace BLAZE_NAMESPACE {
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
 			return capabilities.currentExtent;
 		} else {
-			int width;
-			int height;
-			glfwGetFramebufferSize(_window, &width, &height);
+			int width = 0;
+			int height = 0;
+			dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_get_framebuffer_size(width, height);
 
 			VkExtent2D actual_extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
@@ -1296,13 +1432,39 @@ namespace BLAZE_NAMESPACE {
 		throw std::runtime_error("Failed to find suitable memory type!");
 	}
 
-	void VulkanBackend::glfw_error_callback(int /* error */, const char* description) {
-		throw std::runtime_error(description);
+	VkCommandBuffer VulkanBackend::begin_single_time_commands(VkCommandPool command_pool) {
+		VkCommandBufferAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		alloc_info.commandPool = command_pool;
+		alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		alloc_info.commandBufferCount = 1;
+
+		VkCommandBuffer command_buffer;
+		if (vkAllocateCommandBuffers(_device, &alloc_info, &command_buffer) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to allocate command buffers!");
+		}
+
+		VkCommandBufferBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(command_buffer, &begin_info);
+
+		return command_buffer;
 	}
 
-	void VulkanBackend::glfw_framebuffer_size_callback(GLFWwindow* window, int /* width */, int /* height */) {
-		auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
-		app->_framebuffer_resized = true;
+	void VulkanBackend::end_single_time_commands(VkCommandBuffer command_buffer, VkQueue queue) {
+		vkEndCommandBuffer(command_buffer);
+
+		VkSubmitInfo submit_info = {};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &command_buffer;
+
+		vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+		vkQueueWaitIdle(queue);
+
+		vkFreeCommandBuffers(_device, _transfer_command_pool, 1, &command_buffer);
 	}
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanBackend::vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT /* message_severity */, VkDebugUtilsMessageTypeFlagsEXT /* message_type */, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* /* user_data */) {

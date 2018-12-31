@@ -11,6 +11,7 @@
 // @todo This is just for the thread id stuff
 #include <fmt/ostream.h>
 
+#include "graphics_backend.h"
 #include "graphics_backend/vulkan.h"
 
 using namespace blaze;
@@ -59,7 +60,7 @@ void game() {
 	#ifdef __ANDROID__
 		// @todo This is needed because otherwise it is not included
 		// Add export command to flint where we can add things that need to be exported
-		FORCE_UNDEFINED_SYMBOL(JNI_OnLoad);
+		FORCE_UNDEFINED_SYMBOL(ANativeActivity_onCreate);
 	#endif
 
 	// Setup event handlers
@@ -121,7 +122,11 @@ void game() {
 
 	// Graphics test
 	{
-		std::shared_ptr<GraphicsBackend> graphics_backend = std::make_shared<VulkanBackend>();
+		#if !defined(_WIN32)
+			std::shared_ptr<GraphicsBackend> graphics_backend = std::make_shared<VulkanBackend>();
+		#else
+			std::shared_ptr<GraphicsBackend> graphics_backend = std::make_shared<DummyBackend>();
+		#endif
 
 		graphics_backend->init();
 		// @todo GLFW should be seperate from the vulkan backend

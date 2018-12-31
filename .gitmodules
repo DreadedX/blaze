@@ -37,3 +37,6 @@
 [submodule "plugin/glsl/vendor/glslang"]
 	path = plugin/glsl/vendor/glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "plugin/image/vendor/stb"]
+	path = plugin/image/vendor/stb
+	url = https://github.com/nothings/stb

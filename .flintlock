@@ -3,9 +3,10 @@ version = dev
 base_url = https://downloads.mtgames.nl/release/flint
 
 [flint.py-plugins]
-lexer_parser@dreaded_x.local = ../plugin_lexer_parser
+lexer_parser@dreaded_x.local = ..\plugin_lexer_parser
 android@dreaded_x.local = ../plugin_android
 packager@blaze.local = plugin/packager
 langpack@blaze.local = plugin/lang
 glsl@blaze.local = plugin/glsl
+image@blaze.local = plugin/image
 

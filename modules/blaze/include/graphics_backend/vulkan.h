@@ -4,12 +4,25 @@
 
 #include "logger.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
+#include "vulkan/vulkan.hpp"
 
 #include <optional>
 
 namespace BLAZE_NAMESPACE {
+	// Platforms that support vulkan need to implement this
+	class VulkanPlatformSupport {
+		public:
+			virtual void vulkan_init() = 0;
+			virtual void vulkan_update() = 0;
+			virtual void vulkan_destroy() = 0;
+			virtual bool vulkan_is_running() = 0;
+			virtual void vulkan_get_framebuffer_size(int& width, int& height) = 0;
+
+			virtual VkSurfaceKHR vulkan_create_surface(VkInstance instance) = 0;
+
+			virtual std::vector<const char*> vulkan_get_required_extensions() = 0;
+	};
+
 	class VulkanBackend : public GraphicsBackend {
 		public:
 			void init() override;
@@ -19,6 +32,8 @@ namespace BLAZE_NAMESPACE {
 			void cleanup() override;
 
 			bool is_running() override;
+
+			bool _framebuffer_resized = false;
 
 		private:
 			struct QueueFamilyIndices {
@@ -54,6 +69,7 @@ namespace BLAZE_NAMESPACE {
 			void create_graphics_pipeline();
 			void create_framebuffers();
 			void create_command_pools();
+			void create_texture_image();
 			void create_vertex_buffer();
 			void create_index_buffer();
 			void create_uniform_buffers();
@@ -62,8 +78,11 @@ namespace BLAZE_NAMESPACE {
 			void create_command_buffers();
 			void create_sync_objects();
 
+			void create_image(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& image_memory);
+			void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 			void create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags propteries, VkBuffer& buffer, VkDeviceMemory& buffer_memory);
 			void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
+			void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 			void draw_frame();
 
@@ -82,13 +101,10 @@ namespace BLAZE_NAMESPACE {
 
 			uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags propteries);
 
-			static void glfw_error_callback(int error, const char* description);
-			static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);
-			static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data);
+			VkCommandBuffer begin_single_time_commands(VkCommandPool command_pool);
+			void end_single_time_commands(VkCommandBuffer command_buffer, VkQueue queue);
 
-			GLFWwindow* _window;
-			const uint32_t WIDTH = 800;
-			const uint32_t HEIGHT = 600;
+			static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data);
 
 			const std::vector<const char*> _validation_layers = {
 				"VK_LAYER_LUNARG_standard_validation"
@@ -109,7 +125,7 @@ namespace BLAZE_NAMESPACE {
 				0, 1, 2, 2, 3, 0
 			};
 
-			#ifdef NDEBUG
+			#if defined(NDEBUG) || defined(__ANDROID__)
 				const bool _enable_validation_layers = false;
 			#else
 				const bool _enable_validation_layers = true;
@@ -149,6 +165,9 @@ namespace BLAZE_NAMESPACE {
 			VkBuffer _index_buffer;
 			VkDeviceMemory _index_buffer_memory;
 
+			VkImage _texture_image;
+			VkDeviceMemory _texture_image_memory;
+
 			std::vector<VkImageView> _swap_chain_image_views;
 			std::vector<VkFramebuffer> _swap_chain_framebuffers;
 			std::vector<VkCommandBuffer> _graphics_command_buffers;
@@ -163,7 +182,5 @@ namespace BLAZE_NAMESPACE {
 
 			const int MAX_FRAMES_IN_FLIGHT = 2;
 			size_t _current_frame = 0;
-
-			bool _framebuffer_resized = false;
 	};
 }

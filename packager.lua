@@ -1,6 +1,7 @@
 plugin "packager@blaze"
 plugin "langpack@blaze"
 plugin "glsl@blaze"
+plugin "image@blaze"
 
 meta "archives"
 	dependency("base", "my_first_mod")
@@ -32,6 +33,10 @@ archive "base"
 	asset "base/shader/Fragment"
 		path "assets/base/shader/triangle.frag"
 		task(shader.compiler)
+
+	asset "base/texture/Test"
+		path "assets/base/texture/test.png"
+		task(image.load)
 
 archive "my_first_mod"
 	author "Dreaded_X"

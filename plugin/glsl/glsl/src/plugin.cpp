@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-#include "logger.h"
+//#include "logger.h"
+// @todo Fix the include situation
+#include "C:\Users\timhu\Desktop\test\flint\third_party\logger\logger\include\logger.h"
 
 std::vector<uint8_t> compile(const std::string& source_name, shaderc_shader_kind kind, const std::string& source, bool optimize = false) {
 	shaderc::Compiler compiler;

@@ -22,15 +22,20 @@ namespace BLAZE_NAMESPACE {
 
 	class GraphicsBackend {
 		public:
+			virtual ~GraphicsBackend() {}
+
 			virtual void init() = 0;
 			virtual void update() = 0;
 			virtual void cleanup() = 0;
 
 			virtual bool is_running() = 0;
+
 	};
 
 	class DummyBackend : public GraphicsBackend{
 		public:
+			virtual ~DummyBackend() {}
+
 			void init() override {}
 			void update() override {}
 			void cleanup() override {}

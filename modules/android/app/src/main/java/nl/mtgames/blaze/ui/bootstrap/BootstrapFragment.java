@@ -1,8 +1,10 @@
 package nl.mtgames.blaze.ui.bootstrap;
 
+import android.app.NativeActivity;
 import android.app.ProgressDialog;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -26,7 +28,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Objects;
 
+import nl.mtgames.blaze.Native;
 import nl.mtgames.blaze.R;
+
+import static android.view.View.*;
 
 public class BootstrapFragment extends Fragment {
 
@@ -51,7 +56,6 @@ public class BootstrapFragment extends Fragment {
         final Observer<String> logObserver = new Observer<String>() {
             @Override
             public void onChanged(@Nullable final String log) {
-                //displayLog(log);
                 TextView logView = Objects.requireNonNull(getView()).findViewById(R.id.message);
                 logView.setText(log);
             }
@@ -61,13 +65,18 @@ public class BootstrapFragment extends Fragment {
         final Button downloadButton = Objects.requireNonNull(getView()).findViewById(R.id.download);
         downloadButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                new DownloadFile().execute("http://zeus:3000/static/base.flm", "base.flm");
-                new DownloadFile().execute("http://zeus:3000/static/my_first_mod.flm", "my_first_mod.flm");
+                // new DownloadFile().execute("http://zeus:3000/static/base.flm", "base.flm");
+                // new DownloadFile().execute("http://zeus:3000/static/my_first_mod.flm", "my_first_mod.flm");
+                new DownloadFile().execute("http://192.168.178.60:3000/static/base.flm", "base.flm");
+                new DownloadFile().execute("http://192.168.178.60:3000/static/my_first_mod.flm", "my_first_mod.flm");
             }
         });
         final Button startButton = Objects.requireNonNull(getView()).findViewById(R.id.start);
         startButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
+                v.setSystemUiVisibility(SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+                Intent intent = new Intent(getContext(), Native.class);
+                startActivity(intent);
                 mViewModel.start();
                 startState(true);
             }

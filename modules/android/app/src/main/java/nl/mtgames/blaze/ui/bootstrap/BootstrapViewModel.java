@@ -14,26 +14,12 @@ public class BootstrapViewModel extends AndroidViewModel {
     private String logString = "";
     private boolean started = false;
 
-    static {
-        System.loadLibrary("game");
-    }
-
-    private native void startNative();
-
     public BootstrapViewModel(@NonNull Application application) {
         super(application);
     }
 
     public void start() {
-        if (!started) {
-            Log.d("BlazeBootstrap", Objects.requireNonNull(getApplication().getExternalFilesDir(null)).getAbsolutePath());
-            Log.d("BlazeBootstrap", "Starting engine");
-            // We are running the engine in a background thread
-            // Could change in the future if we can render our own loading screen
-            Thread thread = new Thread(this::startNative);
-            thread.start();
-            started = true;
-        }
+        started = true;
     }
 
     public boolean isStarted() {
