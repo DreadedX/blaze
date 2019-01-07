@@ -9,7 +9,7 @@ int main();
 
 bool _android_running = false;
 ANativeWindow* _android_window = nullptr;
-bool _android_resized = false;
+blaze::VulkanBackend* _vulkan_backed = nullptr;
 
 std::thread game_thread;
 
@@ -30,7 +30,7 @@ void handle_cmd(android_app* app, int32_t cmd) {
 		case APP_CMD_CONFIG_CHANGED:
 			__android_log_print(ANDROID_LOG_INFO, "BlazeNativeHandler", "Config change");
 			// @todo This is super janky
-			_android_resized = true;
+			_vulkan_backed->_framebuffer_resized = true;
 			break;
 
 		default:
@@ -88,7 +88,8 @@ namespace BLAZE_NAMESPACE::platform {
 		};
 	}
 
-	void Android::vulkan_init(VulkanBackend*) {
+	void Android::vulkan_init(VulkanBackend* backend) {
+		_vulkan_backed = backend;
 	}
 
 	void Android::vulkan_update() {

@@ -53,33 +53,26 @@ public class BootstrapFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(BootstrapViewModel.class);
 
-        final Observer<String> logObserver = new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable final String log) {
-                TextView logView = Objects.requireNonNull(getView()).findViewById(R.id.message);
-                logView.setText(log);
-            }
+        final Observer<String> logObserver = log -> {
+            TextView logView = Objects.requireNonNull(getView()).findViewById(R.id.message);
+            logView.setText(log);
         };
         mViewModel.getLog().observe(this, logObserver);
 
         final Button downloadButton = Objects.requireNonNull(getView()).findViewById(R.id.download);
-        downloadButton.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
-                // new DownloadFile().execute("http://zeus:3000/static/base.flm", "base.flm");
-                // new DownloadFile().execute("http://zeus:3000/static/my_first_mod.flm", "my_first_mod.flm");
-                new DownloadFile().execute("http://192.168.178.60:3000/static/base.flm", "base.flm");
-                new DownloadFile().execute("http://192.168.178.60:3000/static/my_first_mod.flm", "my_first_mod.flm");
-            }
+        downloadButton.setOnClickListener(v -> {
+            new DownloadFile().execute("http://zeus:3000/static/base.flm", "base.flm");
+            new DownloadFile().execute("http://zeus:3000/static/my_first_mod.flm", "my_first_mod.flm");
+//            new DownloadFile().execute("http://192.168.178.60:3000/static/base.flm", "base.flm");
+//            new DownloadFile().execute("http://192.168.178.60:3000/static/my_first_mod.flm", "my_first_mod.flm");
         });
         final Button startButton = Objects.requireNonNull(getView()).findViewById(R.id.start);
-        startButton.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
-                v.setSystemUiVisibility(SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-                Intent intent = new Intent(getContext(), Native.class);
-                startActivity(intent);
-                mViewModel.start();
-                startState(true);
-            }
+        startButton.setOnClickListener(v -> {
+            v.setSystemUiVisibility(SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            Intent intent = new Intent(getContext(), Native.class);
+            startActivity(intent);
+            mViewModel.start();
+            startState(true);
         });
 
         startState(mViewModel.isStarted());

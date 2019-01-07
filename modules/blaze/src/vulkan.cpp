@@ -104,11 +104,9 @@ namespace BLAZE_NAMESPACE {
 		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_update();
 
 		#ifdef __ANDROID__
-			if (_android_resized) {
+			if (_framebuffer_resized) {
 				// @todo This is super janky
 				std::this_thread::sleep_for(std::chrono::milliseconds(200));
-				_android_resized = false;
-				_framebuffer_resized = true;
 			}
 		#endif
 

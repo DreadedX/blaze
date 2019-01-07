@@ -22,7 +22,7 @@ android {
     }
     sourceSets {
         main {
-            jniLibs.srcDirs = ['../../../.flint/build/android/debug/bin/', 'C:/Users/timhu/Desktop/test/android-ndk-r19-canary/sources/third_party/vulkan/src/build-android/jniLibs']
+            jniLibs.srcDirs = ['../../../.flint/build/android/debug/bin/', '../jniLibs']
         }
     }
 }
