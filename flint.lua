@@ -238,6 +238,8 @@ lexer "plugin_lang-lexer"
 	path "plugin/lang"
 	dependency "plugin_lang-parser"
 
+	-- @todo We need to include the unistd.h file which comes with win_flex on windows
+
 -- This should actually be a plugin in the future, for now it is just a tool
 shared "plugin_langpack"
 	path "plugin/lang"

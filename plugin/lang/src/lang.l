@@ -13,7 +13,6 @@ int read_input(char* buffer, int* num_bytes_read, int max_bytes_to_read);
 %}
 
 %option noyywrap
-%option nounistd
 
 %%
 

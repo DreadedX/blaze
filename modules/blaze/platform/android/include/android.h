@@ -19,7 +19,7 @@ namespace BLAZE_NAMESPACE::platform {
 			bool has_async_support() const override;
 			logger::LogHandler get_logger() override;
 
-			void vulkan_init() override;
+			void vulkan_init(VulkanBackend* backend) override;
 			void vulkan_update() override;
 			void vulkan_destroy() override;
 			bool vulkan_is_running() override;

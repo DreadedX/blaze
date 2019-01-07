@@ -173,7 +173,7 @@ namespace BLAZE_NAMESPACE {
 
 
 	void VulkanBackend::init_window() {
-		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_init();
+		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_init(this);
 	}
 
 	void VulkanBackend::init_vulkan() {
@@ -382,6 +382,7 @@ namespace BLAZE_NAMESPACE {
 		}
 
 		VkPhysicalDeviceFeatures device_features = {};
+		device_features.samplerAnisotropy = VK_TRUE;
 
 		VkDeviceCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -1314,11 +1315,11 @@ namespace BLAZE_NAMESPACE {
 		uint32_t image_index;
 		VkResult result = vkAcquireNextImageKHR(_device, _swap_chain, std::numeric_limits<uint64_t>::max(), _image_available_semaphores[_current_frame], VK_NULL_HANDLE, &image_index);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 			_framebuffer_resized = false;
 			recreate_swapchain();
 			return;
-		} else if (result != VK_SUCCESS) {
+		} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("Failed to acquire swap chain image!");
 		}
 

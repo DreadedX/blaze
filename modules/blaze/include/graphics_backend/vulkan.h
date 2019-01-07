@@ -9,10 +9,12 @@
 #include <optional>
 
 namespace BLAZE_NAMESPACE {
+	class VulkanBackend;
+
 	// Platforms that support vulkan need to implement this
 	class VulkanPlatformSupport {
 		public:
-			virtual void vulkan_init() = 0;
+			virtual void vulkan_init(VulkanBackend* backend) = 0;
 			virtual void vulkan_update() = 0;
 			virtual void vulkan_destroy() = 0;
 			virtual bool vulkan_is_running() = 0;

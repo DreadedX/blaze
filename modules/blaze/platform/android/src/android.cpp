@@ -88,7 +88,7 @@ namespace BLAZE_NAMESPACE::platform {
 		};
 	}
 
-	void Android::vulkan_init() {
+	void Android::vulkan_init(VulkanBackend*) {
 	}
 
 	void Android::vulkan_update() {

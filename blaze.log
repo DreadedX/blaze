@@ -1,0 +1,5 @@
+BLZNGN Version: 133_f429da3_dirty_debug
+Thread id: 140737331533632 (GAME)
+/home/tim/Projects/cpp/blaze/./modules/blaze/src/engine.cpp:158
+=>	Failed to load archive 'base': Failed to open file
+EXCEPTION: Can not find asset: 'base/language/English'

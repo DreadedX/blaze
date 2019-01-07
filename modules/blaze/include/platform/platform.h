@@ -36,7 +36,7 @@ namespace BLAZE_NAMESPACE::platform {
 #if (!defined(__ANDROID__) && defined(__linux__)) || defined(_WIN32)
 	class VulkanGLFW : public VulkanPlatformSupport {
 		public:
-			void vulkan_init() {
+			void vulkan_init(VulkanBackend* backend) {
 				glfwInit();
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 				// glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -49,8 +49,8 @@ namespace BLAZE_NAMESPACE::platform {
 
 				_window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 
-				glfwSetWindowUserPointer(_window, this);
-				glfwSetFramebufferSizeCallback(_window, glfw_framebuffer_size_callback);
+				glfwSetWindowUserPointer(_window, backend);
+				glfwSetFramebufferSizeCallback(_window, vulkan_glfw_framebuffer_size_callback);
 			}
 
 			void vulkan_update() override {
@@ -65,14 +65,18 @@ namespace BLAZE_NAMESPACE::platform {
 			}
 
 			bool vulkan_is_running() override {
-				return !glfwWindowShouldClose(_window);
+				int v = !glfwWindowShouldClose(_window);
+				if (!v) {
+					LOG_D("State? {}\n", v);
+				}
+				return v;
 			}
 
 			void vulkan_get_framebuffer_size(int& width, int& height) override {
 				glfwGetFramebufferSize(_window, &width, &height);
 			}
 
-			VkSurfaceKHR vulkan_create_surface(VkInstance instance) {
+			VkSurfaceKHR vulkan_create_surface(VkInstance instance) override {
 				VkSurfaceKHR surface;
 				if (glfwCreateWindowSurface(instance, _window, nullptr, &surface) != VK_SUCCESS) {
 					throw std::runtime_error("Failed to create window surface");
@@ -100,9 +104,9 @@ namespace BLAZE_NAMESPACE::platform {
 				throw std::runtime_error(description);
 			}
 
-			static void glfw_framebuffer_size_callback(GLFWwindow* window, int /* width */, int /* height */) {
-				auto app = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
-				app->_framebuffer_resized = true;
+			static void vulkan_glfw_framebuffer_size_callback(GLFWwindow* window, int /* width */, int /* height */) {
+				auto backend = reinterpret_cast<VulkanBackend*>(glfwGetWindowUserPointer(window));
+				backend->_framebuffer_resized = true;
 			}
 	};
 #endif

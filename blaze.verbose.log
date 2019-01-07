@@ -1,0 +1,15 @@
+
+FILE: /home/tim/Projects/cpp/blaze/./modules/blaze/src/launch.cpp, LINE: 74, LEVEL: debug
+BLZNGN Version: 133_f429da3_dirty_debug
+
+FILE: /home/tim/Projects/cpp/blaze/./game/src/game.cpp, LINE: 77, LEVEL: debug
+Thread id: 140737331533632 (GAME)
+
+FILE: /home/tim/Projects/cpp/blaze/./game/src/game.cpp, LINE: 47, LEVEL: error
+/home/tim/Projects/cpp/blaze/./modules/blaze/src/engine.cpp:158
+
+FILE: /home/tim/Projects/cpp/blaze/./game/src/game.cpp, LINE: 47, LEVEL: error
+=>	Failed to load archive 'base': Failed to open file
+
+FILE: /home/tim/Projects/cpp/blaze/./modules/blaze/src/launch.cpp, LINE: 84, LEVEL: error
+EXCEPTION: Can not find asset: 'base/language/English'
