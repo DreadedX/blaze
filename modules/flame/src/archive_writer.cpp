@@ -13,7 +13,7 @@ namespace FLAME_NAMESPACE {
 			throw std::runtime_error("Failed to open file");
 		}
 
-		iohelper::write(_fs, MAGIC, false);
+		iohelper::write_vector<uint8_t>(_fs, MAGIC, false);
 
 		_signed = _key.get_d().size() && _key.get_n().size();
 		iohelper::write<bool>(_fs, _signed);
@@ -24,14 +24,14 @@ namespace FLAME_NAMESPACE {
 		// @todo Figure out the correct way to determine the length of the digest
 		if (_signed) {
 			// Reserve space for Signature and Key
-			iohelper::write(_fs, _key.get_n());
+			iohelper::write_vector<uint8_t>(_fs, _key.get_n());
 			digest_size = (_key.get_d().size()/8)*8;
 		} else {
 			// Reserve space for sha3 digest
 			digest_size = 256/8;
 		}
 		std::vector<uint8_t> digest_reserve(digest_size);
-		iohelper::write(_fs, digest_reserve);
+		iohelper::write_vector<uint8_t>(_fs, digest_reserve);
 
 		_offset2 = _fs.tellp();
 
@@ -60,21 +60,23 @@ namespace FLAME_NAMESPACE {
 		size_t size = _fs.tellp();
 
 		// @todo Make sure this function starts in the right place
-		std::vector<uint8_t> digest = calculate_hash(_fs, size - _offset2, _offset2);
+		//std::vector<uint8_t> digest = calculate_hash(_fs, size - _offset2, _offset2);
 
 		if (_signed) {
+			std::vector<uint8_t> signature((_key.get_d().size()/8)*8, 0x22);
 			// Sign with private key
-			std::vector<uint8_t> signature = _key.encrypt(digest);
-			std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
+			//std::vector<uint8_t> signature = _key.encrypt(digest);
+			//std::cout << "SIGNATURE SIZE: " << signature.size() << '\n';
 
 			_fs.seekp(_offset1);
 			size_t key_length = iohelper::read_length(_fs);
 			_fs.seekp(key_length, std::ios::cur);
 
-			iohelper::write(_fs, signature);
+			iohelper::write_vector<uint8_t>(_fs, signature);
 		} else {
 			_fs.seekp(_offset1);
-			iohelper::write(_fs, digest);
+			std::vector<uint8_t> digest(256/8, 0x11);
+			iohelper::write_vector<uint8_t>(_fs, digest);
 		}
 
 		_finalized = true;
@@ -112,6 +114,6 @@ namespace FLAME_NAMESPACE {
 
 		// Since async = false we do not have to check if data is loaded
 		auto data = data_handle.get();
-		iohelper::write(_fs, data);
+		iohelper::write_vector<uint8_t>(_fs, data);
 	}
 }

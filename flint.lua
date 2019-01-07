@@ -156,17 +156,19 @@ lib "blaze"
 
 subfile("plugin/glsl/flint.lua", "plugin_glsl")
 subfile("plugin/image/flint.lua", "plugin_image")
+subfile("plugin/obj/flint.lua", "plugin_obj")
 
 meta "plugins"
-	dependency("plugin_packager", "plugin_langpack", "plugin_glsl", "plugin_image")
+	dependency("plugin_packager", "plugin_langpack", "plugin_glsl", "plugin_image", "plugin_obj")
 
 -- @todo Allows skipping the second argument
 local packager = plugin "packager@blaze"
 local langpack_plugin = plugin "langpack@blaze"
 local glsl_plugin = plugin "glsl@blaze"
 local image_plugin = plugin "image@blaze"
+local obj_plugin = plugin "obj@blaze"
 
-if packager and langpack_plugin and glsl_plugin and image_plugin then
+if packager and langpack_plugin and glsl_plugin and image_plugin and obj_plugin then
 	subfile("packager.lua", "")
 else
 	print "Packager plugin not loaded, skipping building archives"

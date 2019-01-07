@@ -1,0 +1,10 @@
+[meta]
+author = blaze
+name = obj
+
+[linux]
+plugin.so = ../../.flint/build/linux/debug/bin/plugin_obj.so
+
+[windows]
+plugin.dll = ../../.flint/build/windows/debug/bin/plugin_obj.dll
+

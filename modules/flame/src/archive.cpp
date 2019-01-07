@@ -10,7 +10,7 @@
 #include <fstream>
 #include <cassert>
 
-#define CHUNK_SIZE 1024
+#define CHUNK_SIZE 1024*1024
 
 namespace FLAME_NAMESPACE {
 
@@ -20,6 +20,7 @@ namespace FLAME_NAMESPACE {
 		uint32_t remaining = size;
 		crypto::SHA3_256 hash;
 		while (remaining > 0) {
+			std::cout << "Hashing chunk\n";
 			uint32_t chunk = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
 
 			std::vector<uint8_t> data(chunk);
@@ -55,7 +56,7 @@ namespace FLAME_NAMESPACE {
 		// 	throw std::runtime_error("File too small");
 		// }
 
-		auto magic = iohelper::read<std::vector<uint8_t>>(fs, MAGIC.size());
+		auto magic = iohelper::read_vector<uint8_t>(fs, MAGIC.size());
 		if (!std::equal(magic.begin(), magic.begin(), MAGIC.end())) {
 			throw std::runtime_error("File is not a FLMx file");
 		}
@@ -67,28 +68,29 @@ namespace FLAME_NAMESPACE {
 		std::vector<uint8_t> stored_digest;
 		if (_signed) {
 			// @todo There should be a function in crypto that provides this
-			auto n = iohelper::read<std::vector<uint8_t>>(fs);
+			auto n = iohelper::read_vector<uint8_t>(fs);
 			_key = crypto::RSA(n, crypto::default_e());
 
-			auto signature = iohelper::read<std::vector<uint8_t>>(fs);
+			auto signature = iohelper::read_vector<uint8_t>(fs);
 			// @todo Encrypt is the wrong term here
 			stored_digest = _key.encrypt(signature);
 		} else {
-			stored_digest = iohelper::read<std::vector<uint8_t>>(fs);
+			stored_digest = iohelper::read_vector<uint8_t>(fs);
 		}
 
 		_offset2 = fs.tellg();
 
-		std::vector<uint8_t> digest = calculate_hash(fs, size - _offset2, _offset2);
+		// @todo This is SUPER slow
+		//std::vector<uint8_t> digest = calculate_hash(fs, size - _offset2, _offset2);
 
-		size_t length = stored_digest.size();
-		if (length != digest.size()) {
-			throw std::runtime_error("File is corrupted (Digest size is different)");
-		}
+		//size_t length = stored_digest.size();
+		//if (length != digest.size()) {
+			//throw std::runtime_error("File is corrupted (Digest size is different)");
+		//}
 
-		if (!std::equal(digest.begin(), digest.begin(), stored_digest.end())) {
-			throw std::runtime_error("File is corrupted (Digest is different)");
-		}
+		//if (!std::equal(digest.begin(), digest.begin(), stored_digest.end())) {
+			//throw std::runtime_error("File is corrupted (Digest is different)");
+		//}
 
 		// Jump to the start of the data
 		fs.seekg(_offset2);
@@ -169,6 +171,7 @@ namespace FLAME_NAMESPACE {
 				workflow.push_back(zlib::decompress);
 				break;
 			default:
+				std::cerr << "COMPRESSION " << (uint32_t)compression << '\n';
 				throw std::logic_error("Decompression type not implemented");
 		}
 

@@ -69,7 +69,11 @@ namespace BLAZE_NAMESPACE {
 			void create_graphics_pipeline();
 			void create_framebuffers();
 			void create_command_pools();
+			void create_depth_resources();
 			void create_texture_image();
+			void create_texture_image_view();
+			void create_texture_sampler();
+			void load_model();
 			void create_vertex_buffer();
 			void create_index_buffer();
 			void create_uniform_buffers();
@@ -83,6 +87,7 @@ namespace BLAZE_NAMESPACE {
 			void create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags propteries, VkBuffer& buffer, VkDeviceMemory& buffer_memory);
 			void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 			void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+			VkImageView create_image_view(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags);
 
 			void draw_frame();
 
@@ -98,41 +103,62 @@ namespace BLAZE_NAMESPACE {
 			VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR> available_present_modes);
 			VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities);
 			VkShaderModule create_shader_module(const std::vector<uint8_t>& code);
+			VkFormat find_supported_format(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+			VkFormat find_depth_format();
+			bool has_stencil_component(VkFormat format);
 
 			uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags propteries);
 
 			VkCommandBuffer begin_single_time_commands(VkCommandPool command_pool);
 			void end_single_time_commands(VkCommandBuffer command_buffer, VkQueue queue);
 
-			static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data);
+			#if !defined(__ANDROID__)
+				static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data);
 
-			const std::vector<const char*> _validation_layers = {
-				"VK_LAYER_LUNARG_standard_validation"
-			};
+				const std::vector<const char*> _validation_layers = {
+					"VK_LAYER_LUNARG_standard_validation"
+				};
+			#else
+				static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char * pLayerPrefix, const char * pMsg, void * pUserData);
+
+				const std::vector<const char*> _validation_layers = {
+					"VK_LAYER_LUNARG_core_validation"
+				};
+			#endif
 
 			const std::vector<const char*> _device_extensions = {
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME
 			};
 
-			const std::vector<Vertex> _vertices = {
-				{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-				{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-				{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-				{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+			std::vector<Vertex> _vertices = {
+				//{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+				//{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+				//{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+				//{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+
+				//{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+				//{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+				//{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+				//{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 			};
 
-			const std::vector<uint16_t> _indices = {
-				0, 1, 2, 2, 3, 0
+			std::vector<uint32_t> _indices = {
+				//0, 1, 2, 2, 3, 0,
+				//4, 5, 6, 6, 7, 4
 			};
 
-			#if defined(NDEBUG) || defined(__ANDROID__)
-				const bool _enable_validation_layers = false;
-			#else
+			#if defined(DEBUG)
 				const bool _enable_validation_layers = true;
+			#else
+				const bool _enable_validation_layers = false;
 			#endif
 
 			VkInstance _instance;
-			VkDebugUtilsMessengerEXT _callback;
+			#if !defined(__ANDROID__)
+				VkDebugUtilsMessengerEXT _callback;
+			#else
+				VkDebugReportCallbackEXT _callback;
+			#endif
 
 			VkPhysicalDevice _physical_device = VK_NULL_HANDLE;
 			VkDevice _device;
@@ -167,10 +193,16 @@ namespace BLAZE_NAMESPACE {
 
 			VkImage _texture_image;
 			VkDeviceMemory _texture_image_memory;
+			VkImageView _texture_image_view;
+			VkSampler _texture_sampler;
 
 			std::vector<VkImageView> _swap_chain_image_views;
 			std::vector<VkFramebuffer> _swap_chain_framebuffers;
 			std::vector<VkCommandBuffer> _graphics_command_buffers;
+
+			VkImage _depth_image;
+			VkDeviceMemory _depth_image_memory;
+			VkImageView _depth_image_view;
 
 			std::vector<VkSemaphore> _image_available_semaphores;
 			std::vector<VkSemaphore> _render_finished_semaphores;

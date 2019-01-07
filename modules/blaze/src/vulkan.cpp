@@ -47,6 +47,22 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
+VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* create_info, const VkAllocationCallbacks* allocator, VkDebugReportCallbackEXT* callback) {
+	auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+	if (func != nullptr) {
+		return func(instance, create_info, allocator, callback);
+	} else {
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* allocator) {
+	auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+	if (func != nullptr) {
+		func(instance, callback, allocator);
+	}
+}
+
 // We are not making this a function of Vertex as vertex will be used by other graphic backends later on as well
 VkVertexInputBindingDescription get_vertex_binding_description() {
 	VkVertexInputBindingDescription binding_description  {};
@@ -57,18 +73,23 @@ VkVertexInputBindingDescription get_vertex_binding_description() {
 	return binding_description;
 }
 
-std::array<VkVertexInputAttributeDescription, 2> get_vertex_attribute_description() {
-	std::array<VkVertexInputAttributeDescription, 2> attribute_description = {};
+std::array<VkVertexInputAttributeDescription, 3> get_vertex_attribute_description() {
+	std::array<VkVertexInputAttributeDescription, 3> attribute_description = {};
 
 	attribute_description[0].binding = 0;
 	attribute_description[0].location = 0;
-	attribute_description[0].format = VK_FORMAT_R32G32_SFLOAT;
+	attribute_description[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	attribute_description[0].offset = offsetof(blaze::Vertex, pos);
 
 	attribute_description[1].binding = 0;
 	attribute_description[1].location = 1;
 	attribute_description[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 	attribute_description[1].offset = offsetof(blaze::Vertex, color);
+
+	attribute_description[2].binding = 0;
+	attribute_description[2].location = 2;
+	attribute_description[2].format = VK_FORMAT_R32G32_SFLOAT;
+	attribute_description[2].offset = offsetof(blaze::Vertex, tex_coord);
 
 	return attribute_description;
 }
@@ -105,6 +126,10 @@ namespace BLAZE_NAMESPACE {
 
 		cleanup_swap_chain();
 
+		vkDestroySampler(_device, _texture_sampler, nullptr);
+
+		vkDestroyImageView(_device, _texture_image_view, nullptr);
+
 		vkDestroyImage(_device, _texture_image, nullptr);
 		vkFreeMemory(_device, _texture_image_memory, nullptr);
 
@@ -129,7 +154,11 @@ namespace BLAZE_NAMESPACE {
 		vkDestroyDevice(_device, nullptr);
 
 		if (_enable_validation_layers) {
-			DestroyDebugUtilsMessengerEXT(_instance, _callback, nullptr);
+			#if !defined(__ANDROID__)
+				DestroyDebugUtilsMessengerEXT(_instance, _callback, nullptr);
+			#else
+				DestroyDebugReportCallbackEXT(_instance, _callback, nullptr);
+			#endif
 		}
 
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -158,9 +187,14 @@ namespace BLAZE_NAMESPACE {
 		create_render_pass();
 		create_descriptor_set_layout();
 		create_graphics_pipeline();
-		create_framebuffers();
 		create_command_pools();
+
+		create_depth_resources();
+		create_framebuffers();
 		create_texture_image();
+		create_texture_image_view();
+		create_texture_sampler();
+		load_model();
 		create_vertex_buffer();
 		create_index_buffer();
 		create_uniform_buffers();
@@ -181,6 +215,10 @@ namespace BLAZE_NAMESPACE {
 		vkDestroyPipelineLayout(_device, _pipeline_layout, nullptr);
 		vkDestroyRenderPass(_device, _render_pass, nullptr);
 
+		vkDestroyImageView(_device, _depth_image_view, nullptr);
+		vkDestroyImage(_device, _depth_image, nullptr);
+		vkFreeMemory(_device, _depth_image_memory, nullptr);
+
 		for (auto image_view : _swap_chain_image_views) {
 			vkDestroyImageView(_device, image_view, nullptr);
 		}
@@ -199,6 +237,7 @@ namespace BLAZE_NAMESPACE {
 		create_image_views();
 		create_render_pass();
 		create_graphics_pipeline();
+		create_depth_resources();
 		create_framebuffers();
 		create_command_buffers();
 	}
@@ -246,18 +285,33 @@ namespace BLAZE_NAMESPACE {
 			return;
 		}
 
-		VkDebugUtilsMessengerCreateInfoEXT create_info = {};
-		create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		create_info.pfnUserCallback = vk_debug_callback;
-		create_info.pUserData = nullptr;
+		#if !defined(__ANDROID__)
+			VkDebugUtilsMessengerCreateInfoEXT create_info = {};
+			create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+			create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+			create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+			create_info.pfnUserCallback = vk_debug_callback;
+			create_info.pUserData = nullptr;
 
-		VkResult result = CreateDebugUtilsMessengerEXT(_instance, &create_info, nullptr, &_callback);
-		LOG_D("result = {}\n", result);
-		if (result != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create vulkan instance!");
-		}
+			VkResult result = CreateDebugUtilsMessengerEXT(_instance, &create_info, nullptr, &_callback);
+			LOG_D("result = {}\n", result);
+			if (result != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create vulkan instance!");
+			}
+		#else
+			VkDebugReportCallbackCreateInfoEXT create_info = {};
+			create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+			create_info.pNext = nullptr;
+			create_info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			create_info.pfnCallback = vk_debug_callback;
+			create_info.pUserData = nullptr;
+
+			VkResult result = CreateDebugReportCallbackEXT(_instance, &create_info, nullptr, &_callback);
+			LOG_D("result = {}\n", result);
+			if (result != VK_SUCCESS) {
+				throw std::runtime_error("Failed to create vulkan instance!");
+			}
+		#endif
 	}
 
 	void VulkanBackend::create_surface() {
@@ -402,7 +456,8 @@ namespace BLAZE_NAMESPACE {
 		//create_info.preTransform = swap_chain_support.capabilities.currentTransform;
 		create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 
-		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		//create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
 
 		create_info.presentMode = present_mode;
 		create_info.clipped = VK_TRUE;
@@ -429,25 +484,7 @@ namespace BLAZE_NAMESPACE {
 
 		for (size_t i = 0; i < _swap_chain_images.size(); ++i) {
 			LOG_D("Creating image view ({})\n", i);
-			VkImageViewCreateInfo create_info = {};
-			create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			create_info.image = _swap_chain_images[i];
-			create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			create_info.format = _swap_chain_image_format;
-			create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-			create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-			create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			create_info.subresourceRange.baseMipLevel = 0;
-			create_info.subresourceRange.levelCount = 1;
-			create_info.subresourceRange.baseArrayLayer = 0;
-			create_info.subresourceRange.layerCount = 1;
-
-			if (vkCreateImageView(_device, &create_info, nullptr, &_swap_chain_image_views[i]) != VK_SUCCESS) {
-				throw std::runtime_error("Failed to create image views!");
-			}
+			_swap_chain_image_views[i] = create_image_view(_swap_chain_images[i], _swap_chain_image_format, VK_IMAGE_ASPECT_COLOR_BIT);
 		}
 	}
 
@@ -466,15 +503,31 @@ namespace BLAZE_NAMESPACE {
 		color_attachment_ref.attachment = 0;
 		color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+		VkAttachmentDescription depth_attachment = {};
+		depth_attachment.format = find_depth_format();
+		depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depth_attachment_ref = {};
+		depth_attachment_ref.attachment = 1;
+		depth_attachment_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &color_attachment_ref;
+		subpass.pDepthStencilAttachment = &depth_attachment_ref;
 
+		std::array<VkAttachmentDescription, 2> attachments = {color_attachment, depth_attachment};
 		VkRenderPassCreateInfo render_pass_info = {};
 		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_info.attachmentCount = 1;
-		render_pass_info.pAttachments = &color_attachment;
+		render_pass_info.attachmentCount = attachments.size();
+		render_pass_info.pAttachments = attachments.data();
 		render_pass_info.subpassCount = 1;
 		render_pass_info.pSubpasses = &subpass;
 
@@ -504,10 +557,19 @@ namespace BLAZE_NAMESPACE {
 		ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		ubo_layout_binding.pImmutableSamplers = nullptr;
 
+		VkDescriptorSetLayoutBinding sampler_layout_binding = {};
+		sampler_layout_binding.binding = 1;
+		sampler_layout_binding.descriptorCount = 1;
+		sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		sampler_layout_binding.pImmutableSamplers = nullptr;
+		sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		// @todo Replace all the times we used vector with array
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = {ubo_layout_binding, sampler_layout_binding};
 		VkDescriptorSetLayoutCreateInfo layout_info = {};
 		layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layout_info.bindingCount = 1;
-		layout_info.pBindings = &ubo_layout_binding;
+		layout_info.bindingCount = bindings.size();
+		layout_info.pBindings = bindings.data();
 
 		if (vkCreateDescriptorSetLayout(_device, &layout_info, nullptr, &_descriptor_set_layout) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create descriptor set layout!");
@@ -598,6 +660,21 @@ namespace BLAZE_NAMESPACE {
 		multisampling.alphaToCoverageEnable = VK_FALSE;
 		multisampling.alphaToOneEnable = VK_FALSE;
 
+		VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
+		depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depth_stencil.depthTestEnable = VK_TRUE;
+		depth_stencil.depthWriteEnable = VK_TRUE;
+
+		depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+
+		depth_stencil.depthBoundsTestEnable = VK_FALSE;
+		depth_stencil.minDepthBounds = 0.0f;
+		depth_stencil.maxDepthBounds = 1.0f;
+
+		depth_stencil.stencilTestEnable = VK_FALSE;
+		depth_stencil.front = {};
+		depth_stencil.back = {};
+
 		VkPipelineColorBlendAttachmentState color_blend_attachment = {};
 		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		color_blend_attachment.blendEnable = VK_TRUE;
@@ -640,7 +717,7 @@ namespace BLAZE_NAMESPACE {
 		pipeline_info.pViewportState = &viewport_state;
 		pipeline_info.pRasterizationState = &rasterizer;
 		pipeline_info.pMultisampleState = &multisampling;
-		pipeline_info.pDepthStencilState = nullptr;
+		pipeline_info.pDepthStencilState = &depth_stencil;
 		pipeline_info.pColorBlendState = &color_blending;
 		pipeline_info.pDynamicState = nullptr;
 
@@ -662,15 +739,16 @@ namespace BLAZE_NAMESPACE {
 		_swap_chain_framebuffers.resize(_swap_chain_image_views.size());
 
 		for (size_t i = 0; i < _swap_chain_image_views.size(); i++) {
-			VkImageView attachments[] = {
-				_swap_chain_image_views[i]
+			std::array<VkImageView, 2> attachments = {
+				_swap_chain_image_views[i],
+				_depth_image_view
 			};
 
 			VkFramebufferCreateInfo framebuffer_info = {};
 			framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebuffer_info.renderPass = _render_pass;
-			framebuffer_info.attachmentCount = 1;
-			framebuffer_info.pAttachments = attachments;
+			framebuffer_info.attachmentCount = attachments.size();
+			framebuffer_info.pAttachments = attachments.data();
 			framebuffer_info.width = _swap_chain_extent.width;
 			framebuffer_info.height = _swap_chain_extent.height;
 			framebuffer_info.layers = 1;
@@ -707,8 +785,16 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
+	void VulkanBackend::create_depth_resources() {
+		VkFormat depth_format = find_depth_format();
+		create_image(_swap_chain_extent.width, _swap_chain_extent.height, depth_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _depth_image, _depth_image_memory);
+		_depth_image_view = create_image_view(_depth_image, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+		transition_image_layout(_depth_image, depth_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	}
+
 	void VulkanBackend::create_texture_image() {
-		auto texture_handle = asset_list::load_data("base/texture/Test");
+		auto texture_handle = asset_list::load_data("base/texture/Chalet");
 
 		LOG_D("Waiting for assets to finish loading...\n");
 		texture_handle.wait();
@@ -751,6 +837,42 @@ namespace BLAZE_NAMESPACE {
 		vkFreeMemory(_device, staging_buffer_memory, nullptr);
 	}
 
+	void VulkanBackend::create_texture_image_view() {
+		_texture_image_view = create_image_view(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	}
+
+	void VulkanBackend::create_texture_sampler() {
+		VkSamplerCreateInfo sampler_info = {};
+		sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		// sampler_info.magFilter = VK_FILTER_LINEAR;
+		// sampler_info.minFilter = VK_FILTER_LINEAR;
+		sampler_info.magFilter = VK_FILTER_NEAREST;
+		sampler_info.minFilter = VK_FILTER_NEAREST;
+
+		sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		// @todo Make this optonal instead of required
+		sampler_info.anisotropyEnable = VK_TRUE;
+		sampler_info.maxAnisotropy = 16;
+
+		sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+		sampler_info.compareEnable = VK_FALSE;
+		sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler_info.mipLodBias = 0.0f;
+		sampler_info.minLod = 0.0f;
+		sampler_info.maxLod = 0.0f;
+
+		if (vkCreateSampler(_device, &sampler_info, nullptr, &_texture_sampler) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create texture sampler!");
+		}
+	}
+
 	void VulkanBackend::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout) {
 		// @todo In the future we should collect all commands and then submit all at once
 		VkCommandBuffer command_buffer = begin_single_time_commands(_transfer_command_pool);
@@ -762,7 +884,16 @@ namespace BLAZE_NAMESPACE {
 
 		barrier.image = image;
 
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		if (new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			if (has_stencil_component(format)) {
+				barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+			}
+		} else {
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		}
+
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -778,7 +909,7 @@ namespace BLAZE_NAMESPACE {
 			source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		} else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -789,7 +920,17 @@ namespace BLAZE_NAMESPACE {
 
 			QueueFamilyIndices indices = find_queue_families(_physical_device);
 			barrier.srcQueueFamilyIndex = indices.transfer_family.value();
-			barrier.srcQueueFamilyIndex = indices.graphics_family.value();
+			barrier.dstQueueFamilyIndex = indices.graphics_family.value();
+		} else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+
+			QueueFamilyIndices indices = find_queue_families(_physical_device);
+			barrier.srcQueueFamilyIndex = indices.transfer_family.value();
+			barrier.dstQueueFamilyIndex = indices.graphics_family.value();
 		} else {
 			throw std::invalid_argument("Unsupported layout transition!");
 		}
@@ -797,6 +938,36 @@ namespace BLAZE_NAMESPACE {
 		vkCmdPipelineBarrier(command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 		end_single_time_commands(command_buffer, _transfer_queue);
+	}
+
+	void VulkanBackend::load_model() {
+		auto model_handle = asset_list::load_data("base/model/Chalet");
+
+		LOG_D("Waiting for assets to finish loading...\n");
+		model_handle.wait();
+		LOG_D("Done!\n");
+
+		std::vector<uint8_t> model_data = model_handle.get();
+		iohelper::imemstream stream(model_data);
+
+		_vertices.resize(iohelper::read_length(stream));
+		for (auto& vertex : _vertices) {
+			vertex.pos.x = iohelper::read<float>(stream);
+			vertex.pos.y = iohelper::read<float>(stream);
+			vertex.pos.z = iohelper::read<float>(stream);
+
+			vertex.color.r = iohelper::read<float>(stream);
+			vertex.color.g = iohelper::read<float>(stream);
+			vertex.color.b = iohelper::read<float>(stream);
+
+			vertex.tex_coord.x = iohelper::read<float>(stream);
+			vertex.tex_coord.y = iohelper::read<float>(stream);
+		}
+
+		_indices.resize(iohelper::read_length(stream));
+		for (auto& index : _indices) {
+			index = iohelper::read<uint32_t>(stream);
+		}
 	}
 
 	void VulkanBackend::create_vertex_buffer() {
@@ -851,14 +1022,16 @@ namespace BLAZE_NAMESPACE {
 	}
 
 	void VulkanBackend::create_descriptor_pool() {
-		VkDescriptorPoolSize pool_size = {};
-		pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		pool_size.descriptorCount = static_cast<uint32_t>(_swap_chain_images.size());
+		std::array<VkDescriptorPoolSize,2> pool_sizes = {};
+		pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		pool_sizes[0].descriptorCount = static_cast<uint32_t>(_swap_chain_images.size());
+		pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		pool_sizes[1].descriptorCount = static_cast<uint32_t>(_swap_chain_images.size());
 
 		VkDescriptorPoolCreateInfo pool_info = {};
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		pool_info.poolSizeCount = 1;
-		pool_info.pPoolSizes = &pool_size;
+		pool_info.poolSizeCount = pool_sizes.size();
+		pool_info.pPoolSizes = pool_sizes.data();
 		pool_info.maxSets = static_cast<uint32_t>(_swap_chain_images.size());
 
 		if (vkCreateDescriptorPool(_device, &pool_info, nullptr, &_descriptor_pool) != VK_SUCCESS) {
@@ -886,16 +1059,29 @@ namespace BLAZE_NAMESPACE {
 			buffer_info.offset = 0;
 			buffer_info.range = sizeof(UniformBufferObject);
 
-			VkWriteDescriptorSet descriptor_write = {};
-			descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write.dstSet = _descriptor_sets[i];
-			descriptor_write.dstBinding = 0;
-			descriptor_write.dstArrayElement = 0;
-			descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptor_write.descriptorCount = 1;
-			descriptor_write.pBufferInfo = &buffer_info;
+			VkDescriptorImageInfo image_info = {};
+			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			image_info.imageView = _texture_image_view;
+			image_info.sampler = _texture_sampler;
 
-			vkUpdateDescriptorSets(_device, 1, &descriptor_write, 0, nullptr);
+			std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+			descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_writes[0].dstSet = _descriptor_sets[i];
+			descriptor_writes[0].dstBinding = 0;
+			descriptor_writes[0].dstArrayElement = 0;
+			descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptor_writes[0].descriptorCount = 1;
+			descriptor_writes[0].pBufferInfo = &buffer_info;
+
+			descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_writes[1].dstSet = _descriptor_sets[i];
+			descriptor_writes[1].dstBinding = 1;
+			descriptor_writes[1].dstArrayElement = 0;
+			descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptor_writes[1].descriptorCount = 1;
+			descriptor_writes[1].pImageInfo = &image_info;
+
+			vkUpdateDescriptorSets(_device, descriptor_writes.size(), descriptor_writes.data(), 0, nullptr);
 		}
 	}
 
@@ -962,23 +1148,23 @@ namespace BLAZE_NAMESPACE {
 		image_info.samples = VK_SAMPLE_COUNT_1_BIT;
 		image_info.flags = 0;
 
-		if (vkCreateImage(_device, &image_info, nullptr, &_texture_image) != VK_SUCCESS) {
+		if (vkCreateImage(_device, &image_info, nullptr, &image) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create image!");
 		}
 
 		VkMemoryRequirements mem_requirements;
-		vkGetImageMemoryRequirements(_device, _texture_image, &mem_requirements);
+		vkGetImageMemoryRequirements(_device, image, &mem_requirements);
 
 		VkMemoryAllocateInfo alloc_info = {};
 		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		alloc_info.allocationSize = mem_requirements.size;
 		alloc_info.memoryTypeIndex = find_memory_type(mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		if (vkAllocateMemory(_device, &alloc_info, nullptr, &_texture_image_memory) != VK_SUCCESS) {
+		if (vkAllocateMemory(_device, &alloc_info, nullptr, &image_memory) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to allocate image memory!");
 		}
 
-		vkBindImageMemory(_device, _texture_image, _texture_image_memory, 0);
+		vkBindImageMemory(_device, image, image_memory, 0);
 	}
 
 	void VulkanBackend::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size) {
@@ -1026,6 +1212,26 @@ namespace BLAZE_NAMESPACE {
 		end_single_time_commands(command_buffer, _transfer_queue);
 	}
 
+	VkImageView VulkanBackend::create_image_view(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags) {
+		VkImageViewCreateInfo view_info = {};
+		view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		view_info.image = image;
+		view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		view_info.format = format;
+		view_info.subresourceRange.aspectMask = aspect_flags;
+		view_info.subresourceRange.baseMipLevel = 0;
+		view_info.subresourceRange.levelCount = 1;
+		view_info.subresourceRange.baseArrayLayer = 0;
+		view_info.subresourceRange.layerCount = 1;
+
+		VkImageView image_view;
+		if (vkCreateImageView(_device, &view_info, nullptr, &image_view) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create texture image view!");
+		}
+
+		return image_view;
+	}
+
 	void VulkanBackend::create_command_buffers() {
 		_graphics_command_buffers.resize(_swap_chain_framebuffers.size());
 
@@ -1056,10 +1262,11 @@ namespace BLAZE_NAMESPACE {
 			render_pass_info.renderArea.offset = {0, 0};
 			render_pass_info.renderArea.extent = _swap_chain_extent;
 
-			VkClearValue clear_color = {};
-			clear_color.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-			render_pass_info.clearValueCount = 1;
-			render_pass_info.pClearValues = &clear_color;
+			std::array<VkClearValue, 2> clear_values = {};
+			clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+			clear_values[1].depthStencil = {1.0f, 0};
+			render_pass_info.clearValueCount = clear_values.size();
+			render_pass_info.pClearValues = clear_values.data();
 
 			vkCmdBeginRenderPass(_graphics_command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(_graphics_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphics_pipeline);
@@ -1068,7 +1275,7 @@ namespace BLAZE_NAMESPACE {
 			VkDeviceSize offsets[] = {0};
 			vkCmdBindVertexBuffers(_graphics_command_buffers[i], 0, 1, vertex_buffers, offsets);
 
-			vkCmdBindIndexBuffer(_graphics_command_buffers[i], _index_buffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(_graphics_command_buffers[i], _index_buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			vkCmdBindDescriptorSets(_graphics_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &_descriptor_sets[i], 0, nullptr);
 
@@ -1186,7 +1393,11 @@ namespace BLAZE_NAMESPACE {
 		auto extensions = dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_get_required_extensions();
 
 		if (_enable_validation_layers) {
-			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			#if !defined(__ANDROID__)
+				extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			#else
+				extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			#endif
 		}
 
 		return extensions;
@@ -1248,6 +1459,10 @@ namespace BLAZE_NAMESPACE {
 			//LOG_D("Device does not support geometry shader\n");
 			//return 0;
 		//}
+		if (!device_features.samplerAnisotropy) {
+			LOG_D("Device does not support anisotropy\n");
+			return 0;
+		}
 
 		// Make sure the device has the required queues
 		if (!find_queue_families(device).is_complete()) {
@@ -1419,6 +1634,29 @@ namespace BLAZE_NAMESPACE {
 		return shader_module;
 	}
 
+	VkFormat VulkanBackend::find_supported_format(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+		for (VkFormat format : candidates) {
+			VkFormatProperties properties;
+			vkGetPhysicalDeviceFormatProperties(_physical_device, format, &properties);
+
+			if (tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & features) == features) {
+				return format;
+			} else if (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & features) == features) {
+				return format;
+			}
+
+			throw std::runtime_error("Unable to find supported format!");
+		}
+	}
+
+	VkFormat VulkanBackend::find_depth_format() {
+		return find_supported_format({VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT}, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	}
+
+	bool VulkanBackend::has_stencil_component(VkFormat format) {
+		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+	}
+
 	uint32_t VulkanBackend::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags propteries) {
 		VkPhysicalDeviceMemoryProperties mem_properties;
 		vkGetPhysicalDeviceMemoryProperties(_physical_device, &mem_properties);
@@ -1467,9 +1705,17 @@ namespace BLAZE_NAMESPACE {
 		vkFreeCommandBuffers(_device, _transfer_command_pool, 1, &command_buffer);
 	}
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanBackend::vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT /* message_severity */, VkDebugUtilsMessageTypeFlagsEXT /* message_type */, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* /* user_data */) {
-		LOG_D("VkDebug: {}\n", callback_data->pMessage);
+	#if !defined(__ANDROID__)
+		VKAPI_ATTR VkBool32 VKAPI_CALL VulkanBackend::vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT /* message_severity */, VkDebugUtilsMessageTypeFlagsEXT /* message_type */, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* /* user_data */) {
+			LOG_D("VkDebug: {}\n", callback_data->pMessage);
 
-		return VK_FALSE;
-	}
+			return VK_FALSE;
+		}
+	#else
+	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanBackend::vk_debug_callback(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char * pLayerPrefix, const char * pMsg, void * pUserData) {
+			LOG_D("VkDebug: {}\n", pMsg);
+
+			return VK_FALSE;
+		}
+	#endif
 }

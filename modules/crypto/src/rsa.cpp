@@ -154,15 +154,15 @@ namespace CRYPTO_NAMESPACE {
 		if (iohelper::read<uint8_t>(stream) != 0x00) { throw std::runtime_error("File not in correct format"); }
 
 		if (iohelper::read<uint8_t>(stream) != 0x02) { throw std::runtime_error("File not in correct format"); }
-		auto n = iohelper::read<std::vector<uint8_t>>(stream);
+		auto n = iohelper::read_vector<uint8_t>(stream);
 
 		if (iohelper::read<uint8_t>(stream) != 0x02) { throw std::runtime_error("File not in correct format"); }
-		auto e_temp = iohelper::read<std::vector<uint8_t>>(stream);
+		auto e_temp = iohelper::read_vector<uint8_t>(stream);
 		std::vector<uint8_t> e;
 		e.insert(e.end(), e_temp.begin(), e_temp.end());
 
 		if (iohelper::read<uint8_t>(stream) != 0x02) { throw std::runtime_error("File not in correct format"); }
-		auto d = iohelper::read<std::vector<uint8_t>>(stream);
+		auto d = iohelper::read_vector<uint8_t>(stream);
 
 		return std::make_pair(RSA(n, e), RSA(n, d));
 	}

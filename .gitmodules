@@ -40,3 +40,6 @@
 [submodule "plugin/image/vendor/stb"]
 	path = plugin/image/vendor/stb
 	url = https://github.com/nothings/stb
+[submodule "plugin/obj/vendor/tinyobjloader"]
+	path = plugin/obj/vendor/tinyobjloader
+	url = https://github.com/syoyo/tinyobjloader

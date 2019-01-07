@@ -9,4 +9,5 @@ packager@blaze.local = plugin/packager
 langpack@blaze.local = plugin/lang
 glsl@blaze.local = plugin/glsl
 image@blaze.local = plugin/image
+obj@blaze.local = plugin/obj
 

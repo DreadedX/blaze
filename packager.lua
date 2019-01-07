@@ -2,6 +2,7 @@ plugin "packager@blaze"
 plugin "langpack@blaze"
 plugin "glsl@blaze"
 plugin "image@blaze"
+plugin "obj@blaze"
 
 meta "archives"
 	dependency("base", "my_first_mod")
@@ -12,7 +13,7 @@ archive "base"
 	-- key "build/keys/test.priv"
 	-- key "keys/official.pem"
 	-- compression(flame.Compression.none)
-	compression(0)
+	compression(1)
 	version(1)
 
 	script "assets/base/script/Script.lua"
@@ -36,6 +37,14 @@ archive "base"
 
 	asset "base/texture/Test"
 		path "assets/base/texture/test.png"
+		task(image.load)
+
+	asset "base/model/Chalet"
+		path "assets/base/model/chalet.obj"
+		task(obj.load)
+
+	asset "base/texture/Chalet"
+		path "assets/base/texture/chalet.jpg"
 		task(image.load)
 
 archive "my_first_mod"

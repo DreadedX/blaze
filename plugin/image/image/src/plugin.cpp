@@ -48,7 +48,6 @@ extern "C" void FLINT_PLUGIN init(Flint& flint) {
 		output.resize(offset + size);
 
 		memcpy(output.data() + offset, pixels, size);
-		stbi_image_free(pixels);
 
 		return output;
 	});

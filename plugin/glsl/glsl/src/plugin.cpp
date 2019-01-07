@@ -22,6 +22,8 @@ std::vector<uint8_t> compile(const std::string& source_name, shaderc_shader_kind
 	}
 
 	// This is kinda jenky, but otherwise the module will free the data
+	// @todo This will fail if we have different endianess
+	// Should use memstreams
 	std::vector<uint8_t> result((module.end() - module.begin())*4);
 	memcpy(result.data(), module.begin(), result.size());
 
@@ -36,8 +38,6 @@ std::vector<uint8_t> compile(const std::string& source_name, shaderc_shader_kind
 	#define FLINT_PLUGIN
 #endif
 
-// @todo We should not store everything in global variables
-// or we should atleast clear them
 extern "C" void FLINT_PLUGIN init(Flint& flint) {
 	static bool a = false;
 	if (!a) {
