@@ -9,14 +9,29 @@
 
 namespace BLAZE_NAMESPACE {
 	std::vector<flame::Archive> asset_list::_archives;
-	std::unordered_map<std::string, flame::FileHandle> asset_list::_file_handles;
+	std::unordered_map<std::string, std::vector<flame::FileHandle>> asset_list::_file_handles;
 
 	flame::DataHandle asset_list::load_data(std::string name, std::vector<flame::FileHandle::Task> tasks) {
-		auto file_handle = _file_handles.find(name);
-		if (file_handle != _file_handles.end()) {
-			return file_handle->second.load_data(get_platform()->has_async_support(), tasks);
+		auto existing = _file_handles.find(name);
+		if (existing != _file_handles.end()) {
+			return existing->second.back().load_data(get_platform()->has_async_support(), tasks);
 		}
 		throw std::runtime_error("Can not find asset: '" + name + '\'');
+	}
+
+	std::vector<flame::DataHandle> asset_list::load_all_data(std::string name, std::vector<flame::FileHandle::Task> tasks) {
+		std::vector<flame::DataHandle> data_handles;
+
+		auto existing = _file_handles.find(name);
+		if (existing != _file_handles.end()) {
+			for (auto& file_handle : existing->second) {
+				data_handles.push_back(file_handle.load_data(get_platform()->has_async_support(), tasks));
+			}
+		} else {
+			throw std::runtime_error("Can not find asset: '" + name + '\'');
+		}
+
+		return data_handles;
 	}
 
 	void asset_list::add(flame::Archive& archive) {
@@ -39,19 +54,36 @@ namespace BLAZE_NAMESPACE {
 		// Check if we have already 
 		auto existing = _file_handles.find(file_handle.get_name());
 		if (existing != _file_handles.end()) {
-			if (existing->second.get_version() < file_handle.get_version()) {
+			if (existing->second.back().get_version() < file_handle.get_version()) {
 				// @todo Move this to the event bus
-				LOG_D("Replacing asset with newer version: {}\n", file_handle.get_name());
-				existing->second = file_handle;
-			} else if(existing->second.get_version() > file_handle.get_version()) {
-				LOG_D("Already loaded newer asset: {}\n", file_handle.get_name());
+				LOG_D("Adding newer asset: {}\n", file_handle.get_name());
+				existing->second.push_back(file_handle);
+			} else if(existing->second.back().get_version() > file_handle.get_version()) {
+				LOG_D("Storing older asset: {}\n", file_handle.get_name());
+				// @todo Make sure this actually works correctly
+				size_t i = existing->second.size();
+				LOG_D("Size {}\n", i);
+				for (; i--;) {
+					LOG_D("i = {}\n", i);
+					// If same version last loaded is higher in the list (inverted list)
+					if (existing->second[i].get_version() <= file_handle.get_version()) {
+						break;
+					}
+				}
+				LOG_D("Inserting in {}\n", i+1);
+				existing->second.insert(existing->second.begin() + i + 1, file_handle);
 			} else {
 				event_bus::send(std::make_shared<Error>("Conflicting asset with same version: '" + file_handle.get_name() + "' (" + std::to_string(file_handle.get_version()) + ')', __FILE__, __LINE__));
+				// @todo Is this how we want to handle conflicts?
+				// This will be based on load order
+				existing->second.push_back(file_handle);
 			}
 			return;
 		}
 
-		_file_handles.insert({file_handle.get_name(), file_handle});
+		LOG_D("New asset: {}\n", file_handle.get_name());
+
+		_file_handles.insert({file_handle.get_name(), {file_handle}});
 	}
 
 	bool asset_list::check_dependency(flame::Dependency dependency) {

@@ -13,6 +13,7 @@ namespace BLAZE_NAMESPACE {
 	class asset_list {
 		public:
 			static flame::DataHandle load_data(std::string name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
+			static std::vector<flame::DataHandle> load_all_data(std::string name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
 			static void add(flame::Archive& archive);
 			static void add(flame::FileHandle& file_handle);
 			static bool check_dependency(flame::Dependency dependency);
@@ -24,6 +25,6 @@ namespace BLAZE_NAMESPACE {
 			// @note The GameAsset system in turn can than also reload all of its assets and now we can, on the fly reload all assets that we want
 			// @note Debug interface should make it possible to selectively reload GameAssets, it will require a full Archive and Asset reload
 			static std::vector<flame::Archive> _archives;
-			static std::unordered_map<std::string, flame::FileHandle> _file_handles;
+			static std::unordered_map<std::string, std::vector<flame::FileHandle>> _file_handles;
 	};
 }
