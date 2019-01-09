@@ -12,7 +12,7 @@ namespace BLAZE_NAMESPACE {
 			static std::shared_ptr<T> new_asset(std::string asset_name, Args... args) {
 				static_assert(std::is_base_of<GameAsset, T>(), "T must be derived from GameAsset");
 				std::shared_ptr<T> game_asset = std::make_shared<T>(asset_name, args...);
-				_loading_assets.push_back(game_asset);
+				_loading_assets.push_back(std::make_pair(game_asset, std::chrono::system_clock::now()));
 				return game_asset;
 			}
 
@@ -22,7 +22,7 @@ namespace BLAZE_NAMESPACE {
 
 
 		private:
-			static std::list<std::shared_ptr<GameAsset>> _loading_assets;
+			static std::list<std::pair<std::shared_ptr<GameAsset>, std::chrono::system_clock::time_point>> _loading_assets;
 	};
 
 }
