@@ -4,6 +4,8 @@
 
 #include "logger.h"
 
+#include "cvar.h"
+
 #include <string>
 #include <functional>
 
@@ -22,6 +24,10 @@
 // @todo Move the environment stuff in here
 
 namespace BLAZE_NAMESPACE::platform {
+	namespace _internal {
+		void std_logger(Level level, std::string, int, std::string text);
+	}
+
 	class Platform {
 		public:
 			Platform() {}
@@ -123,9 +129,9 @@ namespace BLAZE_NAMESPACE::platform {
 			}
 
 			logger::LogHandler get_logger() override {
-				return logger::std_logger;
+				return _internal::std_logger;
 			}
-	};
+		};
 #else
 	class Linux : public Platform {};
 #endif
@@ -142,7 +148,7 @@ namespace BLAZE_NAMESPACE::platform {
 			}
 
 			logger::LogHandler get_logger() override {
-				return logger::std_logger;
+				return _internal::std_logger;
 			}
 	};
 #else
@@ -163,7 +169,7 @@ namespace BLAZE_NAMESPACE::platform {
 			}
 
 			logger::LogHandler get_logger() override {
-				return logger::std_logger;
+				return _internal::std_logger;
 			}
 	};
 #else

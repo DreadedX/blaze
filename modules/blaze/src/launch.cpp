@@ -9,6 +9,9 @@
 #include "version.h"
 #include "enviroment.h"
 
+#include "blaze/config.h"
+#include "cvar.h"
+
 #include <fstream>
 
 // @note This is implemtented by the user
@@ -21,6 +24,12 @@ std::ofstream verbose_log_file;
 #endif
 
 void file_logger(Level level, std::string file, int line, std::string text) {
+	static int& log_level = blaze::CVar::get<int>("log_level");
+
+	if (level < (Level)log_level) {
+		return;
+	}
+
 	log_file << text;
 	#ifdef DEBUG
 		std::string level_name;
@@ -44,6 +53,8 @@ void file_logger(Level level, std::string file, int line, std::string text) {
 
 // This is the entry point of the game engine
 int main() {
+	blaze::set_default_cvars();
+
 	// try {
 	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
 		blaze::set_platform<blaze::platform::Linux>();

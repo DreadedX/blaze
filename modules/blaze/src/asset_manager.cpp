@@ -19,7 +19,7 @@ namespace BLAZE_NAMESPACE {
 			bool loaded = asset.first->is_loaded();
 			if (loaded) {
 				auto duration = std::chrono::system_clock::now() - asset.second;
-				LOG_M("Loading '{}' took {} ms\n", asset.first->get_name(), std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+				LOG_D("Loading '{}' took {} ms\n", asset.first->get_name(), std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
 			}
 			return loaded;
 		});

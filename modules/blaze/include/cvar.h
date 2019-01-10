@@ -23,7 +23,13 @@ namespace BLAZE_NAMESPACE {
 
 			template <typename T>
 			static T& set(std::string name, T value) {
-				return std::get<T>(_values.insert({name, value}).first->second);
+				auto existing = _values.find(name);
+				if (existing == _values.end()) {
+					return std::get<T>(_values.insert({name, value}).first->second);
+				}
+
+				existing->second = value;
+				return std::get<T>(existing->second);
 			}
 
 			template <typename T>

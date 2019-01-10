@@ -1,5 +1,7 @@
 #include "android.h"
 
+#include "cvar.h"
+
 #include <android/log.h>
 
 #include <iostream>
@@ -71,6 +73,12 @@ namespace BLAZE_NAMESPACE::platform {
 
 	logger::LogHandler Android::get_logger() {
 		return [](Level level, std::string, int, std::string message){
+			static int& log_level = CVar::get<int>("log_level");
+
+			if (level < (Level)log_level) {
+				return;
+			}
+
 			switch (level) {
 				case Level::debug:
 					__android_log_print(ANDROID_LOG_DEBUG, "BlazeNative", message.c_str());

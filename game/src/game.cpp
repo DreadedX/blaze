@@ -84,9 +84,6 @@ void game() {
 		parse_cvars(cvar_file);
 	}
 
-	CVar::set_default("debug", 0);
-	int& backend_cvar = CVar::set_default("backend", 0);
-
 	// Setup event handlers
 	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
 	event_bus::subscribe<Error>(std::ref(handle_error));
@@ -148,6 +145,7 @@ void game() {
 	{
 		std::shared_ptr<GraphicsBackend> graphics_backend = nullptr;
 
+		int& backend_cvar = CVar::set_default("backend", 1);
 		if (backend_cvar == 1) {
 			#if !defined(__EMSCRIPTEN__)
 				graphics_backend = std::make_shared<VulkanBackend>();
