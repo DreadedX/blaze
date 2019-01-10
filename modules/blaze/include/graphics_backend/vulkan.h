@@ -8,6 +8,8 @@
 
 #include <optional>
 
+#include "game_asset.h"
+
 namespace BLAZE_NAMESPACE {
 	class VulkanBackend;
 
@@ -25,6 +27,55 @@ namespace BLAZE_NAMESPACE {
 			virtual std::vector<const char*> vulkan_get_required_extensions() = 0;
 	};
 
+	class VulkanTexture : public GameAsset {
+		public:
+			VulkanTexture(std::string asset_name, VulkanBackend* backend);
+
+			~VulkanTexture();
+
+			VkImageView _texture_image_view;
+			VkSampler _texture_sampler;
+
+		private:
+			std::vector<uint8_t> load(std::vector<uint8_t> data);
+
+			void create_texture_image(std::vector<uint8_t>& data);
+			void create_texture_image_view();
+			void create_texture_sampler();
+
+			VulkanBackend* _backend;
+
+			VkImage _texture_image;
+			VkDeviceMemory _texture_image_memory;
+	};
+
+	class VulkanModel : public GameAsset {
+		public:
+			VulkanModel(std::string asset_name, VulkanBackend* backend);
+			~VulkanModel();
+
+			void draw_commands(VkCommandBuffer command_buffer, VkDescriptorSet descriptor_set);
+
+			VkBuffer _vertex_buffer;
+			VkDeviceMemory _vertex_buffer_memory;
+
+			VkBuffer _index_buffer;
+			VkDeviceMemory _index_buffer_memory;
+
+			std::vector<uint32_t> _indices;
+
+		private:
+			std::vector<uint8_t> load(std::vector<uint8_t> data);
+
+			void load_model(std::vector<uint8_t>& data);
+			void create_vertex_buffer();
+			void create_index_buffer();
+
+			VulkanBackend* _backend;
+
+			std::vector<Vertex> _vertices;
+	};
+
 	class VulkanBackend : public GraphicsBackend {
 		public:
 			void init() override;
@@ -36,6 +87,9 @@ namespace BLAZE_NAMESPACE {
 			bool is_running() override;
 
 			bool _framebuffer_resized = false;
+
+			friend class VulkanTexture;
+			friend class VulkanModel;
 
 		private:
 			struct QueueFamilyIndices {
@@ -72,12 +126,8 @@ namespace BLAZE_NAMESPACE {
 			void create_framebuffers();
 			void create_command_pools();
 			void create_depth_resources();
-			void create_texture_image();
-			void create_texture_image_view();
-			void create_texture_sampler();
-			void load_model();
+			void load_assets();
 			void create_vertex_buffer();
-			void create_index_buffer();
 			void create_uniform_buffers();
 			void create_descriptor_pool();
 			void create_descriptor_sets();
@@ -132,23 +182,6 @@ namespace BLAZE_NAMESPACE {
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME
 			};
 
-			std::vector<Vertex> _vertices = {
-				//{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-				//{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-				//{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-				//{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
-				//{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-				//{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-				//{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-				//{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-			};
-
-			std::vector<uint32_t> _indices = {
-				//0, 1, 2, 2, 3, 0,
-				//4, 5, 6, 6, 7, 4
-			};
-
 			#if defined(DEBUG)
 				const bool _enable_validation_layers = true;
 			#else
@@ -188,15 +221,8 @@ namespace BLAZE_NAMESPACE {
 			VkDescriptorPool _descriptor_pool;
 			std::vector<VkDescriptorSet> _descriptor_sets;
 
-			VkBuffer _vertex_buffer;
-			VkDeviceMemory _vertex_buffer_memory;
-			VkBuffer _index_buffer;
-			VkDeviceMemory _index_buffer_memory;
-
-			VkImage _texture_image;
-			VkDeviceMemory _texture_image_memory;
-			VkImageView _texture_image_view;
-			VkSampler _texture_sampler;
+			std::shared_ptr<VulkanTexture> _vulkan_texture;
+			std::shared_ptr<VulkanModel> _vulkan_model;
 
 			std::vector<VkImageView> _swap_chain_image_views;
 			std::vector<VkFramebuffer> _swap_chain_framebuffers;

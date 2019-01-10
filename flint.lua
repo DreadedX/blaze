@@ -140,8 +140,12 @@ lib "blaze"
 	path "modules/blaze"
 	dependency("flame", "generated", "lang", "sol2")
 	dependency "glm"
-	if config.platform.target ~= "android" then
+	if config.platform.target ~= "android" and config.platform.target ~= "web" then
 		dependency "glfw"
+	end
+
+	if config.platform.target == "web" then
+		src "-modules/blaze/src/graphics_backend/vulkan.cpp"
 	end
 
 	dependency "vulkan-headers"
@@ -183,6 +187,7 @@ if config.platform.target == "android" then
 		main "nl.mtgames.blaze/.Bootstrap"
 
 		dependency "libgame"
+
 end
 executable(name)
 	path "game"
@@ -206,6 +211,10 @@ executable(name)
 	-- @todo We really need to only build static if we are cross compiling
 	if config.platform.target == "windows" and config.platform.host == "linux" then
 		static()
+	end
+
+	if config.platform.target == "android" then
+		flag "-u ANativeActivity_onCreate"
 	end
 
 	threads()

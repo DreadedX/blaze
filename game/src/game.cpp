@@ -12,7 +12,13 @@
 #include <fmt/ostream.h>
 
 #include "graphics_backend.h"
-#include "graphics_backend/vulkan.h"
+#if !defined(__EMSCRIPTEN__)
+	#include "graphics_backend/vulkan.h"
+#endif
+
+#include "cvar.h"
+
+#include <fstream>
 
 using namespace blaze;
 
@@ -55,13 +61,31 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 
 }
 
-#define FORCE_UNDEFINED_SYMBOL(x) void* __ ## x ## _fp =(void*)&x;
+void parse_cvars(std::istream& stream) {
+	std::string word;
+	std::string name;
+
+	while (stream >> word) {
+		if (!name.empty()) {
+			LOG_D("Setting cvar {} = {}\n", name, word);
+			CVar::set<int>(name, std::stoi(word));
+
+			name.clear();
+		} else {
+			name = word;
+		}
+	}
+}
+
 void game() {
-	#ifdef __ANDROID__
-		// @todo This is needed because otherwise it is not included
-		// Add export command to flint where we can add things that need to be exported
-		FORCE_UNDEFINED_SYMBOL(ANativeActivity_onCreate);
-	#endif
+	std::ifstream cvar_file("cvars.txt", std::ios::in);
+
+	if (cvar_file.is_open()) {
+		parse_cvars(cvar_file);
+	}
+
+	CVar::set_default("debug", 0);
+	int& backend_cvar = CVar::set_default("backend", 0);
 
 	// Setup event handlers
 	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
@@ -78,7 +102,7 @@ void game() {
 
 	// Load base archive
 	blaze::load_archive("base");
-	while (asset_manager::loading_count()  > 0) {
+	while (asset_manager::loading_count() > 0) {
 		asset_manager::load_assets();
 	}
 
@@ -122,11 +146,17 @@ void game() {
 
 	// Graphics test
 	{
-		#if !defined(_WIN32)
-			std::shared_ptr<GraphicsBackend> graphics_backend = std::make_shared<VulkanBackend>();
-		#else
-			std::shared_ptr<GraphicsBackend> graphics_backend = std::make_shared<DummyBackend>();
-		#endif
+		std::shared_ptr<GraphicsBackend> graphics_backend = nullptr;
+
+		if (backend_cvar == 1) {
+			#if !defined(__EMSCRIPTEN__)
+				graphics_backend = std::make_shared<VulkanBackend>();
+			#else
+				throw std::runtime_error("Unsupported backend");
+			#endif
+		} else {
+			 graphics_backend = std::make_shared<DummyBackend>();
+		}
 
 		graphics_backend->init();
 		// @todo GLFW should be seperate from the vulkan backend
@@ -135,4 +165,6 @@ void game() {
 		}
 		graphics_backend->cleanup();
 	}
+
+	LOG_D("cvar: {}\n", CVar::get<int>("debug"));
 }

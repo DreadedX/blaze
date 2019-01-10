@@ -14,7 +14,16 @@ namespace FLAME_NAMESPACE {
 	}
 
 	bool DataHandle::is_loaded() {
-		return is_valid() && (!_async || _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready);
+		if (is_valid()) {
+			if (!_async) {
+				_future.wait();
+				return true;
+			}
+
+			return _future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
+		} else {
+			return false;
+		}
 	}
 
 	void DataHandle::wait() {

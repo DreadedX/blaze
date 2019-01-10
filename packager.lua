@@ -13,7 +13,7 @@ archive "base"
 	-- key "build/keys/test.priv"
 	-- key "keys/official.pem"
 	-- compression(flame.Compression.none)
-	compression(1)
+	compression(0)
 	version(1)
 
 	script "assets/base/script/Script.lua"
@@ -53,7 +53,7 @@ archive "my_first_mod"
 	-- key "build/keys/unofficial.priv"
 	-- key "keys/official.pem"
 	-- compression(flame.Compression.none)
-	compression(1)
+	compression(0)
 	version(3)
 
 	script "assets/my_first_mod/script/Script.lua"

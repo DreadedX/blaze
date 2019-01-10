@@ -44,7 +44,7 @@ void file_logger(Level level, std::string file, int line, std::string text) {
 
 // This is the entry point of the game engine
 int main() {
-	try {
+	// try {
 	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
 		blaze::set_platform<blaze::platform::Linux>();
 	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Windows) {
@@ -80,7 +80,7 @@ int main() {
 	blaze::done();
 
 	log_file.close();
-	} catch (std::exception& e) {
-		LOG_E("EXCEPTION: {}\n", e.what());
-	}
+	// } catch (std::exception& e) {
+	// 	LOG_E("EXCEPTION: {}\n", e.what());
+	// }
 }

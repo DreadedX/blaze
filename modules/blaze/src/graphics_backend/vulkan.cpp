@@ -23,6 +23,7 @@
 #include "engine.h"
 
 #include "asset_list.h"
+#include "asset_manager.h"
 
 #include "iohelper/memstream.h"
 #include "iohelper/read.h"
@@ -95,6 +96,195 @@ std::array<VkVertexInputAttributeDescription, 3> get_vertex_attribute_descriptio
 }
 
 namespace BLAZE_NAMESPACE {
+	VulkanTexture::VulkanTexture(std::string asset_name, VulkanBackend* backend) : GameAsset(asset_name, {std::bind(&VulkanTexture::load, this, std::placeholders::_1)}), _backend(backend) {
+		LOG_D("Creating texture\n");
+	}
+
+	VulkanTexture::~VulkanTexture() {
+		vkDestroySampler(_backend->_device, _texture_sampler, nullptr);
+
+		vkDestroyImageView(_backend->_device, _texture_image_view, nullptr);
+
+		vkDestroyImage(_backend->_device, _texture_image, nullptr);
+		vkFreeMemory(_backend->_device, _texture_image_memory, nullptr);
+	}
+
+	std::vector<uint8_t> VulkanTexture::load(std::vector<uint8_t> data) {
+		create_texture_image(data);
+		create_texture_image_view();
+		create_texture_sampler();
+
+		return data;
+	}
+
+	void VulkanTexture::create_texture_image(std::vector<uint8_t>& data) {
+		iohelper::imemstream stream(data);
+
+		int width = iohelper::read_length(stream);
+		int height = iohelper::read_length(stream);
+		int channels = iohelper::read<uint8_t>(stream);
+
+		if (channels != 4) {
+			throw std::runtime_error("We can only load images with 4 channels");
+		}
+
+		int size = width * height * channels;
+		// @todo Kind of jenky
+		int offset = data.size() - size;
+
+		VkBuffer staging_buffer;
+		VkDeviceMemory staging_buffer_memory;
+
+		_backend->create_buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
+
+		void* temp;
+		vkMapMemory(_backend->_device, staging_buffer_memory, 0, size, 0, &temp);
+		memcpy(temp, data.data() + offset, size);
+		vkUnmapMemory(_backend->_device, staging_buffer_memory);
+
+		_backend->create_image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _texture_image, _texture_image_memory);
+
+		_backend->transition_image_layout(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		_backend->copy_buffer_to_image(staging_buffer, _texture_image, width, height);
+
+		_backend->transition_image_layout(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		vkDestroyBuffer(_backend->_device, staging_buffer, nullptr);
+		vkFreeMemory(_backend->_device, staging_buffer_memory, nullptr);
+	}
+
+	void VulkanTexture::create_texture_image_view() {
+		_texture_image_view = _backend->create_image_view(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	}
+
+	void VulkanTexture::create_texture_sampler() {
+		VkSamplerCreateInfo sampler_info = {};
+		sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		// sampler_info.magFilter = VK_FILTER_LINEAR;
+		// sampler_info.minFilter = VK_FILTER_LINEAR;
+		sampler_info.magFilter = VK_FILTER_NEAREST;
+		sampler_info.minFilter = VK_FILTER_NEAREST;
+
+		sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		// @todo Make this optonal instead of required
+		sampler_info.anisotropyEnable = VK_TRUE;
+		sampler_info.maxAnisotropy = 16;
+
+		sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+		sampler_info.compareEnable = VK_FALSE;
+		sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler_info.mipLodBias = 0.0f;
+		sampler_info.minLod = 0.0f;
+		sampler_info.maxLod = 0.0f;
+
+		if (vkCreateSampler(_backend->_device, &sampler_info, nullptr, &_texture_sampler) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create texture sampler!");
+		}
+	}
+
+	VulkanModel::VulkanModel(std::string asset_name, VulkanBackend* backend) : GameAsset(asset_name, {std::bind(&VulkanModel::load, this, std::placeholders::_1)}), _backend(backend) {
+		LOG_D("Creating model\n");
+	}
+
+	VulkanModel::~VulkanModel() {
+		vkDestroyBuffer(_backend->_device, _vertex_buffer, nullptr);
+		vkFreeMemory(_backend->_device, _vertex_buffer_memory, nullptr);
+
+		vkDestroyBuffer(_backend->_device, _index_buffer, nullptr);
+		vkFreeMemory(_backend->_device, _index_buffer_memory, nullptr);
+	}
+
+	void VulkanModel::draw_commands(VkCommandBuffer command_buffer, VkDescriptorSet descriptor_set) {
+		VkBuffer vertex_buffers[] = {_vertex_buffer};
+		VkDeviceSize offsets[] = {0};
+		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
+
+		vkCmdBindIndexBuffer(command_buffer, _index_buffer, 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _backend->_pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+
+		vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+	}
+
+	std::vector<uint8_t> VulkanModel::load(std::vector<uint8_t> data) {
+		load_model(data);
+		create_vertex_buffer();
+		create_index_buffer();
+
+		return data;
+	}
+
+	void VulkanModel::load_model(std::vector<uint8_t>& data) {
+		iohelper::imemstream stream(data);
+
+		_vertices.resize(iohelper::read_length(stream));
+		for (auto& vertex : _vertices) {
+			vertex.pos.x = iohelper::read<float>(stream);
+			vertex.pos.y = iohelper::read<float>(stream);
+			vertex.pos.z = iohelper::read<float>(stream);
+
+			vertex.color.r = iohelper::read<float>(stream);
+			vertex.color.g = iohelper::read<float>(stream);
+			vertex.color.b = iohelper::read<float>(stream);
+
+			vertex.tex_coord.x = iohelper::read<float>(stream);
+			vertex.tex_coord.y = iohelper::read<float>(stream);
+		}
+
+		_indices.resize(iohelper::read_length(stream));
+		for (auto& index : _indices) {
+			index = iohelper::read<uint32_t>(stream);
+		}
+	}
+
+	void VulkanModel::create_vertex_buffer() {
+		VkDeviceSize buffer_size = sizeof(_vertices[0]) * _vertices.size();
+
+		VkBuffer staging_buffer;
+		VkDeviceMemory staging_buffer_memory;
+		_backend->create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
+
+		void* data;
+		vkMapMemory(_backend->_device, staging_buffer_memory, 0, buffer_size, 0, &data);
+		memcpy(data, _vertices.data(), static_cast<uint32_t>(buffer_size));
+		vkUnmapMemory(_backend->_device, staging_buffer_memory);
+
+		_backend->create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _vertex_buffer, _vertex_buffer_memory);
+
+		_backend->copy_buffer(staging_buffer, _vertex_buffer, buffer_size);
+
+		vkDestroyBuffer(_backend->_device, staging_buffer, nullptr);
+		vkFreeMemory(_backend->_device, staging_buffer_memory, nullptr);
+	}
+
+	void VulkanModel::create_index_buffer() {
+		VkDeviceSize buffer_size = sizeof(_indices[0]) * _indices.size();
+
+		VkBuffer staging_buffer;
+		VkDeviceMemory staging_buffer_memory;
+		_backend->create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
+
+		void* data;
+		vkMapMemory(_backend->_device, staging_buffer_memory, 0, buffer_size, 0, &data);
+		memcpy(data, _indices.data(), static_cast<uint32_t>(buffer_size));
+		vkUnmapMemory(_backend->_device, staging_buffer_memory);
+
+		_backend->create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _index_buffer, _index_buffer_memory);
+
+		_backend->copy_buffer(staging_buffer, _index_buffer, buffer_size);
+
+		vkDestroyBuffer(_backend->_device, staging_buffer, nullptr);
+		vkFreeMemory(_backend->_device, staging_buffer_memory, nullptr);
+	}
+
 	void VulkanBackend::init() {
 		init_window();
 		init_vulkan();
@@ -103,12 +293,12 @@ namespace BLAZE_NAMESPACE {
 	void VulkanBackend::update() {
 		dynamic_cast<VulkanPlatformSupport*>(blaze::get_platform().get())->vulkan_update();
 
-		#ifdef __ANDROID__
-			if (_framebuffer_resized) {
-				// @todo This is super janky
-				std::this_thread::sleep_for(std::chrono::milliseconds(200));
-			}
-		#endif
+#ifdef __ANDROID__
+		if (_framebuffer_resized) {
+			// @todo This is super janky
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+#endif
 
 		draw_frame();
 	}
@@ -122,14 +312,10 @@ namespace BLAZE_NAMESPACE {
 			vkDestroyFence(_device, _in_flight_fences[i], nullptr);
 		}
 
+		_vulkan_texture = nullptr;
+		_vulkan_model = nullptr;
+
 		cleanup_swap_chain();
-
-		vkDestroySampler(_device, _texture_sampler, nullptr);
-
-		vkDestroyImageView(_device, _texture_image_view, nullptr);
-
-		vkDestroyImage(_device, _texture_image, nullptr);
-		vkFreeMemory(_device, _texture_image_memory, nullptr);
 
 		vkDestroyDescriptorPool(_device, _descriptor_pool, nullptr);
 
@@ -139,12 +325,6 @@ namespace BLAZE_NAMESPACE {
 			vkDestroyBuffer(_device, _uniform_buffers[i], nullptr);
 			vkFreeMemory(_device, _uniform_buffers_memory[i], nullptr);
 		}
-
-		vkDestroyBuffer(_device, _vertex_buffer, nullptr);
-		vkFreeMemory(_device, _vertex_buffer_memory, nullptr);
-
-		vkDestroyBuffer(_device, _index_buffer, nullptr);
-		vkFreeMemory(_device, _index_buffer_memory, nullptr);
 
 		vkDestroyCommandPool(_device, _graphics_command_pool, nullptr);
 		vkDestroyCommandPool(_device, _transfer_command_pool, nullptr);
@@ -189,12 +369,7 @@ namespace BLAZE_NAMESPACE {
 
 		create_depth_resources();
 		create_framebuffers();
-		create_texture_image();
-		create_texture_image_view();
-		create_texture_sampler();
-		load_model();
-		create_vertex_buffer();
-		create_index_buffer();
+		load_assets();
 		create_uniform_buffers();
 		create_descriptor_pool();
 		create_descriptor_sets();
@@ -792,83 +967,13 @@ namespace BLAZE_NAMESPACE {
 		transition_image_layout(_depth_image, depth_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
 
-	void VulkanBackend::create_texture_image() {
-		auto texture_handle = asset_list::load_data("base/texture/Chalet");
+	void VulkanBackend::load_assets() {
+		LOG_D("Loading Chalet texture!\n");
+		_vulkan_texture = asset_manager::new_asset<VulkanTexture>("base/texture/Chalet", this);
+		_vulkan_model = asset_manager::new_asset<VulkanModel>("base/model/Chalet", this);
 
-		LOG_D("Waiting for assets to finish loading...\n");
-		texture_handle.wait();
-		LOG_D("Done!\n");
-
-		std::vector<uint8_t> texture_data = texture_handle.get();
-		iohelper::imemstream stream(texture_data);
-
-		int width = iohelper::read_length(stream);
-		int height = iohelper::read_length(stream);
-		int channels = iohelper::read<uint8_t>(stream);
-
-		if (channels != 4) {
-			throw std::runtime_error("We can only load images with 4 channels");
-		}
-
-		int size = width * height * channels;
-		// @todo Kind of jenky
-		int offset = texture_data.size() - size;
-
-		VkBuffer staging_buffer;
-		VkDeviceMemory staging_buffer_memory;
-
-		create_buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
-
-		void* data;
-		vkMapMemory(_device, staging_buffer_memory, 0, size, 0, &data);
-			memcpy(data, texture_data.data() + offset, size);
-		vkUnmapMemory(_device, staging_buffer_memory);
-
-		create_image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _texture_image, _texture_image_memory);
-
-		transition_image_layout(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		copy_buffer_to_image(staging_buffer, _texture_image, width, height);
-
-		transition_image_layout(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-		vkDestroyBuffer(_device, staging_buffer, nullptr);
-		vkFreeMemory(_device, staging_buffer_memory, nullptr);
-	}
-
-	void VulkanBackend::create_texture_image_view() {
-		_texture_image_view = create_image_view(_texture_image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-	}
-
-	void VulkanBackend::create_texture_sampler() {
-		VkSamplerCreateInfo sampler_info = {};
-		sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		// sampler_info.magFilter = VK_FILTER_LINEAR;
-		// sampler_info.minFilter = VK_FILTER_LINEAR;
-		sampler_info.magFilter = VK_FILTER_NEAREST;
-		sampler_info.minFilter = VK_FILTER_NEAREST;
-
-		sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-		// @todo Make this optonal instead of required
-		sampler_info.anisotropyEnable = VK_TRUE;
-		sampler_info.maxAnisotropy = 16;
-
-		sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		sampler_info.unnormalizedCoordinates = VK_FALSE;
-
-		sampler_info.compareEnable = VK_FALSE;
-		sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-
-		sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		sampler_info.mipLodBias = 0.0f;
-		sampler_info.minLod = 0.0f;
-		sampler_info.maxLod = 0.0f;
-
-		if (vkCreateSampler(_device, &sampler_info, nullptr, &_texture_sampler) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create texture sampler!");
+		while (asset_manager::loading_count() > 0) {
+			asset_manager::load_assets();
 		}
 	}
 
@@ -939,76 +1044,6 @@ namespace BLAZE_NAMESPACE {
 		end_single_time_commands(command_buffer, _transfer_queue);
 	}
 
-	void VulkanBackend::load_model() {
-		auto model_handle = asset_list::load_data("base/model/Chalet");
-
-		LOG_D("Waiting for assets to finish loading...\n");
-		model_handle.wait();
-		LOG_D("Done!\n");
-
-		std::vector<uint8_t> model_data = model_handle.get();
-		iohelper::imemstream stream(model_data);
-
-		_vertices.resize(iohelper::read_length(stream));
-		for (auto& vertex : _vertices) {
-			vertex.pos.x = iohelper::read<float>(stream);
-			vertex.pos.y = iohelper::read<float>(stream);
-			vertex.pos.z = iohelper::read<float>(stream);
-
-			vertex.color.r = iohelper::read<float>(stream);
-			vertex.color.g = iohelper::read<float>(stream);
-			vertex.color.b = iohelper::read<float>(stream);
-
-			vertex.tex_coord.x = iohelper::read<float>(stream);
-			vertex.tex_coord.y = iohelper::read<float>(stream);
-		}
-
-		_indices.resize(iohelper::read_length(stream));
-		for (auto& index : _indices) {
-			index = iohelper::read<uint32_t>(stream);
-		}
-	}
-
-	void VulkanBackend::create_vertex_buffer() {
-		VkDeviceSize buffer_size = sizeof(_vertices[0]) * _vertices.size();
-
-		VkBuffer staging_buffer;
-		VkDeviceMemory staging_buffer_memory;
-		create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
-
-		void* data;
-		vkMapMemory(_device, staging_buffer_memory, 0, buffer_size, 0, &data);
-		memcpy(data, _vertices.data(), static_cast<uint32_t>(buffer_size));
-		vkUnmapMemory(_device, staging_buffer_memory);
-
-		create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _vertex_buffer, _vertex_buffer_memory);
-
-		copy_buffer(staging_buffer, _vertex_buffer, buffer_size);
-
-		vkDestroyBuffer(_device, staging_buffer, nullptr);
-		vkFreeMemory(_device, staging_buffer_memory, nullptr);
-	}
-
-	void VulkanBackend::create_index_buffer() {
-		VkDeviceSize buffer_size = sizeof(_indices[0]) * _indices.size();
-
-		VkBuffer staging_buffer;
-		VkDeviceMemory staging_buffer_memory;
-		create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, staging_buffer, staging_buffer_memory);
-
-		void* data;
-		vkMapMemory(_device, staging_buffer_memory, 0, buffer_size, 0, &data);
-		memcpy(data, _indices.data(), static_cast<uint32_t>(buffer_size));
-		vkUnmapMemory(_device, staging_buffer_memory);
-
-		create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _index_buffer, _index_buffer_memory);
-
-		copy_buffer(staging_buffer, _index_buffer, buffer_size);
-
-		vkDestroyBuffer(_device, staging_buffer, nullptr);
-		vkFreeMemory(_device, staging_buffer_memory, nullptr);
-	}
-
 	void VulkanBackend::create_uniform_buffers() {
 		VkDeviceSize buffer_size = sizeof(UniformBufferObject);
 
@@ -1060,8 +1095,8 @@ namespace BLAZE_NAMESPACE {
 
 			VkDescriptorImageInfo image_info = {};
 			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			image_info.imageView = _texture_image_view;
-			image_info.sampler = _texture_sampler;
+			image_info.imageView = _vulkan_texture->_texture_image_view;
+			image_info.sampler = _vulkan_texture->_texture_sampler;
 
 			std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 			descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1270,15 +1305,7 @@ namespace BLAZE_NAMESPACE {
 			vkCmdBeginRenderPass(_graphics_command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(_graphics_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphics_pipeline);
 
-			VkBuffer vertex_buffers[] = {_vertex_buffer};
-			VkDeviceSize offsets[] = {0};
-			vkCmdBindVertexBuffers(_graphics_command_buffers[i], 0, 1, vertex_buffers, offsets);
-
-			vkCmdBindIndexBuffer(_graphics_command_buffers[i], _index_buffer, 0, VK_INDEX_TYPE_UINT32);
-
-			vkCmdBindDescriptorSets(_graphics_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline_layout, 0, 1, &_descriptor_sets[i], 0, nullptr);
-
-			vkCmdDrawIndexed(_graphics_command_buffers[i], static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+			_vulkan_model->draw_commands(_graphics_command_buffers[i], _descriptor_sets[i]);
 
 			vkCmdEndRenderPass(_graphics_command_buffers[i]);
 
