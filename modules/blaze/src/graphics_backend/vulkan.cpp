@@ -285,6 +285,8 @@ namespace BLAZE_NAMESPACE {
 		vkFreeMemory(_backend->_device, staging_buffer_memory, nullptr);
 	}
 
+	VulkanBackend::VulkanBackend() : _enable_validation_layers(CVar::get<int>("debug")) {}
+
 	void VulkanBackend::init() {
 		init_window();
 		init_vulkan();
@@ -507,27 +509,28 @@ namespace BLAZE_NAMESPACE {
 
 		std::multimap<int, VkPhysicalDevice> candidates;
 
+		static int& log_level = CVar::get<int>("log_level");
 		for (const auto& device : devices) {
 			int score = rate_device_suitability(device);
 			candidates.insert({score, device});
 
-#ifdef DEBUG
-			VkPhysicalDeviceProperties device_properties;
-			vkGetPhysicalDeviceProperties(device, &device_properties);
+			if ((Level)log_level <= Level::debug) {
+				VkPhysicalDeviceProperties device_properties;
+				vkGetPhysicalDeviceProperties(device, &device_properties);
 
-			LOG_D("Rated GPU: {} ({})\n", device_properties.deviceName, score);
-#endif
+				LOG_D("Rated GPU: {} ({})\n", device_properties.deviceName, score);
+			}
 		}
 
 		if (candidates.size() > 0 && candidates.rbegin()->first > 0) {
 			_physical_device = candidates.rbegin()->second;
 
-#ifdef DEBUG
-			VkPhysicalDeviceProperties device_properties;
-			vkGetPhysicalDeviceProperties(_physical_device, &device_properties);
+			if ((Level)log_level <= Level::debug) {
+				VkPhysicalDeviceProperties device_properties;
+				vkGetPhysicalDeviceProperties(_physical_device, &device_properties);
 
-			LOG_D("Selected GPU: {} ({})\n", device_properties.deviceName, candidates.rbegin()->first);
-#endif
+				LOG_D("Selected GPU: {} ({})\n", device_properties.deviceName, candidates.rbegin()->first);
+			}
 		} else {
 			throw std::runtime_error("Failed to find suitable GPU!");
 		}

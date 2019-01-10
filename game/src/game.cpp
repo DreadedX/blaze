@@ -61,29 +61,7 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 
 }
 
-void parse_cvars(std::istream& stream) {
-	std::string word;
-	std::string name;
-
-	while (stream >> word) {
-		if (!name.empty()) {
-			LOG_D("Setting cvar {} = {}\n", name, word);
-			CVar::set<int>(name, std::stoi(word));
-
-			name.clear();
-		} else {
-			name = word;
-		}
-	}
-}
-
 void game() {
-	std::ifstream cvar_file("cvars.txt", std::ios::in);
-
-	if (cvar_file.is_open()) {
-		parse_cvars(cvar_file);
-	}
-
 	// Setup event handlers
 	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
 	event_bus::subscribe<Error>(std::ref(handle_error));

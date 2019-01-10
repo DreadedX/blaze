@@ -78,6 +78,9 @@ namespace BLAZE_NAMESPACE {
 
 	class VulkanBackend : public GraphicsBackend {
 		public:
+
+			VulkanBackend();
+
 			void init() override;
 
 			void update() override;
@@ -182,11 +185,7 @@ namespace BLAZE_NAMESPACE {
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME
 			};
 
-			#if defined(DEBUG)
-				const bool _enable_validation_layers = true;
-			#else
-				const bool _enable_validation_layers = false;
-			#endif
+			const bool _enable_validation_layers;
 
 			VkInstance _instance;
 			#if !defined(__ANDROID__)

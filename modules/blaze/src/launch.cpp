@@ -51,8 +51,30 @@ void file_logger(Level level, std::string file, int line, std::string text) {
 	#endif
 }
 
+void parse_cvars(std::istream& stream) {
+	std::string word;
+	std::string name;
+
+	while (stream >> word) {
+		if (!name.empty()) {
+			LOG_D("Setting cvar {} = {}\n", name, word);
+			blaze::CVar::set<int>(name, std::stoi(word));
+
+			name.clear();
+		} else {
+			name = word;
+		}
+	}
+}
+
 // This is the entry point of the game engine
 int main() {
+	std::ifstream cvar_file("cvars.txt", std::ios::in);
+
+	if (cvar_file.is_open()) {
+		parse_cvars(cvar_file);
+	}
+
 	blaze::set_default_cvars();
 
 	// try {
