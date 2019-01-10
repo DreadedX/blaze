@@ -190,7 +190,7 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
-	VulkanModel::VulkanModel(std::string asset_name, VulkanBackend* backend) : GameAsset(asset_name, {std::bind(&VulkanModel::load, this, std::placeholders::_1)}), _backend(backend) {
+	VulkanModel::VulkanModel(std::string asset_name, std::shared_ptr<VulkanMaterial> material, VulkanBackend* backend) : GameAsset(asset_name, {std::bind(&VulkanModel::load, this, std::placeholders::_1)}), _material(material), _backend(backend) {
 		LOG_D("Creating model\n");
 	}
 
@@ -202,16 +202,21 @@ namespace BLAZE_NAMESPACE {
 		vkFreeMemory(_backend->_device, _index_buffer_memory, nullptr);
 	}
 
-	void VulkanModel::draw_commands(VkCommandBuffer command_buffer, VkDescriptorSet descriptor_set) {
+	void VulkanModel::commands(VkCommandBuffer command_buffer, int index) {
+		_material->commands(command_buffer, index);
+
 		VkBuffer vertex_buffers[] = {_vertex_buffer};
 		VkDeviceSize offsets[] = {0};
+
 		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
 
 		vkCmdBindIndexBuffer(command_buffer, _index_buffer, 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _backend->_pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-
 		vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+	}
+
+	void VulkanModel::recreate() {
+		_material->recreate();
 	}
 
 	std::vector<uint8_t> VulkanModel::load(std::vector<uint8_t> data) {
@@ -285,6 +290,283 @@ namespace BLAZE_NAMESPACE {
 		vkFreeMemory(_backend->_device, staging_buffer_memory, nullptr);
 	}
 
+	// @todo We need to bae able to pass in the seperate shader parts, these parts store what type they are and we link it together here
+	// @todo We need a description of sorts that can be used to generate the descriptor set layout and later fill them in
+	VulkanShader::VulkanShader(std::string vertex_name, std::string fragment_name, VulkanBackend* backend) : GameAsset(vertex_name), _fragment_handle(asset_list::load_data(fragment_name)), _backend(backend) {
+		_name += ";" + fragment_name;
+		LOG_D("Creating shader\n");
+	}
+
+	VulkanShader::~VulkanShader() {
+		vkDestroyShaderModule(_backend->_device, _vert_shader_module, nullptr);
+		vkDestroyShaderModule(_backend->_device, _frag_shader_module, nullptr);
+		vkDestroyPipeline(_backend->_device, _pipeline, nullptr);
+		vkDestroyPipelineLayout(_backend->_device, _pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(_backend->_device, _descriptor_set_layout, nullptr);
+	}
+
+	void VulkanShader::recreate() {
+		vkDestroyPipeline(_backend->_device, _pipeline, nullptr);
+		vkDestroyPipelineLayout(_backend->_device, _pipeline_layout, nullptr);
+		create_graphics_pipeline();
+	}
+
+	void VulkanShader::commands(VkCommandBuffer command_buffer) {
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
+	}
+
+	bool VulkanShader::is_loaded() {
+		bool vertex_loaded = GameAsset::is_loaded();
+		bool fragment_loaded = _fragment_handle.is_loaded();
+
+		static bool loaded = false;
+		if (vertex_loaded && fragment_loaded && !loaded) {
+			LOG_D("Both the fragment and vertex shader have been loaded\n");
+			// @todo Make sure this happends in a seperate thread
+			_vert_shader_module = _backend->create_shader_module(_data_handle.get());
+			_frag_shader_module = _backend->create_shader_module(_fragment_handle.get());
+
+			create_descriptor_set_layout();
+			create_graphics_pipeline();
+
+			loaded = true;
+		}
+
+		return loaded;
+	}
+
+	void VulkanShader::create_graphics_pipeline() {
+		// --- This section can be made an asset aswel
+
+		VkPipelineShaderStageCreateInfo vert_shader_stage_info = {};
+		vert_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vert_shader_stage_info.module = _vert_shader_module;
+		vert_shader_stage_info.pName = "main";
+
+		VkPipelineShaderStageCreateInfo frag_shader_stage_info = {};
+		frag_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		frag_shader_stage_info.module = _frag_shader_module;
+		frag_shader_stage_info.pName = "main";
+
+		VkPipelineShaderStageCreateInfo shader_stages[] = {vert_shader_stage_info, frag_shader_stage_info};
+		// ----
+
+		auto binding_description = get_vertex_binding_description();
+		auto attribute_description = get_vertex_attribute_description();
+
+		VkPipelineVertexInputStateCreateInfo vertex_input_info = {};
+		vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertex_input_info.vertexBindingDescriptionCount = 1;
+		vertex_input_info.pVertexBindingDescriptions = &binding_description;
+		vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_description.size());
+		vertex_input_info.pVertexAttributeDescriptions = attribute_description.data();
+
+		VkPipelineInputAssemblyStateCreateInfo input_assembly = {};
+		input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		input_assembly.primitiveRestartEnable = VK_FALSE;
+
+		VkViewport viewport = {};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = _backend->_swap_chain_extent.width;
+		viewport.height = _backend->_swap_chain_extent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor = {};
+		scissor.offset = {0, 0};
+		scissor.extent = _backend->_swap_chain_extent;
+
+		VkPipelineViewportStateCreateInfo viewport_state = {};
+		viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewport_state.viewportCount = 1;
+		viewport_state.pViewports = &viewport;
+		viewport_state.scissorCount = 1;
+		viewport_state.pScissors = &scissor;
+
+		VkPipelineRasterizationStateCreateInfo rasterizer = {};
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterizer.lineWidth = 1.0f;
+		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		// Due to the way glm works everything is drawn the other way around
+		// rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizer.depthBiasEnable = VK_FALSE;
+		rasterizer.depthBiasConstantFactor = 0.0f;
+		rasterizer.depthBiasClamp = 0.0f;
+		rasterizer.depthBiasSlopeFactor = 0.0f;
+
+		VkPipelineMultisampleStateCreateInfo multisampling = {};
+		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampling.sampleShadingEnable = VK_FALSE;
+		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		multisampling.minSampleShading = 1.0f;
+		multisampling.pSampleMask = nullptr;
+		multisampling.alphaToCoverageEnable = VK_FALSE;
+		multisampling.alphaToOneEnable = VK_FALSE;
+
+		VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
+		depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depth_stencil.depthTestEnable = VK_TRUE;
+		depth_stencil.depthWriteEnable = VK_TRUE;
+
+		depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+
+		depth_stencil.depthBoundsTestEnable = VK_FALSE;
+		depth_stencil.minDepthBounds = 0.0f;
+		depth_stencil.maxDepthBounds = 1.0f;
+
+		depth_stencil.stencilTestEnable = VK_FALSE;
+		depth_stencil.front = {};
+		depth_stencil.back = {};
+
+		VkPipelineColorBlendAttachmentState color_blend_attachment = {};
+		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		color_blend_attachment.blendEnable = VK_TRUE;
+		color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+		color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+		VkPipelineColorBlendStateCreateInfo color_blending = {};
+		color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		color_blending.logicOpEnable = VK_FALSE;
+		color_blending.logicOp = VK_LOGIC_OP_COPY;
+		color_blending.attachmentCount = 1;
+		color_blending.pAttachments = &color_blend_attachment;
+		color_blending.blendConstants[0] = 0.0f;
+		color_blending.blendConstants[1] = 0.0f;
+		color_blending.blendConstants[2] = 0.0f;
+		color_blending.blendConstants[3] = 0.0f;
+
+		VkPipelineLayoutCreateInfo pipeline_layout_info = {};
+		pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipeline_layout_info.setLayoutCount = 1;
+		pipeline_layout_info.pSetLayouts = &_descriptor_set_layout;
+		pipeline_layout_info.pushConstantRangeCount = 0;
+		pipeline_layout_info.pPushConstantRanges = nullptr;
+
+		if (vkCreatePipelineLayout(_backend->_device, &pipeline_layout_info, nullptr, &_pipeline_layout) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create pipeline layout!");
+		}
+
+		VkGraphicsPipelineCreateInfo pipeline_info = {};
+		pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipeline_info.stageCount = 2;
+		pipeline_info.pStages = shader_stages;
+		pipeline_info.pVertexInputState = &vertex_input_info;
+		pipeline_info.pInputAssemblyState = &input_assembly;
+
+		pipeline_info.pViewportState = &viewport_state;
+		pipeline_info.pRasterizationState = &rasterizer;
+		pipeline_info.pMultisampleState = &multisampling;
+		pipeline_info.pDepthStencilState = &depth_stencil;
+		pipeline_info.pColorBlendState = &color_blending;
+		pipeline_info.pDynamicState = nullptr;
+
+		pipeline_info.layout = _pipeline_layout;
+		pipeline_info.renderPass = _backend->_render_pass;
+		pipeline_info.subpass = 0;
+		pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+		pipeline_info.basePipelineIndex = -1;
+
+		if (vkCreateGraphicsPipelines(_backend->_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_pipeline) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create graphics pipeline!");
+		}
+	}
+
+	// This needs some kind of configuration
+	void VulkanShader::create_descriptor_set_layout() {
+		VkDescriptorSetLayoutBinding ubo_layout_binding = {};
+		ubo_layout_binding.binding = 0;
+		ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		ubo_layout_binding.descriptorCount = 1;
+		ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		ubo_layout_binding.pImmutableSamplers = nullptr;
+
+		VkDescriptorSetLayoutBinding sampler_layout_binding = {};
+		sampler_layout_binding.binding = 1;
+		sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		sampler_layout_binding.descriptorCount = 1;
+		sampler_layout_binding.pImmutableSamplers = nullptr;
+		sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		// @todo Replace all the times we used vector with array
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = {ubo_layout_binding, sampler_layout_binding};
+		VkDescriptorSetLayoutCreateInfo layout_info = {};
+		layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layout_info.bindingCount = bindings.size();
+		layout_info.pBindings = bindings.data();
+
+		if (vkCreateDescriptorSetLayout(_backend->_device, &layout_info, nullptr, &_descriptor_set_layout) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create descriptor set layout!");
+		}
+	}
+
+	VulkanMaterial::VulkanMaterial(std::shared_ptr<VulkanShader> shader, std::shared_ptr<VulkanTexture> texture, VulkanBackend* backend) : _shader(shader), _texture(texture), _backend(backend) {
+		create_descriptor_sets();
+	}
+
+	void VulkanMaterial::commands(VkCommandBuffer command_buffer, int index) {
+		_shader->commands(command_buffer);
+		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _shader->_pipeline_layout, 0, 1, &_descriptor_sets[index], 0, nullptr);
+		// Here we have to bind the descriptor set
+	}
+
+	void VulkanMaterial::create_descriptor_sets() {
+		_descriptor_sets.resize(_backend->_swap_chain_images.size());
+
+		std::vector<VkDescriptorSetLayout> layouts(_backend->_swap_chain_images.size(), _shader->_descriptor_set_layout);
+		VkDescriptorSetAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		alloc_info.descriptorPool = _backend->_descriptor_pool;
+		alloc_info.descriptorSetCount = static_cast<uint32_t>(_backend->_swap_chain_images.size());
+		alloc_info.pSetLayouts = layouts.data();
+
+		if (vkAllocateDescriptorSets(_backend->_device, &alloc_info, _descriptor_sets.data()) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to allocate descriptor sets!");
+		}
+
+		for (size_t i = 0; i < _backend->_swap_chain_images.size(); ++i) {
+			VkDescriptorBufferInfo buffer_info = {};
+			buffer_info.buffer = _backend->_uniform_buffers[i];
+			buffer_info.offset = 0;
+			buffer_info.range = sizeof(UniformBufferObject);
+
+			VkDescriptorImageInfo image_info = {};
+			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			image_info.imageView = _texture->_texture_image_view;
+			image_info.sampler = _texture->_texture_sampler;
+
+			std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+			descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_writes[0].dstSet = _descriptor_sets[i];
+			descriptor_writes[0].dstBinding = 0;
+			descriptor_writes[0].dstArrayElement = 0;
+			descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptor_writes[0].descriptorCount = 1;
+			descriptor_writes[0].pBufferInfo = &buffer_info;
+
+			descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_writes[1].dstSet = _descriptor_sets[i];
+			descriptor_writes[1].dstBinding = 1;
+			descriptor_writes[1].dstArrayElement = 0;
+			descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptor_writes[1].descriptorCount = 1;
+			descriptor_writes[1].pImageInfo = &image_info;
+
+			vkUpdateDescriptorSets(_backend->_device, descriptor_writes.size(), descriptor_writes.data(), 0, nullptr);
+		}
+	}
+
 	VulkanBackend::VulkanBackend() : _enable_validation_layers(CVar::get<int>("debug")) {}
 
 	void VulkanBackend::init() {
@@ -314,14 +596,11 @@ namespace BLAZE_NAMESPACE {
 			vkDestroyFence(_device, _in_flight_fences[i], nullptr);
 		}
 
-		_vulkan_texture = nullptr;
 		_vulkan_model = nullptr;
 
 		cleanup_swap_chain();
 
 		vkDestroyDescriptorPool(_device, _descriptor_pool, nullptr);
-
-		vkDestroyDescriptorSetLayout(_device, _descriptor_set_layout, nullptr);
 
 		for (size_t i = 0; i < _swap_chain_images.size(); ++i) {
 			vkDestroyBuffer(_device, _uniform_buffers[i], nullptr);
@@ -365,16 +644,13 @@ namespace BLAZE_NAMESPACE {
 		create_swap_chain();
 		create_image_views();
 		create_render_pass();
-		create_descriptor_set_layout();
-		create_graphics_pipeline();
 		create_command_pools();
 
 		create_depth_resources();
 		create_framebuffers();
-		load_assets();
 		create_uniform_buffers();
 		create_descriptor_pool();
-		create_descriptor_sets();
+		load_assets();
 		create_command_buffers();
 		create_sync_objects();
 	}
@@ -386,8 +662,6 @@ namespace BLAZE_NAMESPACE {
 
 		vkFreeCommandBuffers(_device, _graphics_command_pool, static_cast<uint32_t>(_graphics_command_buffers.size()), _graphics_command_buffers.data());
 
-		vkDestroyPipeline(_device, _graphics_pipeline, nullptr);
-		vkDestroyPipelineLayout(_device, _pipeline_layout, nullptr);
 		vkDestroyRenderPass(_device, _render_pass, nullptr);
 
 		vkDestroyImageView(_device, _depth_image_view, nullptr);
@@ -411,7 +685,7 @@ namespace BLAZE_NAMESPACE {
 		create_swap_chain();
 		create_image_views();
 		create_render_pass();
-		create_graphics_pipeline();
+		_vulkan_model->recreate();
 		create_depth_resources();
 		create_framebuffers();
 		create_command_buffers();
@@ -726,192 +1000,6 @@ namespace BLAZE_NAMESPACE {
 		}
 	}
 
-	void VulkanBackend::create_descriptor_set_layout() {
-		VkDescriptorSetLayoutBinding ubo_layout_binding = {};
-		ubo_layout_binding.binding = 0;
-		ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		ubo_layout_binding.descriptorCount = 1;
-		ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		ubo_layout_binding.pImmutableSamplers = nullptr;
-
-		VkDescriptorSetLayoutBinding sampler_layout_binding = {};
-		sampler_layout_binding.binding = 1;
-		sampler_layout_binding.descriptorCount = 1;
-		sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		sampler_layout_binding.pImmutableSamplers = nullptr;
-		sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		// @todo Replace all the times we used vector with array
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = {ubo_layout_binding, sampler_layout_binding};
-		VkDescriptorSetLayoutCreateInfo layout_info = {};
-		layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layout_info.bindingCount = bindings.size();
-		layout_info.pBindings = bindings.data();
-
-		if (vkCreateDescriptorSetLayout(_device, &layout_info, nullptr, &_descriptor_set_layout) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create descriptor set layout!");
-		}
-	}
-
-	void VulkanBackend::create_graphics_pipeline() {
-		auto vert_shader_code_handle = asset_list::load_data("base/shader/Vertex");
-		auto frag_shader_code_handle = asset_list::load_data("base/shader/Fragment");
-
-		LOG_D("Waiting for assets to finish loading...\n");
-		vert_shader_code_handle.wait();
-		frag_shader_code_handle.wait();
-		LOG_D("Done!\n");
-
-		VkShaderModule vert_shader_module = create_shader_module(vert_shader_code_handle.get());
-		VkShaderModule frag_shader_module = create_shader_module(frag_shader_code_handle.get());
-
-		VkPipelineShaderStageCreateInfo vert_shader_stage_info = {};
-		vert_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vert_shader_stage_info.module = vert_shader_module;
-		vert_shader_stage_info.pName = "main";
-
-		VkPipelineShaderStageCreateInfo frag_shader_stage_info = {};
-		frag_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		frag_shader_stage_info.module = frag_shader_module;
-		frag_shader_stage_info.pName = "main";
-
-		VkPipelineShaderStageCreateInfo shader_stages[] = {vert_shader_stage_info, frag_shader_stage_info};
-
-		auto binding_description = get_vertex_binding_description();
-		auto attribute_description = get_vertex_attribute_description();
-
-		VkPipelineVertexInputStateCreateInfo vertex_input_info = {};
-		vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertex_input_info.vertexBindingDescriptionCount = 1;
-		vertex_input_info.pVertexBindingDescriptions = &binding_description;
-		vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_description.size());
-		vertex_input_info.pVertexAttributeDescriptions = attribute_description.data();
-
-		VkPipelineInputAssemblyStateCreateInfo input_assembly = {};
-		input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		input_assembly.primitiveRestartEnable = VK_FALSE;
-
-		VkViewport viewport = {};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = _swap_chain_extent.width;
-		viewport.height = _swap_chain_extent.height;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
-		VkRect2D scissor = {};
-		scissor.offset = {0, 0};
-		scissor.extent = _swap_chain_extent;
-
-		VkPipelineViewportStateCreateInfo viewport_state = {};
-		viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewport_state.viewportCount = 1;
-		viewport_state.pViewports = &viewport;
-		viewport_state.scissorCount = 1;
-		viewport_state.pScissors = &scissor;
-
-		VkPipelineRasterizationStateCreateInfo rasterizer = {};
-		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterizer.depthClampEnable = VK_FALSE;
-		rasterizer.rasterizerDiscardEnable = VK_FALSE;
-		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizer.lineWidth = 1.0f;
-		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		// Due to the way glm works everything is drawn the other way around
-		// rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterizer.depthBiasEnable = VK_FALSE;
-		rasterizer.depthBiasConstantFactor = 0.0f;
-		rasterizer.depthBiasClamp = 0.0f;
-		rasterizer.depthBiasSlopeFactor = 0.0f;
-
-		VkPipelineMultisampleStateCreateInfo multisampling = {};
-		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampling.sampleShadingEnable = VK_FALSE;
-		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-		multisampling.minSampleShading = 1.0f;
-		multisampling.pSampleMask = nullptr;
-		multisampling.alphaToCoverageEnable = VK_FALSE;
-		multisampling.alphaToOneEnable = VK_FALSE;
-
-		VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
-		depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depth_stencil.depthTestEnable = VK_TRUE;
-		depth_stencil.depthWriteEnable = VK_TRUE;
-
-		depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
-
-		depth_stencil.depthBoundsTestEnable = VK_FALSE;
-		depth_stencil.minDepthBounds = 0.0f;
-		depth_stencil.maxDepthBounds = 1.0f;
-
-		depth_stencil.stencilTestEnable = VK_FALSE;
-		depth_stencil.front = {};
-		depth_stencil.back = {};
-
-		VkPipelineColorBlendAttachmentState color_blend_attachment = {};
-		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		color_blend_attachment.blendEnable = VK_TRUE;
-		color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-		color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-		VkPipelineColorBlendStateCreateInfo color_blending = {};
-		color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		color_blending.logicOpEnable = VK_FALSE;
-		color_blending.logicOp = VK_LOGIC_OP_COPY;
-		color_blending.attachmentCount = 1;
-		color_blending.pAttachments = &color_blend_attachment;
-		color_blending.blendConstants[0] = 0.0f;
-		color_blending.blendConstants[1] = 0.0f;
-		color_blending.blendConstants[2] = 0.0f;
-		color_blending.blendConstants[3] = 0.0f;
-
-		VkPipelineLayoutCreateInfo pipeline_layout_info = {};
-		pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipeline_layout_info.setLayoutCount = 1;
-		pipeline_layout_info.pSetLayouts = &_descriptor_set_layout;
-		pipeline_layout_info.pushConstantRangeCount = 0;
-		pipeline_layout_info.pPushConstantRanges = nullptr;
-
-		if (vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_pipeline_layout) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create pipeline layout!");
-		}
-
-		VkGraphicsPipelineCreateInfo pipeline_info = {};
-		pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipeline_info.stageCount = 2;
-		pipeline_info.pStages = shader_stages;
-		pipeline_info.pVertexInputState = &vertex_input_info;
-		pipeline_info.pInputAssemblyState = &input_assembly;
-
-		pipeline_info.pViewportState = &viewport_state;
-		pipeline_info.pRasterizationState = &rasterizer;
-		pipeline_info.pMultisampleState = &multisampling;
-		pipeline_info.pDepthStencilState = &depth_stencil;
-		pipeline_info.pColorBlendState = &color_blending;
-		pipeline_info.pDynamicState = nullptr;
-
-		pipeline_info.layout = _pipeline_layout;
-		pipeline_info.renderPass = _render_pass;
-		pipeline_info.subpass = 0;
-		pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
-		pipeline_info.basePipelineIndex = -1;
-
-		if (vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_graphics_pipeline) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create graphics pipeline!");
-		}
-
-		vkDestroyShaderModule(_device, vert_shader_module, nullptr);
-		vkDestroyShaderModule(_device, frag_shader_module, nullptr);
-	}
-
 	void VulkanBackend::create_framebuffers() {
 		_swap_chain_framebuffers.resize(_swap_chain_image_views.size());
 
@@ -970,10 +1058,21 @@ namespace BLAZE_NAMESPACE {
 		transition_image_layout(_depth_image, depth_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
 
+	// @todo We need to make sure that at any point load new assets
+	// That way we can start to move most of this outside of the backend
+	// The goal is to create this in the main game loop and render it from there
 	void VulkanBackend::load_assets() {
-		LOG_D("Loading Chalet texture!\n");
-		_vulkan_texture = asset_manager::new_asset<VulkanTexture>("base/texture/Chalet", this);
-		_vulkan_model = asset_manager::new_asset<VulkanModel>("base/model/Chalet", this);
+		auto shader = asset_manager::new_asset<VulkanShader>("base/shader/Vertex", "base/shader/Fragment", this);
+		auto texture = asset_manager::new_asset<VulkanTexture>("base/texture/Test", this);
+		auto texture2 = asset_manager::new_asset<VulkanTexture>("base/texture/Chalet", this);
+
+		while (asset_manager::loading_count() > 0) {
+			asset_manager::load_assets();
+		}
+		// @todo This should be based on a GameAsset or something and wait with creating things until 
+		auto material = std::make_shared<VulkanMaterial>(shader, texture2, this);
+
+		_vulkan_model = asset_manager::new_asset<VulkanModel>("base/model/Chalet", material, this);
 
 		while (asset_manager::loading_count() > 0) {
 			asset_manager::load_assets();
@@ -1073,52 +1172,6 @@ namespace BLAZE_NAMESPACE {
 
 		if (vkCreateDescriptorPool(_device, &pool_info, nullptr, &_descriptor_pool) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create descriptor pool!");
-		}
-	}
-
-	void VulkanBackend::create_descriptor_sets() {
-		_descriptor_sets.resize(_swap_chain_images.size());
-
-		std::vector<VkDescriptorSetLayout> layouts(_swap_chain_images.size(), _descriptor_set_layout);
-		VkDescriptorSetAllocateInfo alloc_info = {};
-		alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		alloc_info.descriptorPool = _descriptor_pool;
-		alloc_info.descriptorSetCount = static_cast<uint32_t>(_swap_chain_images.size());
-		alloc_info.pSetLayouts = layouts.data();
-
-		if (vkAllocateDescriptorSets(_device, &alloc_info, _descriptor_sets.data()) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to allocate descriptor sets!");
-		}
-
-		for (size_t i = 0; i < _swap_chain_images.size(); ++i) {
-			VkDescriptorBufferInfo buffer_info = {};
-			buffer_info.buffer = _uniform_buffers[i];
-			buffer_info.offset = 0;
-			buffer_info.range = sizeof(UniformBufferObject);
-
-			VkDescriptorImageInfo image_info = {};
-			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			image_info.imageView = _vulkan_texture->_texture_image_view;
-			image_info.sampler = _vulkan_texture->_texture_sampler;
-
-			std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
-			descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_writes[0].dstSet = _descriptor_sets[i];
-			descriptor_writes[0].dstBinding = 0;
-			descriptor_writes[0].dstArrayElement = 0;
-			descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptor_writes[0].descriptorCount = 1;
-			descriptor_writes[0].pBufferInfo = &buffer_info;
-
-			descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_writes[1].dstSet = _descriptor_sets[i];
-			descriptor_writes[1].dstBinding = 1;
-			descriptor_writes[1].dstArrayElement = 0;
-			descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptor_writes[1].descriptorCount = 1;
-			descriptor_writes[1].pImageInfo = &image_info;
-
-			vkUpdateDescriptorSets(_device, descriptor_writes.size(), descriptor_writes.data(), 0, nullptr);
 		}
 	}
 
@@ -1306,9 +1359,8 @@ namespace BLAZE_NAMESPACE {
 			render_pass_info.pClearValues = clear_values.data();
 
 			vkCmdBeginRenderPass(_graphics_command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
-			vkCmdBindPipeline(_graphics_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphics_pipeline);
 
-			_vulkan_model->draw_commands(_graphics_command_buffers[i], _descriptor_sets[i]);
+			_vulkan_model->commands(_graphics_command_buffers[i], i);
 
 			vkCmdEndRenderPass(_graphics_command_buffers[i]);
 

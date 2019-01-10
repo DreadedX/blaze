@@ -49,12 +49,61 @@ namespace BLAZE_NAMESPACE {
 			VkDeviceMemory _texture_image_memory;
 	};
 
+	class VulkanShader : public GameAsset {
+		public:
+			// @todo Split the shader stages into there own assets
+			VulkanShader(std::string vertex_name, std::string fragment_name, VulkanBackend* backend);
+			~VulkanShader();
+
+			bool is_loaded() override;
+
+			void recreate();
+
+			void commands(VkCommandBuffer command_buffer);
+
+			VkPipelineLayout _pipeline_layout;
+			VkPipeline _pipeline;
+			VkDescriptorSetLayout _descriptor_set_layout;
+
+		private:
+			void create_graphics_pipeline();
+			void create_descriptor_set_layout();
+
+			flame::DataHandle _fragment_handle;
+			VulkanBackend* _backend;
+
+			VkShaderModule _vert_shader_module;
+			VkShaderModule _frag_shader_module;
+	};
+
+	class VulkanMaterial {
+		public:
+			VulkanMaterial(std::shared_ptr<VulkanShader> shader, std::shared_ptr<VulkanTexture> texture, VulkanBackend* backend);
+
+			void commands(VkCommandBuffer command_buffer, int index);
+
+			void recreate() {
+				_shader->recreate();
+			}
+
+			std::vector<VkDescriptorSet> _descriptor_sets;
+		private:
+			void create_descriptor_sets();
+
+			std::shared_ptr<VulkanShader> _shader;
+			std::shared_ptr<VulkanTexture> _texture;
+
+			VulkanBackend* _backend;
+	};
+
 	class VulkanModel : public GameAsset {
 		public:
-			VulkanModel(std::string asset_name, VulkanBackend* backend);
+			VulkanModel(std::string asset_name, std::shared_ptr<VulkanMaterial> material, VulkanBackend* backend);
 			~VulkanModel();
 
-			void draw_commands(VkCommandBuffer command_buffer, VkDescriptorSet descriptor_set);
+			void commands(VkCommandBuffer command_buffer, int index);
+
+			void recreate();
 
 			VkBuffer _vertex_buffer;
 			VkDeviceMemory _vertex_buffer_memory;
@@ -71,6 +120,7 @@ namespace BLAZE_NAMESPACE {
 			void create_vertex_buffer();
 			void create_index_buffer();
 
+			std::shared_ptr<VulkanMaterial> _material;
 			VulkanBackend* _backend;
 
 			std::vector<Vertex> _vertices;
@@ -93,6 +143,8 @@ namespace BLAZE_NAMESPACE {
 
 			friend class VulkanTexture;
 			friend class VulkanModel;
+			friend class VulkanShader;
+			friend class VulkanMaterial;
 
 		private:
 			struct QueueFamilyIndices {
@@ -124,16 +176,12 @@ namespace BLAZE_NAMESPACE {
 			void create_swap_chain();
 			void create_image_views();
 			void create_render_pass();
-			void create_descriptor_set_layout();
-			void create_graphics_pipeline();
 			void create_framebuffers();
 			void create_command_pools();
 			void create_depth_resources();
-			void load_assets();
-			void create_vertex_buffer();
-			void create_uniform_buffers();
 			void create_descriptor_pool();
-			void create_descriptor_sets();
+			void create_uniform_buffers();
+			void load_assets();
 			void create_command_buffers();
 			void create_sync_objects();
 
@@ -209,18 +257,12 @@ namespace BLAZE_NAMESPACE {
 			VkExtent2D _swap_chain_extent;
 
 			VkRenderPass _render_pass;
-			VkDescriptorSetLayout _descriptor_set_layout;
-			VkPipelineLayout _pipeline_layout;
-
-			VkPipeline _graphics_pipeline;
 
 			VkCommandPool _graphics_command_pool;
 			VkCommandPool _transfer_command_pool;
 
 			VkDescriptorPool _descriptor_pool;
-			std::vector<VkDescriptorSet> _descriptor_sets;
 
-			std::shared_ptr<VulkanTexture> _vulkan_texture;
 			std::shared_ptr<VulkanModel> _vulkan_model;
 
 			std::vector<VkImageView> _swap_chain_image_views;

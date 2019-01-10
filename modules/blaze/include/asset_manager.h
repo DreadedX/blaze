@@ -9,9 +9,9 @@ namespace BLAZE_NAMESPACE {
 	class asset_manager {
 		public:
 			template <typename T, typename... Args>
-			static std::shared_ptr<T> new_asset(std::string asset_name, Args... args) {
+			static std::shared_ptr<T> new_asset(Args... args) {
 				static_assert(std::is_base_of<GameAsset, T>(), "T must be derived from GameAsset");
-				std::shared_ptr<T> game_asset = std::make_shared<T>(asset_name, args...);
+				std::shared_ptr<T> game_asset = std::make_shared<T>(args...);
 				_loading_assets.push_back(std::make_pair(game_asset, std::chrono::system_clock::now()));
 				return game_asset;
 			}
