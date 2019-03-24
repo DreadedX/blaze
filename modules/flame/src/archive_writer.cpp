@@ -5,6 +5,8 @@
 #include "iohelper/write.h"
 #include "iohelper/read.h"
 
+#include <sstream>
+
 namespace FLAME_NAMESPACE {
 
 	// @todo We should add a function that skips ahead the correct amount based on the specified type (More iohelper related)
@@ -104,11 +106,49 @@ namespace FLAME_NAMESPACE {
 			throw std::logic_error("Archive is already finalized");
 		}
 
+		// Split the path of the file
+		std::stringstream name(file_handle.get_name());
+		std::string s;
+		std::vector<std::string> parts;
+		while (std::getline(name, s, '/')) {
+			parts.push_back(s);
+		}
+		// The last part is the file name
+		std::string file_name = parts[parts.size()-1];
+		parts.erase(parts.end());
+
+		// Create required folders and store the folder that contains the file
+		int parent = 0;
+		for (auto& part : parts) {
+			bool found = false;
+			for (auto& [id, folder] : _folders) {
+				if (!folder.second.compare(part) && parent == folder.first) {
+					found = true;
+					parent = id;
+
+					break;
+				}
+			}
+			if (!found) {
+				_counter++;
+				_folders.insert({_counter, {parent, part}});
+
+				iohelper::write<uint8_t>(_fs, static_cast<uint8_t>(Type::dir));
+				iohelper::write_length(_fs, _counter);
+				iohelper::write_length(_fs, parent);
+				iohelper::write<std::string>(_fs, part);
+
+				parent = _counter;
+			}
+		}
+
 		// Start loading
 		// @note We run in deferred mode because there is no point here in running async
 		auto data_handle = file_handle.load_data(false, create_workflow(compression));
 
-		iohelper::write<std::string>(_fs, file_handle.get_name());
+		iohelper::write<uint8_t>(_fs, static_cast<uint8_t>(Type::file));
+		iohelper::write_length(_fs, parent);
+		iohelper::write<std::string>(_fs, file_name);
 		iohelper::write_length(_fs, file_handle.get_version());
 		iohelper::write<uint8_t>(_fs, static_cast<uint8_t>(compression));
 

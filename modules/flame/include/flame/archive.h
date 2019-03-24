@@ -12,6 +12,11 @@ namespace FLAME_NAMESPACE {
 		zlib
 	};
 
+	enum class Type : uint8_t {
+		file,
+		dir
+	};
+
 	typedef std::tuple<std::string, size_t, size_t> Dependency;
 
 	// FLMx is the new wip spec
@@ -45,6 +50,7 @@ namespace FLAME_NAMESPACE {
 			size_t _version;
 			std::vector<Dependency> _dependencies;
 
+			std::unordered_map<int, std::pair<int, std::string>> _folders;
 			std::vector<FileHandle> _file_handles;
 
 			crypto::RSA _key;

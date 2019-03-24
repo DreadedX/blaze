@@ -112,23 +112,48 @@ namespace FLAME_NAMESPACE {
 
 		unsigned long next_file_handle = fs.tellg();
 		while (next_file_handle < size) {
-			internal::FileInfo file_info = {};
-			file_info.filename = filename;
-
 			fs.seekg(next_file_handle);
-			std::string name = iohelper::read<std::string>(fs);
-			// @todo Meta asset should use size_t instead of uint16_t
-			size_t version = iohelper::read_length(fs);
-			Compression compression = static_cast<Compression>(iohelper::read<uint8_t>(fs));
-			file_info.size = iohelper::read_length(fs);
-			file_info.offset = fs.tellg();
+			Type type = static_cast<Type>(iohelper::read<uint8_t>(fs));
+			if (type == Type::dir) {
+				int id = iohelper::read_length(fs);
+				int parent = iohelper::read_length(fs);
+				std::string name = iohelper::read<std::string>(fs);
 
-			auto workflow = create_workflow(compression);
+				next_file_handle = fs.tellg();
 
-			next_file_handle = file_info.offset + file_info.size;
+				_folders.insert({id, {parent, name}});
+			} else if(type == Type::file) {
+				internal::FileInfo file_info = {};
+				file_info.filename = filename;
 
-			_file_handles.push_back(FileHandle(name, version, file_info, workflow));
+				// Resolve the full asset name at runtime
+				int parent = iohelper::read_length(fs);
+				std::string name = iohelper::read<std::string>(fs);
+				while (parent) {
+					auto& [folder_parent, folder_name] = _folders.find(parent)->second;
+					name = folder_name + '/' + name;
+					parent = folder_parent;
+				}
+
+				size_t version = iohelper::read_length(fs);
+				Compression compression = static_cast<Compression>(iohelper::read<uint8_t>(fs));
+				file_info.size = iohelper::read_length(fs);
+				file_info.offset = fs.tellg();
+
+				auto workflow = create_workflow(compression);
+
+				next_file_handle = file_info.offset + file_info.size;
+
+				_file_handles.push_back(FileHandle(name, version, file_info, workflow));
+			} else {
+				throw std::logic_error("This should not happen");
+			}
 		}
+
+		// Print all folders
+		// for (auto& [id, folder] : _folders) {
+		// 	std::cout << id << " - > " << folder.second << " (" << folder.first << ")\n";
+		// }
 
 		fs.close();
 	}

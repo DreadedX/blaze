@@ -21,5 +21,6 @@ namespace FLAME_NAMESPACE {
 			std::fstream _fs;
 
 			bool _finalized = false;
+			int _counter = 0;
 	};
 }
