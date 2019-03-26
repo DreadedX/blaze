@@ -2,6 +2,8 @@
 
 #include "blaze.h"
 
+#include "logger.h"
+
 #include <vector>
 #include <variant>
 #include <string>
@@ -40,6 +42,12 @@ namespace BLAZE_NAMESPACE {
 				}
 
 				return std::get<T>(existing->second);
+			}
+
+			static void debug_print() {
+				for (const auto& value : _values) {
+					LOG_D("{} = {}\n", value.first, std::get<int>(value.second));
+				}
 			}
 
 		private:

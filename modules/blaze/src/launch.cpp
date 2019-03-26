@@ -57,7 +57,6 @@ void parse_cvars(std::istream& stream) {
 
 	while (stream >> word) {
 		if (!name.empty()) {
-			LOG_D("Setting cvar {} = {}\n", name, word);
 			blaze::CVar::set<int>(name, std::stoi(word));
 
 			name.clear();
@@ -89,6 +88,8 @@ int main() {
 	}
 
 	logger::add(blaze::get_platform()->get_logger());
+
+	blaze::CVar::debug_print();
 
 	// @todo Is this usefull on all platforms
 	// On the web this is kind of useless probably...
