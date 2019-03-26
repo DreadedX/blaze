@@ -1,7 +1,9 @@
 lib "tinyobjloader"
 	include "vendor/tinyobjloader"
 
-subfile("../../../flint/flint.lua", "flint");
+git("https://git.mtgames.nl/Dreaded_X/flint", "feature/git", "flint")
+subfile(".flint/git/flint/flint.lua", "flint")
+
 lib "glm"
 	include "../../vendor/glm"
 

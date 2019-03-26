@@ -1,9 +1,11 @@
 lib "stb"
 	include "vendor/stb"
 
-subfile("../../../flint/flint.lua", "flint");
+git("https://git.mtgames.nl/Dreaded_X/flint", "feature/git", "flint")
+subfile(".flint/git/flint/flint.lua", "flint")
 
-subfile("../../../iohelper/flint.lua", "iohelper");
+git("https://git.mtgames.nl/Blaze/iohelper", "master", "iohelper")
+subfile(".flint/git/iohelper/flint.lua", "iohelper")
 
 shared "plugin_image"
 	path "image"

@@ -89,7 +89,8 @@ lib "libshaderc"
 
 	dependency("libshaderc_util", "glslang")
 
-subfile("../../../flint/flint.lua", "flint");
+git("https://git.mtgames.nl/Dreaded_X/flint", "feature/git", "flint")
+subfile(".flint/git/flint/flint.lua", "flint")
 
 shared "plugin_glsl"
 	path "glsl"

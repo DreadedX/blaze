@@ -219,7 +219,8 @@ executable(name)
 
 	threads()
 
-subfile("../flint/flint.lua", "flint")
+git("https://git.mtgames.nl/Dreaded_X/flint", "feature/git", "flint")
+subfile(".flint/git/flint/flint.lua", "flint")
 
 local packager_path = shared "plugin_packager"
 	path "plugin/packager"
