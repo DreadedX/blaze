@@ -67,13 +67,24 @@ void parse_cvars(std::istream& stream) {
 }
 
 // This is the entry point of the game engine
-int main() {
+int main(int argc, const char* argv[]) {
 	std::ifstream cvar_file("cvars.txt", std::ios::in);
 
+	// Loaded cvars from optional file
 	if (cvar_file.is_open()) {
 		parse_cvars(cvar_file);
 	}
 
+	// Load cvars from command line, overwrites those from the file
+	// @todo This is very basic and does almost no checking at all
+	if ((argc-1) % 2 == 0) {
+		for (int i = 1; i < argc; i+=2) {
+			std::cout << "arg: " << argv[i] << argv[i+1];
+			blaze::CVar::set<int>(argv[i], std::stoi(argv[i+1]));
+		}
+	}
+
+	// Set the remaining cvars to their default value
 	blaze::set_default_cvars();
 
 	// try {
