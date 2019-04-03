@@ -89,13 +89,13 @@ void game() {
 		asset_manager::load_assets();
 	}
 
-	auto en = asset_manager::new_asset<Language>("base/language/English");
+	auto en = asset_manager::new_asset<Language>("/resources/base/language/English");
 	get_lua_state().set_function("get_lang", [en]{
 		return en;
 	});
 
 	{
-		auto nl = asset_manager::new_asset<Language>("base/language/Dutch");
+		auto nl = asset_manager::new_asset<Language>("/resources/base/language/Dutch");
 
 		// Wait for all gameassets to be loaded and show progress
 		while (asset_manager::loading_count()  > 0) {
@@ -113,9 +113,9 @@ void game() {
 
 	// Flame tests
 	{
-		LOG_D("{}\n", "====FILE_HANDLES====");
+		LOG_D("{}\n", "====VFS====");
 		blaze::asset_list::debug_list_file_handles();
-		LOG_D("{}\n", "====================");
+		LOG_D("{}\n", "============");
 	}
 
 	// Event bus test

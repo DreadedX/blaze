@@ -44,7 +44,7 @@ namespace FLAME_NAMESPACE {
 
 	void Directory::test_tree() {
 		for (auto& [name, directory] : _directories) {
-			std::cout << directory->get_path() << '\n';
+			std::cout << "\e[34m" << directory->get_path() << "\e[0m\n";
 			directory->test_tree();
 		}
 		for (auto& [name, file] : _files) {
@@ -52,7 +52,7 @@ namespace FLAME_NAMESPACE {
 		}
 	}
 
-	FileHandle Directory::get_file(std::string path, size_t version) {
+	FileHandle& Directory::get_file(std::string path, size_t version) {
 		std::stringstream path_stream(path);
 		std::string s;
 		std::vector<std::string> parts;
@@ -63,7 +63,7 @@ namespace FLAME_NAMESPACE {
 		return get_file(parts, 0, version);
 	}
 
-	FileHandle Directory::get_file(std::vector<std::string> parts, size_t index, size_t version) {
+	FileHandle& Directory::get_file(std::vector<std::string> parts, size_t index, size_t version) {
 		if (parts.size()-1 == index) {
 			// This assumes it exists
 			std::string name = parts[parts.size()-1];
@@ -101,6 +101,14 @@ namespace FLAME_NAMESPACE {
 		}
 
 		return _directories[next_folder]->get_file(parts, index+1, version);
+	}
+
+	Directory* Directory::get_directory(std::string name) {
+		auto iterator = _directories.find(name);
+		if (iterator == _directories.end()) {
+			return nullptr;
+		}
+		return iterator->second;
 	}
 
 	// This is just a prove of concept version

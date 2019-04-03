@@ -79,7 +79,7 @@ int main(int argc, const char* argv[]) {
 	// @todo This is very basic and does almost no checking at all
 	if ((argc-1) % 2 == 0) {
 		for (int i = 1; i < argc; i+=2) {
-			std::cout << "arg: " << argv[i] << argv[i+1];
+			std::cout << "arg: " << argv[i] << argv[i+1] << '\n';
 			blaze::CVar::set<int>(argv[i], std::stoi(argv[i+1]));
 		}
 	}

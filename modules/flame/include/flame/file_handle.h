@@ -9,6 +9,8 @@
 #include <vector>
 #include <functional>
 
+#include <iostream>
+
 namespace FLAME_NAMESPACE {
 	namespace internal {
 		struct FileInfo {

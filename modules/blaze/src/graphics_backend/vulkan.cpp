@@ -1064,9 +1064,9 @@ namespace BLAZE_NAMESPACE {
 	// That way we can start to move most of this outside of the backend
 	// The goal is to create this in the main game loop and render it from there
 	void VulkanBackend::load_assets() {
-		auto shader = asset_manager::new_asset<VulkanShader>("base/shader/Vertex", "base/shader/Fragment", this);
-		auto texture = asset_manager::new_asset<VulkanTexture>("base/texture/Test", this);
-		auto texture2 = asset_manager::new_asset<VulkanTexture>("base/texture/Chalet", this);
+		auto shader = asset_manager::new_asset<VulkanShader>("/resources/base/shader/Vertex", "/resources/base/shader/Fragment", this);
+		auto texture = asset_manager::new_asset<VulkanTexture>("/resources/base/texture/Test", this);
+		auto texture2 = asset_manager::new_asset<VulkanTexture>("/resources/base/texture/Chalet", this);
 
 		while (asset_manager::loading_count() > 0) {
 			asset_manager::load_assets();
@@ -1074,7 +1074,7 @@ namespace BLAZE_NAMESPACE {
 		// @todo This should be based on a GameAsset or something and wait with creating things until 
 		auto material = std::make_shared<VulkanMaterial>(shader, texture2, this);
 
-		_vulkan_model = asset_manager::new_asset<VulkanModel>("base/model/Chalet", material, this);
+		_vulkan_model = asset_manager::new_asset<VulkanModel>("/resources/base/model/Chalet", material, this);
 
 		while (asset_manager::loading_count() > 0) {
 			asset_manager::load_assets();

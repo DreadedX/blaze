@@ -39,7 +39,7 @@ namespace FLAME_NAMESPACE {
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
 	// @todo What is the purpose of the _key here
-	Archive::Archive(std::string filename) : _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+	Archive::Archive(std::string filename, Directory* root) : _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
 
 		std::fstream fs(filename, std::ios::in | std::ios::binary);
 		if (!fs.is_open()) {
@@ -129,10 +129,22 @@ namespace FLAME_NAMESPACE {
 				// Resolve the full asset name at runtime
 				int parent = iohelper::read_length(fs);
 				std::string name = iohelper::read<std::string>(fs);
+				std::vector<std::string> directory_names;
 				while (parent) {
 					auto& [folder_parent, folder_name] = _folders.find(parent)->second;
-					name = folder_name + '/' + name;
+					directory_names.push_back(folder_name);
 					parent = folder_parent;
+				}
+				std::reverse(directory_names.begin(), directory_names.end());
+				Directory* parent_directory = root;
+				for (auto& directory_name : directory_names) {
+					Directory* new_parent_directory = parent_directory->get_directory(directory_name);
+					if (!new_parent_directory) {
+						new_parent_directory = new Directory(directory_name, parent_directory);
+						parent_directory->add_directory(new_parent_directory);
+					}
+
+					parent_directory = new_parent_directory;
 				}
 
 				size_t version = iohelper::read_length(fs);
@@ -144,7 +156,7 @@ namespace FLAME_NAMESPACE {
 
 				next_file_handle = file_info.offset + file_info.size;
 
-				_file_handles.push_back(FileHandle(name, version, file_info, workflow));
+				parent_directory->add_file(FileHandle(name, version, file_info, workflow));
 			} else {
 				throw std::logic_error("This should not happen");
 			}
@@ -201,9 +213,5 @@ namespace FLAME_NAMESPACE {
 		}
 
 		return workflow;
-	}
-
-	std::vector<FileHandle> Archive::get_file_handles() {
-		return _file_handles;
 	}
 }

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "flame.h"
-#include "flame/file_handle.h"
+// #include "flame/file_handle.h"
+#include "flame/vfs.h"
 
 #include "rsa.h"
 
@@ -29,7 +30,7 @@ namespace FLAME_NAMESPACE {
 	// Archives only exist for writing files
 	class Archive {
 		public:
-			Archive(std::string filename);
+			Archive(std::string filename, Directory* root);
 
 			const std::string& get_name() const;
 			const std::string& get_author() const;
@@ -37,7 +38,7 @@ namespace FLAME_NAMESPACE {
 			const size_t& get_version() const;
 			bool is_trusted(crypto::RSA& trusted_key);
 			const std::vector<Dependency>& get_dependencies() const;
-			std::vector<FileHandle> get_file_handles();
+			// std::vector<FileHandle> get_file_handles();
 
 		protected:
 			Archive(std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA key) : _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _key(key) {}

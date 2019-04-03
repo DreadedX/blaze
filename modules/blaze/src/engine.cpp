@@ -143,12 +143,12 @@ namespace BLAZE_NAMESPACE {
 		std::string filename = current_platform->get_base_path() + archive_name + ".flm";
 
 		try {
-			flame::Archive archive(filename);
+			flame::Archive archive(filename, asset_list::_resources);
 
 			asset_list::add(archive);
 
 			try {
-				auto script = asset_manager::new_asset<Script>(archive.get_name() + "/Script");
+				auto script = asset_manager::new_asset<Script>("/resources/" + archive.get_name() + "/Script");
 				scripts.push_back(std::move(script));
 			} catch (std::exception& e) {
 				// @todo We should have a custom exception for this as we now assume an exception means not found

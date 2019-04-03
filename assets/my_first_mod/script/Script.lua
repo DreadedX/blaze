@@ -1,4 +1,4 @@
-local hello = require "my_first_mod/script/Hello"
+local hello = require "/resources/my_first_mod/script/Hello"
 
 function init() 
 	print "==== Hello world! This is my first mod! ===="
