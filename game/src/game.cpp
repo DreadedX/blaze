@@ -18,6 +18,8 @@
 
 #include "cvar.h"
 
+#include "flame/vfs.h"
+
 #include <fstream>
 
 using namespace blaze;
@@ -62,6 +64,12 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 }
 
 void game() {
+	CVar::set_default("vfs_test", 0);
+	if (CVar::get<int>("vfs_test")) {
+		flame::vfs_test();
+		return;
+	}
+
 	// Setup event handlers
 	event_bus::subscribe<MissingDependencies>(std::ref(handle_missing_dependencies));
 	event_bus::subscribe<Error>(std::ref(handle_error));

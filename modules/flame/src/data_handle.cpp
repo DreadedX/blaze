@@ -1,5 +1,7 @@
 #include "flame/data_handle.h"
 
+#include "iohelper/memstream.h"
+
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -45,5 +47,11 @@ namespace FLAME_NAMESPACE {
 	std::string DataHandle::get_as<std::string>() {
 		auto data = get();
 		return std::string(data.begin(), data.end());
+	}
+
+	template<>
+	std::unique_ptr<std::istream> DataHandle::get_as<std::unique_ptr<std::istream>>() {
+		auto data = get();
+		return std::make_unique<iohelper::imemstream_2>(data);
 	}
 }

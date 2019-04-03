@@ -21,13 +21,16 @@ namespace FLAME_NAMESPACE {
 
 		std::vector<uint8_t> data(_file_info.size);
 
-		std::fstream fs(_file_info.filename, std::ios::in | std::ios::binary);
-		if (!fs.is_open()) {
-			throw std::runtime_error("ASYNC: Failed to open file");
-		}
+		// @todo This needs to be provided by a backend provider
+		{
+			std::fstream fs(_file_info.filename, std::ios::in | std::ios::binary);
+			if (!fs.is_open()) {
+				throw std::runtime_error("ASYNC: Failed to open file");
+			}
 
-		fs.seekg(_file_info.offset);
-		fs.read(reinterpret_cast<char*>(data.data()), _file_info.size);
+			fs.seekg(_file_info.offset);
+			fs.read(reinterpret_cast<char*>(data.data()), _file_info.size);
+		}
 
 		for (auto& t : final_workflow) {
 			data = t(std::move(data));

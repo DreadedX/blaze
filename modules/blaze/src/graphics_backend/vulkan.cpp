@@ -907,8 +907,10 @@ namespace BLAZE_NAMESPACE {
 		//create_info.preTransform = swap_chain_support.capabilities.currentTransform;
 		create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 
-		//create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+		// @todo Linux needs INHERIT, while windows needs OPAQUE
+		// Figure out code to auto deterime this
+		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		//create_info.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
 
 		create_info.presentMode = present_mode;
 		create_info.clipped = VK_TRUE;

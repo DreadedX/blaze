@@ -21,7 +21,7 @@ void handle_cmd(android_app* app, int32_t cmd) {
 			__android_log_print(ANDROID_LOG_INFO, "BlazeNativeHandler", "Init");
 			_android_window = app->window;
 			_android_running = true;
-			game_thread = std::thread(main);
+			game_thread = std::thread(main, 0, nullptr);
 			break;
 
 		case APP_CMD_TERM_WINDOW:
