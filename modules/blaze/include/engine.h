@@ -2,7 +2,7 @@
 
 #include "blaze.h"
 
-#include "asset_list.h"
+#include "archive_manager.h"
 #include "events.h"
 #include "platform/platform.h"
 

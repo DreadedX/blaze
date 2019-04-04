@@ -39,7 +39,8 @@ namespace FLAME_NAMESPACE {
 
 	// @todo We need to make sure that each time we read we are staying withing file boundaries
 	// @todo What is the purpose of the _key here
-	Archive::Archive(std::string filename, Directory* root) : _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+	Archive::Archive(std::string filename) : _key(std::vector<uint8_t>(), std::vector<uint8_t>()) {
+		_directory = new Directory();
 
 		std::fstream fs(filename, std::ios::in | std::ios::binary);
 		if (!fs.is_open()) {
@@ -136,7 +137,7 @@ namespace FLAME_NAMESPACE {
 					parent = folder_parent;
 				}
 				std::reverse(directory_names.begin(), directory_names.end());
-				Directory* parent_directory = root;
+				Directory* parent_directory = _directory;
 				for (auto& directory_name : directory_names) {
 					Directory* new_parent_directory = parent_directory->get_directory(directory_name);
 					if (!new_parent_directory) {

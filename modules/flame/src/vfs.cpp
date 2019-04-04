@@ -27,6 +27,19 @@ namespace FLAME_NAMESPACE {
 		_directories.insert({directory->get_name(), directory});
 	}
 
+	// @todo This should really consume the directory
+	void Directory::merge_directory(Directory* directory) {
+		for (auto& [name, dir] : directory->_directories) {
+			dir->_parent = this;
+			add_directory(dir);
+		}
+		for (auto& [name, files] : directory->_files) {
+			for (auto& [version, file] : files) {
+				add_file(file);
+			}
+		}
+	}
+
 	void Directory::add_file(FileHandle file_handle) {
 		std::string name = file_handle.get_name();
 		auto iterator = _files.find(name);

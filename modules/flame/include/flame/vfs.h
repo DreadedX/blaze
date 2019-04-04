@@ -22,6 +22,8 @@ namespace FLAME_NAMESPACE {
 
 			void add_directory(Directory* directory);
 
+			void merge_directory(Directory* directory);
+
 			void add_file(FileHandle file_handle);
 
 			void test_tree();

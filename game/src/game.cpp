@@ -1,6 +1,6 @@
 #include "logger.h"
 
-#include "asset_list.h"
+#include "archive_manager.h"
 #include "engine.h"
 #include "asset_manager.h"
 
@@ -78,7 +78,7 @@ void game() {
 	// if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux && blaze::enviroment::debug) {
 	// 	// @todo We can propably reuse the packager script if we override some of the functions that are used to create archives
 	// 	flame::FileHandle lua_asset("base/Script", "../assets/base/script/Script.lua", 10);
-	// 	blaze::asset_list::add(lua_asset);
+	// 	blaze::archive_manager::add(lua_asset);
 	// }
 
 	LOG_D("Thread id: {} (GAME)\n", std::this_thread::get_id());
@@ -114,7 +114,7 @@ void game() {
 	// Flame tests
 	{
 		LOG_D("{}\n", "====VFS====");
-		blaze::asset_list::debug_list_file_handles();
+		blaze::archive_manager::debug_list_file_handles();
 		LOG_D("{}\n", "============");
 	}
 

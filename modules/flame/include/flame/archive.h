@@ -30,7 +30,7 @@ namespace FLAME_NAMESPACE {
 	// Archives only exist for writing files
 	class Archive {
 		public:
-			Archive(std::string filename, Directory* root);
+			Archive(std::string filename);
 
 			const std::string& get_name() const;
 			const std::string& get_author() const;
@@ -39,6 +39,9 @@ namespace FLAME_NAMESPACE {
 			bool is_trusted(crypto::RSA& trusted_key);
 			const std::vector<Dependency>& get_dependencies() const;
 			// std::vector<FileHandle> get_file_handles();
+			Directory* get_directory() {
+				return _directory;
+			}
 
 		protected:
 			Archive(std::string name, std::string author, std::string description, size_t version, std::vector<Dependency> dependencies, crypto::RSA key) : _name(name), _author(author), _description(description), _version(version), _dependencies(dependencies), _key(key) {}
@@ -62,5 +65,7 @@ namespace FLAME_NAMESPACE {
 			size_t _offset1;
 			// Start of actual data
 			size_t _offset2;
+
+			Directory* _directory;
 	};
 };

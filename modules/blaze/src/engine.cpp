@@ -9,8 +9,6 @@
 
 #include "game_asset/script.h"
 
-#include "asset_list.h"
-
 // @todo THis is more for testing
 #include "game_asset/language.h"
 #include "events.h"
@@ -23,7 +21,7 @@ std::unique_ptr<blaze::platform::Platform> blaze::current_platform;
 sol::object lua_loader(std::string module_name) {
 	// @todo This will block, but there is not really a way around it, unless we maybe make an indirect layer
 	try {
-		auto data = blaze::asset_list::load_data(module_name);
+		auto data = blaze::archive_manager::load_data(module_name);
 
 		// Wait for the asset to load
 		data.wait();
@@ -143,9 +141,9 @@ namespace BLAZE_NAMESPACE {
 		std::string filename = current_platform->get_base_path() + archive_name + ".flm";
 
 		try {
-			flame::Archive archive(filename, asset_list::_resources);
+			flame::Archive archive(filename);
 
-			asset_list::add(archive);
+			archive_manager::add(archive);
 
 			try {
 				auto script = asset_manager::new_asset<Script>("/resources/" + archive.get_name() + "/Script");

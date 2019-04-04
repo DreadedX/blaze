@@ -11,12 +11,10 @@
 
 namespace BLAZE_NAMESPACE {
 
-	class asset_list {
+	class archive_manager {
 		public:
 			static flame::DataHandle load_data(std::string name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
-			static std::vector<flame::DataHandle> load_all_data(std::string name, std::vector<flame::FileHandle::Task> tasks = std::vector<flame::FileHandle::Task>());
 			static void add(flame::Archive& archive);
-			static void add(flame::FileHandle& file_handle);
 			static bool check_dependency(flame::Dependency dependency);
 			static std::vector<flame::Dependency> missing_dependecies(flame::Archive& archive);
 			static void debug_list_file_handles();

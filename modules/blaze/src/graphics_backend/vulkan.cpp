@@ -22,7 +22,7 @@
 #include "logger.h"
 #include "engine.h"
 
-#include "asset_list.h"
+#include "archive_manager.h"
 #include "asset_manager.h"
 
 #include "iohelper/memstream.h"
@@ -292,7 +292,7 @@ namespace BLAZE_NAMESPACE {
 
 	// @todo We need to bae able to pass in the seperate shader parts, these parts store what type they are and we link it together here
 	// @todo We need a description of sorts that can be used to generate the descriptor set layout and later fill them in
-	VulkanShader::VulkanShader(std::string vertex_name, std::string fragment_name, VulkanBackend* backend) : GameAsset(vertex_name), _fragment_handle(asset_list::load_data(fragment_name)), _backend(backend) {
+	VulkanShader::VulkanShader(std::string vertex_name, std::string fragment_name, VulkanBackend* backend) : GameAsset(vertex_name), _fragment_handle(archive_manager::load_data(fragment_name)), _backend(backend) {
 		_name += ";" + fragment_name;
 		LOG_D("Creating shader\n");
 	}
