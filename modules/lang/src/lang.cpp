@@ -46,7 +46,15 @@ namespace LANG_NAMESPACE {
 				}
 				case type::KEY: {
 					std::string key = iohelper::read<std::string>(in);
-					std::string value = iohelper::read<std::string>(in);
+					std::string str = iohelper::read<std::string>(in);
+
+					std::unordered_map<std::string, size_t> map;
+					size_t map_length = iohelper::read_length(in);
+					for (size_t i = 0; i < map_length; ++i) {
+						std::string name = iohelper::read<std::string>(in);
+						size_t pos = iohelper::read_length(in);
+						map[name] = pos;
+					}
 
 					auto it = current_node->children.find(key);
 					if (it == current_node->children.end()) {
@@ -55,7 +63,7 @@ namespace LANG_NAMESPACE {
 						new_node.parent = current_node;
 						current_node->children.emplace(key, std::move(new_node));
 					}
-					current_node->children[key].value = value;
+					current_node->children[key].value = Value(str, map);
 
 					break;
 				}
@@ -66,7 +74,7 @@ namespace LANG_NAMESPACE {
 		return std::move(root);
 	}
 
-	std::string Node::get_value(std::string name) {
+	Value Node::get_value(std::string name) {
 		auto split = split_string(name);
 
 		lang::Node* target = this;
@@ -74,7 +82,7 @@ namespace LANG_NAMESPACE {
 		for (auto& s : split) {
 			auto it = target->children.find(s);
 			if (it == target->children.end()) {
-				return "(undefined)";
+				return Value("(undefined)", {});
 			}
 			target = &it->second;
 		}

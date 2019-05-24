@@ -19,11 +19,11 @@ void display_children(lang::Node& node) {
 		std::cout << node.name << ":\n";
 	}
 	for (auto& [na, n] : node.children) {
-		if (!n.value.empty()) {
+		if (!n.value.get_string().empty()) {
 			for (int i = 0; i < node.level; ++i) {
 				std::cout << '\t';
 			}
-			std::cout << n.name << ": " << n.value << '\n';
+			std::cout << n.name << ": " << n.value.get_string() << '\n';
 		}
 	}
 	for (auto& [na, n] : node.children) {
@@ -41,10 +41,17 @@ void to_file(std::ostream& f, lang::Node& node) {
 
 	// Store all key value pairs
 	for (auto& [na, n] : node.children) {
-		if (!n.value.empty()) {
+		if (!n.value.get_string().empty()) {
 			iohelper::write<uint8_t>(f, (uint8_t)lang::type::KEY);
 			iohelper::write<std::string>(f, n.name);
-			iohelper::write<std::string>(f, n.value);
+			iohelper::write<std::string>(f, n.value.get_string());
+
+			auto map = n.value.get_map();
+			iohelper::write_length(f, map.size());
+			for (auto &[name, pos] : map) {
+				iohelper::write<std::string>(f, name);
+				iohelper::write_length(f, pos);
+			}
 		}
 	}
 

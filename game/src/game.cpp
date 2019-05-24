@@ -59,8 +59,7 @@ void lang_test(std::shared_ptr<blaze::Language> lang) {
 		LOG_M("{}\n", lang->get("tutorials.basic.1"));
 
 		LOG_M("{}\n", lang->get("items.pickaxe.name"));
-		LOG_M("{}\n", lang->get("items.pickaxe.description", 47, 100));
-
+		LOG_M("{}\n", lang->get("items.pickaxe.description", "current", 47, "total", 100));
 }
 
 void game() {
@@ -131,7 +130,12 @@ void game() {
 	{
 		std::shared_ptr<GraphicsBackend> graphics_backend = nullptr;
 
+		// @todo The default value should come from the platform
 		int& backend_cvar = CVar::set_default("backend", 1);
+		LOG_D("Backend: {}\n", backend_cvar);
+		// @todo The platform should register all backends that are supported
+		// Then we use get_backend(x) which will give use the correct backend
+		// if "unknown" backend selected use default and show error message (or throw)
 		if (backend_cvar == 1) {
 			#if !defined(__EMSCRIPTEN__)
 				graphics_backend = std::make_shared<VulkanBackend>();

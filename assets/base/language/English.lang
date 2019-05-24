@@ -10,4 +10,4 @@ without breaking the flow of the text
 ; pickaxe.name
 name = Pickaxe
 ; pickaxe.description
-description = Durability {0}/{1}
+description = Durability {{current}}/{{total}}

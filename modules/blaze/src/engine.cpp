@@ -56,27 +56,29 @@ namespace BLAZE_NAMESPACE {
 		// @todo Instead of using the macro we should call the function ourselfs so we can include file and line data
 		lua_state.set_function("print", [](sol::variadic_args va) {
 			for (auto v : va) {
-				switch (v.get_type()) {
-					case sol::type::nil:
-						LOG_M("nil\t");
-						break;
-
-					case sol::type::string:
-						LOG_M( "{}\t", v.get<std::string>());
-						break;
-
-					case sol::type::number:
-						LOG_M( "{}\t", v.get<double>());
-						break;
-
-					case sol::type::boolean:
-						LOG_M( "{}\t", v.get<bool>());
-						break;
-
-					default:
-						LOG_M( "<<NOT IMPLEMENTED>>\t");
-						break;
-				}
+				std::string s = v;
+				LOG_M("{}\t", s);
+				// switch (v.get_type()) {
+				// 	case sol::type::nil:
+				// 		LOG_M("nil\t");
+				// 		break;
+                //
+				// 	case sol::type::string:
+				// 		LOG_M("{}\t", v.get<std::string>());
+				// 		break;
+                //
+				// 	case sol::type::number:
+				// 		LOG_M("{}\t", v.get<double>());
+				// 		break;
+                //
+				// 	case sol::type::boolean:
+				// 		LOG_M("{}\t", v.get<bool>());
+				// 		break;
+                //
+				// 	default:
+				// 		LOG_M("<<NOT IMPLEMENTED>>\t");
+				// 		break;
+				// }
 			}
 			LOG_M( "\n");
 		});
@@ -93,44 +95,20 @@ namespace BLAZE_NAMESPACE {
 			sol::base_classes, sol::bases<GameAsset>(),
 			// We need some extra code to convert the variadic args to a fmt ArgList
 			"get", [](Language& base, std::string name, sol::variadic_args va) {
-				// @todo Make sure we the amount of arguments does not exceed the max
-				typedef fmt::internal::ArgArray<fmt::ArgList::MAX_PACKED_ARGS-1> ArgArray;
-				typename ArgArray::Type array;
-				uint64_t ArgArrayType = 0;
-
 				int i = 0;
+				std::vector<std::pair<std::string, std::string>> replaces;
+				std::string n;
 				for (auto v : va) {
-					switch (v.get_type()) {
-						case sol::type::nil:
-							array[i] = ArgArray::template make<fmt::BasicFormatter<char>>("nil");
-							ArgArrayType = ArgArrayType | (fmt::internal::make_type(" ") << (i*4));
-							break;
-
-						case sol::type::string:
-							array[i] = ArgArray::template make<fmt::BasicFormatter<char>>(v.get<const char*>());
-							ArgArrayType = ArgArrayType | (fmt::internal::make_type(" ") << (i*4));
-							break;
-
-						case sol::type::number:
-							array[i] = ArgArray::template make<fmt::BasicFormatter<char>>(v.get<double>());
-							ArgArrayType = ArgArrayType | (fmt::internal::make_type(1.0) << (i*4));
-							break;
-
-						case sol::type::boolean:
-							array[i] = ArgArray::template make<fmt::BasicFormatter<char>>(v.get<bool>());
-							ArgArrayType = ArgArrayType | (fmt::internal::make_type(true) << (i*4));
-							break;
-
-						default:
-							array[i] = ArgArray::template make<fmt::BasicFormatter<char>>("<<NOT IMPLEMENTED>>");
-							ArgArrayType = ArgArrayType | (fmt::internal::make_type(" ") << (i*4));
-							break;
+					if (i % 2 == 0) {
+						n = v;
+					} else {
+						std::string r = v;
+						replaces.push_back(std::make_pair(n, r));
 					}
-					++i;
-				}
 
-				fmt::ArgList args(ArgArrayType, array);
-				return base.get(name, args);
+					i++;
+				}
+				return base.get(name, replaces);
 			}
 		);
 

@@ -9,7 +9,7 @@ end
 
 function update()
 	print(get_lang():get("items.pickaxe.name"))
-	print(get_lang():get("items.pickaxe.description", durability, 100))
+	print(get_lang():get("items.pickaxe.description", "current", durability, "total", 100))
 
 	durability = durability - 1
 end

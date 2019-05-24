@@ -21,10 +21,10 @@ int new_level = 0;
 	std::string* sval;
 }
 
-%token ASSIGNMENT SECTION_START SECTION_END FILL_START FILL_END CONTINUE NEWLINE
+%token ASSIGNMENT SECTION_START SECTION_END CONTINUE NEWLINE
 %token <sval> STRING
 
-%type <sval> key value text fill
+%type <sval> key value text
 
 %%
 
@@ -83,7 +83,8 @@ assignment
 			new_node.parent = current_node;
 		}
 		auto t = trim_whitespace($3);
-		current_node->children[*$1].value = *t;
+		lang::Value value(*t);
+		current_node->children[*$1].value = value;
 		delete t;
 		delete $1;
 		delete $3;
@@ -118,20 +119,6 @@ text
 		delete $2;
 	}
 	| STRING
-	| text fill {
-		$$ = new std::string(*$1 + *$2);
-		delete $1;
-		delete $2;
-	}
-	| fill
-	;
-
-fill
-	: FILL_START STRING FILL_END {
-		$$ = new std::string('{' + *$2 + '}');
-		delete $2;
-	}
-	;
 
 %%
 

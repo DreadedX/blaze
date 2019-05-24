@@ -7,4 +7,4 @@
 [items]
 [[pickaxe]]
 name        = Pikker
-description = Kwaliteit {0}/{1}
+description = Kwaliteit {{current}}/{{total}}
