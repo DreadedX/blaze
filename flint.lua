@@ -1,7 +1,7 @@
 -- @todo This is needed in order to support the old packager archives
 run_dir(".flint/build/" .. config.platform.target .. "/debug/archives")
 
--- plugin "android@Dreaded_X"
+plugin "android@Dreaded_X"
 
 subfile("modules/iohelper/flint.lua", "iohelper")
 

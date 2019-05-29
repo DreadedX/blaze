@@ -1,41 +1,45 @@
 package nl.mtgames.blaze.ui.bootstrap;
 
-import android.app.NativeActivity;
 import android.app.ProgressDialog;
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 import nl.mtgames.blaze.Native;
 import nl.mtgames.blaze.R;
-
-import static android.view.View.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class BootstrapFragment extends Fragment {
 
     private BootstrapViewModel mViewModel;
+    private ProgressDialog progressDialog;
+
+    private Handler handler;
 
     public static BootstrapFragment newInstance() {
         return new BootstrapFragment();
@@ -53,22 +57,22 @@ public class BootstrapFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(BootstrapViewModel.class);
 
-        final Observer<String> logObserver = log -> {
-            TextView logView = Objects.requireNonNull(getView()).findViewById(R.id.message);
-            logView.setText(log);
-        };
-        mViewModel.getLog().observe(this, logObserver);
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setTitle("Downloading...");
+        progressDialog.setMax(100);
+        progressDialog.setCancelable(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+        handler = new Handler();
 
         final Button downloadButton = Objects.requireNonNull(getView()).findViewById(R.id.download);
         downloadButton.setOnClickListener(v -> {
-            new DownloadFile().execute("http://zeus:3000/static/base.flm", "base.flm");
-            new DownloadFile().execute("http://zeus:3000/static/my_first_mod.flm", "my_first_mod.flm");
-//            new DownloadFile().execute("http://192.168.178.60:3000/static/base.flm", "base.flm");
-//            new DownloadFile().execute("http://192.168.178.60:3000/static/my_first_mod.flm", "my_first_mod.flm");
+            Thread t = new Thread(download("base.flm", "my_first_mod.flm"));
+            t.start();
         });
+
         final Button startButton = Objects.requireNonNull(getView()).findViewById(R.id.start);
         startButton.setOnClickListener(v -> {
-            v.setSystemUiVisibility(SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
             Intent intent = new Intent(getContext(), Native.class);
             startActivity(intent);
             mViewModel.start();
@@ -78,83 +82,62 @@ public class BootstrapFragment extends Fragment {
         startState(mViewModel.isStarted());
     }
 
-    public void startState(boolean started) {
+    private void startState(boolean started) {
         final Button startButton = Objects.requireNonNull(getView()).findViewById(R.id.start);
         startButton.setEnabled(!started);
     }
 
-    // @todo We need to move this into BootstrapViewModel, that way we can run it from native code
-    private class DownloadFile extends AsyncTask<String, Integer, String> {
-        private ProgressDialog progressDialog;
-        private String fileName;
-        private String folder;
-        private boolean isDownloaded;
+    private Runnable download(String... names) {
+        List<String> nameList = new LinkedList<>(Arrays.asList(names));
+        return download(nameList);
+    }
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            this.progressDialog = new ProgressDialog(BootstrapFragment.this.getContext());
-            this.progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            this.progressDialog.setCancelable(false);
-            this.progressDialog.show();
-        }
-
-        @Override
-        protected String doInBackground(String... f_url) {
-            int count;
+    private Runnable download(List<String> names) {
+        String name = names.get(0);
+        names.remove(0);
+        return () -> {
+            Log.d("BlazeBootstrap", "Downloading: " + name);
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder().url("http://zeus:3000/static/" + name).build();
             try {
-                URL url = new URL(f_url[0]);
-                URLConnection connection = url.openConnection();
-                connection.connect();
-                int lengthOfFile = connection.getContentLength();
+                Response response = client.newCall(request).execute();
 
-                InputStream input = new BufferedInputStream(url.openStream(), 8192);
-                fileName = f_url[1];
-                folder = Objects.requireNonNull(Objects.requireNonNull(getContext()).getExternalFilesDir(null)).getAbsolutePath();
+                float size = Objects.requireNonNull(response.body()).contentLength();
+                BufferedInputStream inputStream = new BufferedInputStream(Objects.requireNonNull(response.body()).byteStream());
 
-                File directory = new File(folder);
+                OutputStream stream = new FileOutputStream(new File(Objects.requireNonNull(getContext()).getExternalFilesDir(null), name));
 
-                // @todo Pretty sure we do not have to do this
-                if (!directory.exists()) {
-                    directory.mkdir();
+                byte[] data = new byte[8129];
+                float total = 0;
+                int readBytes = 0;
+
+                handler.post(() -> {
+                    progressDialog.show();
+                    progressDialog.setTitle("Downloading: " + name);
+                });
+
+                while ((readBytes = inputStream.read(data)) != -1) {
+                    total += readBytes;
+                    stream.write(data, 0, readBytes);
+                    progressDialog.setProgress((int)(total / size * 100));
                 }
 
-                OutputStream output = new FileOutputStream(folder + File.separator + fileName);
+                progressDialog.dismiss();
+                stream.flush();
+                stream.close();
 
-                byte data[] = new byte[1024];
+                Objects.requireNonNull(response.body()).close();
 
-                long total = 0;
-
-                while ((count = input.read(data)) != -1) {
-                    total += count;
-                    publishProgress((int) ((total * 100) / lengthOfFile));
-                    Log.d("BlazeBootstrap", "Progress: " + (int)((total * 100) / lengthOfFile));
-
-                    output.write(data, 0, count);
+                if (names.size() > 0) {
+                    handler.post(() -> {
+                        Thread t = new Thread(download(names));
+                        t.start();
+                    });
                 }
 
-                output.flush();
-
-                output.close();
-                input.close();
-
-                return  "Downloaded at: " + folder + File.separator + fileName;
-            } catch (Exception e) {
-                Log.e("BlazeBootrap", e.getMessage());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            return "Something went wrong";
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            progressDialog.setProgress(progress[0]);
-        }
-
-        @Override
-        protected void onPostExecute(String message) {
-            this.progressDialog.dismiss();
-            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-        }
+        };
     }
 }

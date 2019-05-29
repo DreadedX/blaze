@@ -1,17 +1,12 @@
 package nl.mtgames.blaze.ui.bootstrap;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.MutableLiveData;
-import android.os.AsyncTask;
-import android.support.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
-import java.util.Objects;
-
 public class BootstrapViewModel extends AndroidViewModel {
-    private MutableLiveData<String> log;
-    private String logString = "";
     private boolean started = false;
 
     public BootstrapViewModel(@NonNull Application application) {
@@ -24,19 +19,5 @@ public class BootstrapViewModel extends AndroidViewModel {
 
     public boolean isStarted() {
         return started;
-    }
-
-    public MutableLiveData<String> getLog() {
-        if (this.log == null) {
-            this.log = new MutableLiveData<String>();
-            this.log.setValue("");
-        }
-        return this.log;
-    }
-
-    public void appendLog(String message) {
-        logString += message;
-        Log.d("BlazeNative", message);
-        getLog().postValue(logString);
     }
 }
