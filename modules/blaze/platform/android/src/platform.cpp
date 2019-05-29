@@ -1,4 +1,5 @@
-#include "android.h"
+#include "platform_android.h"
+#include "engine.h"
 
 #include "cvar.h"
 
@@ -7,7 +8,7 @@
 #include <iostream>
 #include <thread>
 
-int main();
+int main(int argc, const char* argv[]);
 
 bool _android_running = false;
 ANativeWindow* _android_window = nullptr;
@@ -60,6 +61,10 @@ void android_main(struct android_app* app) {
 }
 
 namespace BLAZE_NAMESPACE::platform {
+
+	void set() {
+		blaze::set_platform<Android>();
+	}
 
 	const std::string Android::get_base_path() const {
 		// @todo We need to just use the context to get the actual path

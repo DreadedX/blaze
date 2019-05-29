@@ -4,6 +4,7 @@
 
 #include "flame/file_handle.h"
 
+#include <unordered_map>
 #include <map>
 
 namespace FLAME_NAMESPACE {

@@ -29,7 +29,7 @@
 #include "iohelper/read.h"
 
 #ifdef __ANDROID__
-	#include "android.h"
+	#include "platform_android.h"
 #endif
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* create_info, const VkAllocationCallbacks* allocator, VkDebugUtilsMessengerEXT* callback) {

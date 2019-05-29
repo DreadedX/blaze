@@ -84,19 +84,11 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 
+	// Set the platform, the function this refers to is platform specific
+	blaze::platform::set();
+
 	// Set the remaining cvars to their default value
 	blaze::set_default_cvars();
-
-	// try {
-	if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Linux) {
-		blaze::set_platform<blaze::platform::Linux>();
-	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Windows) {
-		blaze::set_platform<blaze::platform::Windows>();
-	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Android) {
-		blaze::set_platform<blaze::platform::Android>();
-	} else if constexpr (blaze::enviroment::os == blaze::enviroment::OS::Web) {
-		blaze::set_platform<blaze::platform::Web>();
-	}
 
 	logger::add(blaze::get_platform()->get_logger());
 

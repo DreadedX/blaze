@@ -1,7 +1,7 @@
 -- @todo This is needed in order to support the old packager archives
 run_dir(".flint/build/" .. config.platform.target .. "/debug/archives")
 
-plugin "android@Dreaded_X"
+-- plugin "android@Dreaded_X"
 
 subfile("modules/iohelper/flint.lua", "iohelper")
 
@@ -152,8 +152,6 @@ lib "blaze"
 
 	-- @todo This should auto happen in flint
 	if config.platform.target == "android" then
-		path "modules/blaze/platform/android"
-
 		define "VK_USE_PLATFORM_ANDROID_KHR"
 		link("log", "android", "EGL", "GLESv1_CM", "vulkan")
 	end
