@@ -1,13 +1,23 @@
-[tutorials]
+[tutorial]
 [[basic]]
 ; part1 = This is just some example text to show of the lang format\n\
 1 = This is just some example text to show of the lang format. \
 Using the backslash you can continue writing long strings \
 without breaking the flow of the text
 
-[items]
+[[test]]
+1 = Hello world!
+2 = This is a test.
+3 = How are you doing?
+
+
+[item]
 [[pickaxe]] ; @note This is a test
 ; pickaxe.name
 name = Pickaxe
 ; pickaxe.description
 description = Durability {{current}}/{{total}}
+
+[ui]
+[[hint]]
+currency = You have {{amount}} {{amount2: "gems" ~= 1, "gem"}}!

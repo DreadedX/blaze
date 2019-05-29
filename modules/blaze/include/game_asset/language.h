@@ -15,7 +15,7 @@ namespace BLAZE_NAMESPACE {
 				lang::Value value = _root.get_value(name);
 
 				std::string str = value.get_string();
-				std::unordered_map<std::string, size_t> map = value.get_map();
+				std::unordered_map<std::string, std::pair<size_t, lang::Expression>> map = value.get_map();
 
 				for (auto& [n, r] : replaces) {
 					str = lang::Value::format_s(str, map, n, r);

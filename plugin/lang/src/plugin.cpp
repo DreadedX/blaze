@@ -24,6 +24,12 @@ void display_children(lang::Node& node) {
 				std::cout << '\t';
 			}
 			std::cout << n.name << ": " << n.value.get_string() << '\n';
+			for (auto& [name, pos] : n.value.get_map()) {
+				for (int i = 0; i < node.level; ++i) {
+					std::cout << '\t';
+				}
+				std::cout << name << '\n';
+			}
 		}
 	}
 	for (auto& [na, n] : node.children) {
@@ -48,9 +54,17 @@ void to_file(std::ostream& f, lang::Node& node) {
 
 			auto map = n.value.get_map();
 			iohelper::write_length(f, map.size());
-			for (auto &[name, pos] : map) {
+			for (auto &[name, p] : map) {
 				iohelper::write<std::string>(f, name);
-				iohelper::write_length(f, pos);
+				iohelper::write_length(f, p.first);
+
+				auto ops = p.second.get_ops();
+				iohelper::write_length(f, ops.size());
+				for (auto& [o, c, s] : ops)  {
+					iohelper::write<uint8_t>(f, o);
+					iohelper::write<int32_t>(f, c);
+					iohelper::write<std::string>(f, s);
+				}
 			}
 		}
 	}

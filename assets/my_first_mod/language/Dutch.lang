@@ -1,10 +1,21 @@
 ; Author: Dreaded_X
-[tutorials]
+[tutorial]
 [[basic]]
 ; part1 = Dit is het eerste deel van de tutorial:\t\tDeze tekst is dubbel getabbed!
 1 = Dit is het eerste deel van de tutorial:		Deze tekst is dubbel getabbed!
 
-[items]
+[[test]]
+1 = Hallo wereld!
+2 = Dit is een test.
+3 = Hoe gaat het er mee?
+
+
+[item]
 [[pickaxe]]
 name        = Pikker
 description = Kwaliteit {{current}}/{{total}}
+
+[ui]
+[[hint]]
+; This is why we need optionals
+currency = Je hebt {{amount}} {{amount2: "Edelstenen" > 1, "Edelsteen"}}

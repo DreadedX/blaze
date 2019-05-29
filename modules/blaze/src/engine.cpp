@@ -44,7 +44,7 @@ void bind_event_subscription(sol::table& blaze, std::string name) {
 
 namespace BLAZE_NAMESPACE {
 	void init() {
-		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table);
+		lua_state.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::table, sol::lib::coroutine);
 
 		// Add custom loader that allows loading from archives
 		// @todo We should make sure these loaders are earlier

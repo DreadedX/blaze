@@ -56,10 +56,10 @@ void handle_error(std::shared_ptr<Error> event) {
 }
 
 void lang_test(std::shared_ptr<blaze::Language> lang) {
-		LOG_M("{}\n", lang->get("tutorials.basic.1"));
+		LOG_M("{}\n", lang->get("tutorial.basic.1"));
 
-		LOG_M("{}\n", lang->get("items.pickaxe.name"));
-		LOG_M("{}\n", lang->get("items.pickaxe.description", "current", 47, "total", 100));
+		LOG_M("{}\n", lang->get("item.pickaxe.name"));
+		LOG_M("{}\n", lang->get("item.pickaxe.description", "current", 47, "total", 100));
 }
 
 void game() {

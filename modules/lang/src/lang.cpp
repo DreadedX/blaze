@@ -48,12 +48,25 @@ namespace LANG_NAMESPACE {
 					std::string key = iohelper::read<std::string>(in);
 					std::string str = iohelper::read<std::string>(in);
 
-					std::unordered_map<std::string, size_t> map;
+					std::unordered_map<std::string, std::pair<size_t, Expression>> map;
 					size_t map_length = iohelper::read_length(in);
 					for (size_t i = 0; i < map_length; ++i) {
 						std::string name = iohelper::read<std::string>(in);
 						size_t pos = iohelper::read_length(in);
-						map[name] = pos;
+						size_t op_count = iohelper::read_length(in);
+						std::vector<std::tuple<Expression::OP, int32_t, std::string>> ops(op_count);
+						for (size_t i = 0; i < op_count; ++i) {
+							Expression::OP op = (Expression::OP)iohelper::read<uint8_t>(in);
+							int32_t criteria = iohelper::read<int32_t>(in);
+							std::string str = iohelper::read<std::string>(in);
+							ops.emplace_back(op, criteria, str);
+						}
+						// @todo Parse expressions properly
+						if (op_count == 0) {
+							map[name] = std::make_pair(pos, Expression());
+						} else {
+							map[name] = std::make_pair(pos, Expression(ops));
+						}
 					}
 
 					auto it = current_node->children.find(key);
